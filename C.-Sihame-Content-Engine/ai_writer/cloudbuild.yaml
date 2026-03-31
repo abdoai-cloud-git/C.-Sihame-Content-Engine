@@ -1,0 +1,40 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - ai_writer/backend/Dockerfile
+      - -t
+      - gcr.io/$PROJECT_ID/ai-content-engine-backend:$COMMIT_SHA
+      - ai_writer
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - gcr.io/$PROJECT_ID/ai-content-engine-backend:$COMMIT_SHA
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE_NAME}
+      - --image
+      - gcr.io/$PROJECT_ID/ai-content-engine-backend:$COMMIT_SHA
+      - --region
+      - ${_REGION}
+      - --platform
+      - managed
+      - --allow-unauthenticated
+      - --port
+      - "8080"
+      - --timeout
+      - ${_TIMEOUT}
+
+images:
+  - gcr.io/$PROJECT_ID/ai-content-engine-backend:$COMMIT_SHA
+
+substitutions:
+  _SERVICE_NAME: ai-content-engine-backend
+  _REGION: us-central1
+  _TIMEOUT: 900s
