@@ -3,10 +3,10 @@ steps:
     args:
       - build
       - -f
-      - ai_writer/backend/Dockerfile
+      - C.-Sihame-Content-Engine/ai_writer/backend/Dockerfile
       - -t
       - gcr.io/$PROJECT_ID/ai-content-engine-backend:$COMMIT_SHA
-      - ai_writer
+      - C.-Sihame-Content-Engine/ai_writer
 
   - name: gcr.io/cloud-builders/docker
     args:

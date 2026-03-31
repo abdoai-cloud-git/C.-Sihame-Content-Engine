@@ -2,8 +2,8 @@
 
 ## Architecture
 
-- Frontend: Vercel project rooted at `ai_writer/frontend`
-- Backend: Cloud Run service built from `ai_writer/cloudbuild.yaml` with `backend/Dockerfile`
+- Frontend: Vercel project rooted at `C.-Sihame-Content-Engine/ai_writer/frontend`
+- Backend: Cloud Run service built from `C.-Sihame-Content-Engine/ai_writer/cloudbuild.yaml` with `backend/Dockerfile`
 
 ## Frontend environment variable
 
@@ -38,18 +38,18 @@ Before the first Cloud Run deployment, create the `content_drafts` table in Supa
 ## Vercel
 
 1. Import the GitHub repository into Vercel.
-2. Set the project root directory to `ai_writer/frontend`.
+2. Set the project root directory to `C.-Sihame-Content-Engine/ai_writer/frontend`.
 3. Add `NEXT_PUBLIC_API_URL`.
 4. Push to GitHub to trigger deployments automatically.
 
 ## Cloud Run
 
-1. Create a Cloud Build GitHub trigger from the `ai_writer` repo root.
-2. Point the trigger config file to `ai_writer/cloudbuild.yaml`.
+1. Create a Cloud Build GitHub trigger from the repository root.
+2. Point the trigger config file to `C.-Sihame-Content-Engine/ai_writer/cloudbuild.yaml`.
 3. Set the Cloud Run service environment variables listed above.
 4. Keep the request timeout at `900s` or higher if generation can run long.
 
-The backend image builds from the `ai_writer` directory so it can include `knowledge_pack` and `feedback_log.md` at runtime.
+The backend image builds from `C.-Sihame-Content-Engine/ai_writer` so it can include `knowledge_pack` and `feedback_log.md` at runtime.
 
 ## Health checks
 
