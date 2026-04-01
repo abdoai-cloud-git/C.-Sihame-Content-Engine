@@ -27,7 +27,7 @@ class VoiceRoute(str, Enum):
 class GenerateDraftRequest(BaseModel):
     raw_input: str = Field(..., min_length=1, description="The raw voice note or text from Coach Sihame")
     post_type: str = Field(default="Reflection", description="The intended post type")
-    platform: str = Field(default="telegram", description="Target platform (telegram vs instagram)")
+    platform: str = Field(default="general", description="Target platform (telegram vs instagram vs general)")
 
 
 class DraftContent(BaseModel):
@@ -105,6 +105,18 @@ class ApproveTextResponse(BaseModel):
     draft_id: str
     status: PostStatus
     approved_text: str
+    model_used: TextModel
+
+
+class AdaptPlatformRequest(BaseModel):
+    draft_id: str = Field(..., description="The approved draft id being adapted")
+    target_platform: str = Field(..., description="The platform to adapt the content for (e.g., instagram, telegram, facebook, tiktok)")
+
+
+class AdaptPlatformResponse(BaseModel):
+    draft_id: str
+    target_platform: str
+    adapted_text: str
     model_used: TextModel
 
 

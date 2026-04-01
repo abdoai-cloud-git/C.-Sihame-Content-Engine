@@ -146,3 +146,18 @@ CURRENT DRAFT:
 {json.dumps(current_draft, ensure_ascii=False)}
 """.strip()
         return await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)
+
+    async def adapt_platform_draft(self, approved_text: str, platform: str) -> DraftGenerationResult:
+        prompt = f"""
+You are the PRD-aligned worker/editor for Coach Sihame.
+Your task is to take this approved post and specifically adapt its formatting, structure, and spacing for the {platform} platform.
+Do NOT change the core meaning or the voice. Adjust only paragraph lengths, text formatting constraints, use of emojis, or hashtags appropriate for {platform}.
+Return EXACTLY the adapted text inside the "body" field of the JSON. For "angle", "hook", "cta", and "safety_flags", provide empty strings.
+
+Return STRICT JSON with exactly these keys: "angle", "hook", "body", "cta", "safety_flags".
+Do not include markdown fences.
+
+APPROVED POST:
+{approved_text}
+""".strip()
+        return await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)

@@ -3,6 +3,8 @@ from functools import lru_cache
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.models.schemas import (
+    AdaptPlatformRequest,
+    AdaptPlatformResponse,
     ApproveTextRequest,
     ApproveTextResponse,
     DraftRecordResponse,
@@ -98,5 +100,22 @@ async def get_draft(
         return await workflow.get_draft(draft_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"Draft {draft_id} not found.") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/adapt", response_model=AdaptPlatformResponse)
+async def adapt_platform(
+    request: AdaptPlatformRequest,
+    workflow: ContentWorkflowService = Depends(get_workflow_service),
+):
+    try:
+        return await workflow.adapt_draft(request)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Draft {request.draft_id} not found.") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ModelAdapterError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.models.schemas import (
+    AdaptPlatformRequest,
+    AdaptPlatformResponse,
     ApproveTextRequest,
     ApproveTextResponse,
     DraftRecordResponse,
@@ -119,3 +121,19 @@ class ContentWorkflowService:
     async def get_draft(self, draft_id: str) -> DraftRecordResponse:
         draft = await self.draft_repository.get(draft_id)
         return DraftRecordResponse(**draft.model_dump())
+
+    async def adapt_draft(self, request: AdaptPlatformRequest) -> AdaptPlatformResponse:
+        draft = await self.draft_repository.get(request.draft_id)
+        if draft.status != PostStatus.APPROVED_TEXT:
+            raise ValueError(f"Draft {draft.draft_id} must be approved before adapting for a platform.")
+        if not draft.approved_text:
+            raise ValueError(f"Draft {draft.draft_id} is missing approved text.")
+        
+        result = await self.text_router.adapt_platform_draft(draft.approved_text, request.target_platform)
+        
+        return AdaptPlatformResponse(
+            draft_id=draft.draft_id,
+            target_platform=request.target_platform,
+            adapted_text=result.body,
+            model_used=result.model_used
+        )
