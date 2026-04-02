@@ -11,6 +11,13 @@ export type HistoryItem = {
   updated_at: string;
 };
 
+const POST_TYPE_MAP: Record<string, { label: string; emoji: string }> = {
+  reflection: { label: "تأمل", emoji: "🧘‍♀️" },
+  "clinic story": { label: "قصة جلسة", emoji: "💆‍♀️" },
+  promo: { label: "ترويجي", emoji: "✨" },
+  "prayer / reflection": { label: "دعاء", emoji: "🤲" },
+};
+
 interface HistoryDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,57 +40,101 @@ export default function HistoryDrawer({ isOpen, onClose, onRestore }: HistoryDra
 
   if (!isOpen) return null;
 
+  const getStatusStyle = (status: string) => {
+    if (status === "approved_text" || status === "approved") {
+      return {
+        bg: "bg-green-50",
+        border: "border-green-200",
+        badge: "bg-green-100 text-green-700",
+        label: "✅ معتمد",
+      };
+    }
+    return {
+      bg: "bg-amber-50/50",
+      border: "border-amber-200/50",
+      badge: "bg-amber-100 text-amber-700",
+      label: "⏳ مسودة",
+    };
+  };
+
   return (
     <>
-      {/* Backdrop overlay */}
+      {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/20 z-40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
       
       {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-80 bg-white/95 backdrop-blur-md shadow-2xl z-50 transform transition-transform overflow-y-auto border-l border-[#0D4F5C]/10 rtl:left-0 rtl:right-auto rtl:border-r rtl:border-l-0">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-[#0D4F5C]">المسودات السابقة</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-black">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <div className="fixed top-0 right-0 h-full w-80 bg-white/95 backdrop-blur-md shadow-2xl z-[70] overflow-y-auto border-l border-[#0D4F5C]/10 rtl:left-0 rtl:right-auto rtl:border-r rtl:border-l-0">
+        <div className="p-5">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-lg font-bold text-[#0D4F5C]">المسودات السابقة</h2>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          <div className="space-y-4">
+          {/* Content */}
+          <div className="space-y-3">
             {isLoading ? (
-              <p className="text-gray-500 text-sm text-center mt-10 animate-pulse">جاري جلب المسودات...</p>
+              <div className="space-y-3 mt-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="skeleton h-20 w-full" />
+                ))}
+              </div>
             ) : isError ? (
-              <p className="text-red-500 text-sm text-center mt-10">حدث خطأ في جلب السجل.</p>
+              <div className="text-center mt-10">
+                <p className="text-3xl mb-2">😔</p>
+                <p className="text-red-500 text-sm">حدث خطأ في جلب السجل</p>
+                <p className="text-xs text-gray-400 mt-1">تأكد من اتصالك بالإنترنت</p>
+              </div>
             ) : history.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center mt-10">لا يوجد سجل حتى الآن.</p>
+              <div className="text-center mt-10">
+                <p className="text-3xl mb-2">📝</p>
+                <p className="text-gray-500 text-sm font-semibold">لا يوجد سجل حتى الآن</p>
+                <p className="text-xs text-gray-400 mt-1">ابدئي بصياغة أول منشور</p>
+              </div>
             ) : (
-              history.map((item) => (
-                <div 
-                  key={item.draft_id} 
-                  className="p-4 rounded-xl border border-[#0D4F5C]/10 hover:border-[#C4933F] hover:shadow-sm cursor-pointer transition-all bg-white"
-                  onClick={() => {
-                    onRestore(item.draft_id);
-                    onClose();
-                  }}
-                >
-                  <p className="font-semibold text-sm line-clamp-2 text-[#0D4F5C] mb-2">{item.title}</p>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>{new Date(item.updated_at).toLocaleDateString("ar-EG")}</span>
-                    <span className="px-2 py-1 bg-gray-100 rounded-lg">{item.post_type}</span>
+              history.map((item, index) => {
+                const style = getStatusStyle(item.status);
+                const typeInfo = POST_TYPE_MAP[item.post_type] || { label: item.post_type, emoji: "📄" };
+                
+                return (
+                  <div 
+                    key={item.draft_id}
+                    className={`p-3.5 rounded-xl border ${style.border} ${style.bg} hover:shadow-md cursor-pointer transition-all group`}
+                    onClick={() => {
+                      onRestore(item.draft_id);
+                      onClose();
+                    }}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <p className="font-semibold text-sm line-clamp-2 text-[#0D4F5C] mb-2 group-hover:text-[#C4933F] transition-colors">
+                      {item.title}
+                    </p>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-gray-400">
+                        {new Date(item.updated_at).toLocaleDateString("ar-EG")}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 bg-white/80 rounded-lg text-gray-500 font-medium">
+                          {typeInfo.emoji} {typeInfo.label}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-lg font-bold ${style.badge}`}>
+                          {style.label}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-2 text-xs font-medium">
-                    {item.status === "approved_text" ? (
-                      <span className="text-green-600">✅ معتمد</span>
-                    ) : (
-                      <span className="text-orange-500">⏳ قيد المراجعة</span>
-                    )}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

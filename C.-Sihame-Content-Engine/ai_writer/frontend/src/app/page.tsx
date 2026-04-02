@@ -6,11 +6,20 @@ import { getApiBaseUrl } from "@/lib/api";
 import HistoryDrawer from "@/components/HistoryDrawer";
 import { useQueryClient } from "@tanstack/react-query";
 
+/* ─── Platform config with icons & brand colors ─── */
 const PLATFORMS = [
-  { id: "facebook", label: "فيسبوك (Facebook)" },
-  { id: "instagram", label: "إنستغرام (Instagram)" },
-  { id: "telegram", label: "تليغرام (Telegram)" },
-  { id: "tiktok", label: "تيك توك (TikTok)" },
+  { id: "facebook", label: "فيسبوك", icon: "📘", color: "#1877F2", bg: "bg-[#1877F2]/10", border: "border-[#1877F2]/30", activeBg: "bg-[#1877F2]" },
+  { id: "instagram", label: "إنستغرام", icon: "📸", color: "#E4405F", bg: "bg-[#E4405F]/10", border: "border-[#E4405F]/30", activeBg: "bg-[#E4405F]" },
+  { id: "telegram", label: "تليغرام", icon: "✈️", color: "#0088CC", bg: "bg-[#0088CC]/10", border: "border-[#0088CC]/30", activeBg: "bg-[#0088CC]" },
+  { id: "tiktok", label: "تيك توك", icon: "🎵", color: "#000000", bg: "bg-gray-100", border: "border-gray-300", activeBg: "bg-black" },
+];
+
+/* ─── Quick-start post types for welcome state ─── */
+const QUICK_START = [
+  { type: "reflection", label: "تأمل", emoji: "🧘‍♀️", desc: "منشور تأملي عميق", color: "from-teal-500/10 to-emerald-500/10" },
+  { type: "clinic story", label: "قصة جلسة", emoji: "💆‍♀️", desc: "قصة من العيادة", color: "from-amber-500/10 to-orange-500/10" },
+  { type: "promo", label: "ترويجي", emoji: "✨", desc: "عرض أو دعوة", color: "from-purple-500/10 to-pink-500/10" },
+  { type: "prayer / reflection", label: "دعاء أو نية", emoji: "🤲", desc: "نية أو دعاء صباحي", color: "from-blue-500/10 to-cyan-500/10" },
 ];
 
 function MainWorkspace() {
@@ -23,7 +32,7 @@ function MainWorkspace() {
 
   // App State: compose | review | approved
   const [appState, setAppState] = useState<"compose" | "review" | "approved">("compose");
-  const [isComposerExpanded, setIsComposerExpanded] = useState(true);
+  const [isComposerExpanded, setIsComposerExpanded] = useState(false);
 
   // Compose State
   const [rawInput, setRawInput] = useState("");
@@ -44,7 +53,7 @@ function MainWorkspace() {
   const [isRevising, setIsRevising] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
 
-  // Adopt State
+  // Adapt State
   const [adaptPlatforms, setAdaptPlatforms] = useState<string[]>([]);
   const [isAdapting, setIsAdapting] = useState(false);
   const [adaptResults, setAdaptResults] = useState<Record<string, string>>({});
@@ -56,18 +65,20 @@ function MainWorkspace() {
     const urlDraftId = searchParams.get("draftId");
     if (urlDraftId) {
       loadDraft(urlDraftId);
-      // Clean up URL without reloading
       router.replace("/");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // History Helper (Database fetch invalidated)
+  // Auto-minimize composer when drawer opens
+  useEffect(() => {
+    if (isDrawerOpen) setIsComposerExpanded(false);
+  }, [isDrawerOpen]);
+
   const invalidateHistory = () => {
     queryClient.invalidateQueries({ queryKey: ["history"] });
   };
 
-  // Helper load draft
   const loadDraft = async (id: string) => {
     setIsLoadingDraft(true);
     setError("");
@@ -91,7 +102,6 @@ function MainWorkspace() {
     } catch (err) {
       setError((err as Error).message);
       setAppState("compose");
-      setIsComposerExpanded(true);
     } finally {
       setIsLoadingDraft(false);
     }
@@ -116,7 +126,6 @@ function MainWorkspace() {
         body: JSON.stringify({
           raw_input: rawInput,
           post_type: postType,
-          // Platform is no longer required at generation, defaults to 'general' via backend
         }),
       });
 
@@ -133,7 +142,7 @@ function MainWorkspace() {
       invalidateHistory();
     } catch (err) {
       console.error(err);
-      setError((err as Error).message || "حدث خطأ غير متوقع. تأكد من تشغيل الخادم الخلفي.");
+      setError((err as Error).message || "حدث خطأ غير متوقع.");
     } finally {
       setIsGenerating(false);
     }
@@ -221,7 +230,7 @@ function MainWorkspace() {
   const handleCopyMainPost = () => {
     if (draft) {
       const fullText = [draft.hook, draft.body, draft.cta]
-        .map((s) => s?.trim())
+        .map((s: string) => s?.trim())
         .filter(Boolean)
         .join("\n\n");
       navigator.clipboard.writeText(fullText);
@@ -236,6 +245,31 @@ function MainWorkspace() {
     setTimeout(() => setCopiedPlatform(null), 2000);
   };
 
+  const handleNewDraft = () => {
+    setDraft(null);
+    setDraftId(null);
+    setAppState("compose");
+    setRawInput("");
+    setAdaptResults({});
+    setIsComposerExpanded(false);
+  };
+
+  const handleQuickStart = (type: string) => {
+    setPostType(type);
+    setIsComposerExpanded(true);
+  };
+
+  /* ─── State label for breadcrumb ─── */
+  const stateLabel = appState === "compose" 
+    ? "صياغة جديدة" 
+    : appState === "review" 
+    ? "مراجعة المسودة" 
+    : "جاهز للنشر ✅";
+  const stateColor = appState === "compose" 
+    ? "bg-[#0D4F5C]/10 text-[#0D4F5C]" 
+    : appState === "review" 
+    ? "bg-amber-100 text-amber-800" 
+    : "bg-green-100 text-green-800";
 
   return (
     <>
@@ -245,198 +279,196 @@ function MainWorkspace() {
         onRestore={loadDraft}
       />
 
-      <div className="max-w-4xl mx-auto mt-8 pb-96 relative">
-        {/* Header & Drawer Trigger */}
-        <div className="flex justify-between items-center mb-8 px-4">
-          <div className="flex-1" />
-          <h1 className="text-3xl font-bold text-center text-[#0D4F5C]">
-             مساعد الكوتش سهام 🪄
+      <div className="max-w-3xl mx-auto pb-40 relative">
+        {/* ─── HEADER ─── */}
+        <div className="flex justify-between items-center mb-2 px-4">
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="w-10 h-10 flex items-center justify-center text-[#0D4F5C] hover:bg-[#0D4F5C]/10 rounded-full transition-all"
+            title="سجل المسودات"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+          <h1 className="text-2xl font-bold text-center text-[#0D4F5C]">
+            مساعد الكوتش سهام 🪄
           </h1>
-          <div className="flex-1 flex justify-end">
-            <button
-              onClick={() => setIsDrawerOpen(true)}
-              className="p-2 text-[#0D4F5C] hover:bg-[#0D4F5C]/10 rounded-full transition-colors flex items-center space-x-2 rtl:space-x-reverse"
-              title="سجل المسودات"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-          </div>
+          <div className="w-10" /> {/* spacer */}
         </div>
 
-        {/* Global Loading / Error */}
-        {isLoadingDraft && (
-          <div className="text-center mt-20 text-xl animate-pulse text-[#0D4F5C]">جاري تحميل المسودة...</div>
-        )}
+        {/* ─── BREADCRUMB ─── */}
+        <div className="flex justify-center mb-6">
+          <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${stateColor} transition-all`}>
+            {stateLabel}
+          </span>
+        </div>
+
+        {/* ─── GLOBAL ERROR ─── */}
         {error && (
-          <div className="p-4 mb-6 mx-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm">
+          <div className="p-3 mb-4 mx-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm animate-slide-up">
             ❌ {error}
           </div>
         )}
 
-        {/* --- FLOATING COMPOSER --- */}
-        <div 
-          className={`fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-[#0D4F5C]/10 transition-transform duration-500 z-50 ${
-            isComposerExpanded ? "translate-y-0" : "translate-y-[calc(100%-80px)]"
-          }`}
-        >
-          <div className="max-w-4xl mx-auto p-4 md:p-8 relative">
-            <button
-              onClick={() => setIsComposerExpanded(!isComposerExpanded)}
-              className="absolute -top-6 left-1/2 -translate-x-1/2 bg-white px-6 py-2 rounded-t-xl shadow-sm border border-[#0D4F5C]/10 hover:bg-gray-50 flex flex-col items-center justify-center space-y-1"
-            >
-              <div className="w-8 h-1 bg-gray-300 rounded-full" />
-              <span className="text-xs text-gray-500 font-semibold">{isComposerExpanded ? "تصغير" : "فكرة جديدة"}</span>
-            </button>
-
-            <div className={isComposerExpanded ? "block" : "hidden"}>
-              <form onSubmit={handleGenerate} className="space-y-4">
-                <textarea
-                  value={rawInput}
-                  onChange={(e) => setRawInput(e.target.value)}
-                  className="w-full h-32 p-4 rounded-xl border border-[#0D4F5C]/20 bg-white/50 focus:ring-2 focus:ring-[#C4933F] focus:outline-none resize-none transition-all"
-                  placeholder="الفكرة الأساسية (بصمتك، صوتك مفرغ، أو نص خام)..."
-                  disabled={isGenerating}
-                />
-                <div className="flex gap-4 items-center">
-                  <select
-                    value={postType}
-                    onChange={(e) => setPostType(e.target.value)}
-                    className="flex-1 p-3 rounded-xl border border-[#0D4F5C]/20 bg-white focus:ring-2 focus:ring-[#C4933F] focus:outline-none"
-                    disabled={isGenerating}
-                  >
-                    <option value="reflection">تأمل (Reflection)</option>
-                    <option value="clinic story">قصة من العيادة (Clinic Story)</option>
-                    <option value="promo">ترويج (Promo / Offer)</option>
-                    <option value="prayer / reflection">دعاء أو نية (Prayer / Intention)</option>
-                  </select>
-                  <button
-                    type="submit"
-                    disabled={isGenerating || !rawInput.trim()}
-                    className="flex-1 py-3 text-white font-bold rounded-xl transition-all shadow-md bg-[#0D4F5C] hover:bg-[#093a44] disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2 rtl:space-x-reverse"
-                  >
-                    {isGenerating ? "جاري الصياغة..." : "صياغة المنشور ✨"}
-                  </button>
-                </div>
-              </form>
+        {/* ─── LOADING SKELETON ─── */}
+        {(isLoadingDraft || isGenerating) && !draft && (
+          <div className="px-4 space-y-4 animate-fade-in">
+            <div className="skeleton h-6 w-48 mx-auto" />
+            <div className="skeleton h-64 w-full" />
+            <div className="skeleton h-20 w-full" />
+            <div className="skeleton h-20 w-full" />
+            <div className="flex gap-4">
+              <div className="skeleton h-14 flex-1" />
+              <div className="skeleton h-14 flex-1" />
             </div>
           </div>
-        </div>
+        )}
 
-        {/* --- REVIEW & APPROVED STATE SHARED CONTENT --- */}
-        {!isLoadingDraft && draft && (appState === "review" || appState === "approved") && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold border-b-4 border-[#C4933F] pb-2 inline-block">
-                {appState === "approved" ? "نص معتمد جاهز للنشر 🎉" : "مراجعة المسودة"}
-              </h2>
-              <div className="flex space-x-2 rtl:space-x-reverse">
-                <div className="px-4 py-2 bg-white/50 rounded-full border border-[#0D4F5C]/20 text-sm font-semibold">
-                  {draft.model_used}
-                </div>
-                <button
-                  onClick={() => {
-                    setDraft(null);
-                    setDraftId(null);
-                    setAppState("compose");
-                    setRawInput("");
-                  }}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm font-semibold transition text-gray-800"
-                >
-                  صياغة جديدة +
-                </button>
-              </div>
+        {/* ═══════════════════════════════════════════════════ */}
+        {/* ─── WELCOME / EMPTY STATE ─── */}
+        {/* ═══════════════════════════════════════════════════ */}
+        {appState === "compose" && !draft && !isGenerating && !isLoadingDraft && (
+          <div className="px-4 animate-slide-up">
+            <div className="text-center mb-8 mt-8">
+              <p className="text-4xl mb-3">🌿</p>
+              <h2 className="text-xl font-bold text-[#0D4F5C] mb-2">أهلاً كوتش سهام</h2>
+              <p className="text-sm text-gray-500">اختاري نوع المنشور أو اكتبي فكرتك مباشرة</p>
             </div>
 
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {QUICK_START.map((item) => (
+                <button
+                  key={item.type}
+                  onClick={() => handleQuickStart(item.type)}
+                  className={`p-4 rounded-2xl border border-[#0D4F5C]/10 bg-gradient-to-br ${item.color} hover:border-[#C4933F] hover:shadow-md transition-all text-center group`}
+                >
+                  <span className="text-2xl block mb-2 group-hover:scale-110 transition-transform">{item.emoji}</span>
+                  <span className="font-bold text-sm text-[#0D4F5C] block">{item.label}</span>
+                  <span className="text-xs text-gray-500">{item.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════ */}
+        {/* ─── REVIEW & APPROVED — CLEAN LAYOUT ─── */}
+        {/* ═══════════════════════════════════════════════════ */}
+        {!isLoadingDraft && draft && (appState === "review" || appState === "approved") && (
+          <div className="px-4 space-y-4 animate-slide-up">
+
+            {/* ─── Sticky Copy + New Draft Bar ─── */}
+            <div className="sticky top-0 z-30 bg-[#FAF7F2]/90 backdrop-blur-md py-3 flex justify-between items-center border-b border-[#0D4F5C]/5">
+              <button
+                onClick={handleNewDraft}
+                className="px-3 py-1.5 bg-white hover:bg-gray-50 rounded-full text-xs font-bold text-gray-600 border border-gray-200 transition-all"
+              >
+                + صياغة جديدة
+              </button>
+              <button
+                onClick={handleCopyMainPost}
+                className="px-4 py-1.5 bg-[#0D4F5C] hover:bg-[#093a44] text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5"
+              >
+                {mainCopySuccess ? "✅ تم النسخ" : "📋 نسخ المنشور"}
+              </button>
+            </div>
+
+            {/* ─── Safety Note ─── */}
             {draft.safety_flags && (
-              <div className="p-4 bg-orange-50 border border-orange-200 text-orange-800 rounded-xl">
-                <strong>⚠️ تنبيه أمان:</strong> {draft.safety_flags}
+              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm leading-relaxed">
+                <strong>⚠️ ملاحظة:</strong> {draft.safety_flags}
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-6">
-                <div className="bg-white/80 backdrop-blur shadow-sm p-6 rounded-2xl border border-[#0D4F5C]/10 relative">
-                  <h3 className="text-sm font-bold text-[#C4933F] uppercase tracking-wider mb-4">النص الرئيسي (Body)</h3>
-                  {appState === "approved" && (
-                    <button
-                      onClick={handleCopyMainPost}
-                      className="absolute top-4 left-4 p-2 text-gray-500 hover:text-[#0D4F5C] hover:bg-gray-100 rounded-lg transition-colors"
-                      title="نسخ النص"
-                    >
-                      {mainCopySuccess ? "✅ منسوخ" : "📋 نسخ"}
-                    </button>
-                  )}
-                  <textarea
-                    className="w-full h-96 p-4 rounded-xl bg-transparent border-none focus:ring-0 resize-none text-lg leading-relaxed dark:text-gray-900"
-                    value={draft.body}
-                    readOnly
-                  />
+            {/* ─── Main Post — Single Clean Card ─── */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-[#0D4F5C]/10 shadow-sm overflow-hidden">
+              {/* Hook */}
+              {draft.hook && (
+                <div className="px-5 pt-5 pb-3 border-b border-dashed border-[#0D4F5C]/10">
+                  <p className="text-xs font-bold text-[#C4933F] mb-1.5">الخطاف</p>
+                  <p className="text-base font-semibold text-[#0D4F5C] leading-relaxed">{draft.hook}</p>
                 </div>
+              )}
+              
+              {/* Body */}
+              <div className="px-5 py-4">
+                <p className="text-xs font-bold text-[#C4933F] mb-2">النص الرئيسي</p>
+                <div className="text-base text-gray-800 leading-[1.9] whitespace-pre-wrap">{draft.body}</div>
               </div>
-
-              <div className="space-y-6">
-                <div className="bg-white/80 backdrop-blur shadow-sm p-6 rounded-2xl border border-[#0D4F5C]/10">
-                  <h3 className="text-sm font-bold text-[#C4933F] uppercase tracking-wider mb-2">الزاوية (Angle)</h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">{draft.angle}</p>
+              
+              {/* CTA */}
+              {draft.cta && (
+                <div className="px-5 pt-3 pb-5 border-t border-dashed border-[#0D4F5C]/10">
+                  <p className="text-xs font-bold text-[#C4933F] mb-1.5">الدعوة للتفاعل</p>
+                  <p className="text-base font-semibold text-[#0D4F5C] leading-relaxed">{draft.cta}</p>
                 </div>
-
-                <div className="bg-white/80 backdrop-blur shadow-sm p-6 rounded-2xl border border-[#0D4F5C]/10">
-                  <h3 className="text-sm font-bold text-[#C4933F] uppercase tracking-wider mb-2">الخطاف (Hook)</h3>
-                  <p className="text-sm text-gray-700 font-semibold">{draft.hook}</p>
-                </div>
-
-                <div className="bg-white/80 backdrop-blur shadow-sm p-6 rounded-2xl border border-[#0D4F5C]/10">
-                  <h3 className="text-sm font-bold text-[#C4933F] uppercase tracking-wider mb-2">الدعوة (CTA)</h3>
-                  <p className="text-sm text-gray-700 font-semibold">{draft.cta}</p>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* --- REVIEW ONLY SECTION --- */}
+            {/* ─── Angle (collapsible detail) ─── */}
+            {draft.angle && (
+              <details className="group">
+                <summary className="text-xs font-bold text-gray-400 cursor-pointer hover:text-[#C4933F] transition-colors list-none flex items-center gap-1">
+                  <span className="group-open:rotate-90 transition-transform">◀</span>
+                  الزاوية المستخدمة
+                </summary>
+                <p className="mt-2 text-sm text-gray-500 pr-4 leading-relaxed">{draft.angle}</p>
+              </details>
+            )}
+
+            {/* ═══ REVIEW ONLY ═══ */}
             {appState === "review" && (
-              <>
-                <div className="bg-[#0D4F5C] text-white p-6 rounded-2xl shadow-lg mt-8">
-                  <h3 className="text-xl font-bold mb-4">هل ترغبين بتعديل شيء؟ ✍️</h3>
-                  <div className="flex gap-4">
+              <div className="space-y-3 pt-2">
+                {/* Edit Instruction */}
+                <div className="bg-[#0D4F5C] p-4 rounded-2xl">
+                  <div className="flex gap-3">
                     <input
                       type="text"
-                      className="flex-1 p-4 rounded-xl text-[#0D4F5C] focus:outline-none focus:ring-2 focus:ring-[#C4933F]"
-                      placeholder="مثال: اجعل النص أقصر، أو خفف من العاطفة..."
+                      className="flex-1 p-3 rounded-xl text-sm text-[#0D4F5C] focus:outline-none focus:ring-2 focus:ring-[#C4933F]"
+                      placeholder="تعديل: مثلاً اجعله أقصر..."
                       value={editInstruction}
                       onChange={(e) => setEditInstruction(e.target.value)}
                       disabled={isRevising || isApproving}
+                      onKeyDown={(e) => e.key === "Enter" && handleRevise()}
                     />
                     <button
                       onClick={handleRevise}
                       disabled={isRevising || !editInstruction.trim() || isApproving}
-                      className="bg-[#C4933F] hover:bg-[#b08030] text-white px-8 font-bold rounded-xl transition-colors disabled:opacity-50"
+                      className="bg-[#C4933F] hover:bg-[#b08030] text-white px-5 font-bold rounded-xl transition-colors disabled:opacity-50 text-sm"
                     >
-                      {isRevising ? "جاري التعديل..." : "تعديل"}
+                      {isRevising ? (
+                        <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spinner" />
+                      ) : "تعديل ✍️"}
                     </button>
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4">
-                  <button
-                    onClick={handleApprove}
-                    disabled={isApproving || isRevising}
-                    className="bg-green-600 hover:bg-green-700 text-white px-12 py-4 rounded-xl font-bold text-xl shadow-md transition-colors disabled:opacity-50"
-                  >
-                    {isApproving ? "جاري الاعتماد..." : "اعتماد هذا النص ✅"}
-                  </button>
-                </div>
-              </>
+                {/* Approve Button */}
+                <button
+                  onClick={handleApprove}
+                  disabled={isApproving || isRevising}
+                  className="w-full bg-gradient-to-l from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isApproving ? (
+                    <>
+                      <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spinner" />
+                      جاري الاعتماد...
+                    </>
+                  ) : "اعتماد هذا النص ✅"}
+                </button>
+              </div>
             )}
 
-            {/* --- APPROVED ONLY SECTION (Platform Adaptation) --- */}
+            {/* ═══ APPROVED ONLY — Platform Adaptation ═══ */}
             {appState === "approved" && (
-              <div className="bg-white/80 backdrop-blur shadow-sm p-8 rounded-3xl border border-[#0D4F5C]/20 mt-8 mb-12">
-                <h3 className="text-xl font-bold text-[#0D4F5C] mb-4">تكييف النص لمنصة محددة 📱</h3>
-                <p className="text-gray-600 mb-6 text-sm">النص المعتمد جاهز للنشر. يمكنك هنا تكييفه تلقائياً ليتناسب مع طبيعة المنصات الأخرى.</p>
+              <div className="bg-gradient-to-br from-[#0D4F5C]/5 to-[#C4933F]/5 p-5 rounded-2xl border border-[#0D4F5C]/10 space-y-4">
+                <div className="text-center">
+                  <h3 className="font-bold text-[#0D4F5C] mb-1">تكييف للمنصات 📱</h3>
+                  <p className="text-xs text-gray-500">اختاري المنصات وسنكيّف النص تلقائياً</p>
+                </div>
                 
-                <div className="flex flex-wrap gap-3 mb-6">
+                <div className="flex flex-wrap gap-2 justify-center">
                   {PLATFORMS.map((p) => {
                     const isSelected = adaptPlatforms.includes(p.id);
                     return (
@@ -449,54 +481,142 @@ function MainWorkspace() {
                             setAdaptPlatforms([...adaptPlatforms, p.id]);
                           }
                         }}
-                        className={`px-4 py-2 rounded-full border text-sm font-semibold transition-colors ${
+                        className={`px-4 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${
                           isSelected 
-                            ? "bg-[#C4933F] text-white border-[#C4933F]" 
-                            : "bg-white text-gray-600 border-gray-200 hover:border-[#C4933F]"
+                            ? `${p.activeBg} text-white shadow-md scale-105` 
+                            : `${p.bg} ${p.border} border text-gray-700 hover:shadow-sm`
                         }`}
                         disabled={isAdapting}
                       >
+                        <span>{p.icon}</span>
                         {p.label}
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="flex gap-4">
-                  <button
-                    onClick={handleAdapt}
-                    disabled={isAdapting || adaptPlatforms.length === 0}
-                    className="bg-[#0D4F5C] hover:bg-[#093a44] text-white px-8 py-3 font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center shadow-md w-full justify-center"
-                  >
-                    {isAdapting ? "جاري التكييف..." : "تكييف النص للمنصات المحددة 🔄"}
-                  </button>
-                </div>
+                <button
+                  onClick={handleAdapt}
+                  disabled={isAdapting || adaptPlatforms.length === 0}
+                  className="w-full bg-[#0D4F5C] hover:bg-[#093a44] text-white py-3 font-bold rounded-xl transition-all disabled:opacity-40 flex items-center justify-center gap-2 text-sm"
+                >
+                  {isAdapting ? (
+                    <>
+                      <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spinner" />
+                      جاري التكييف...
+                    </>
+                  ) : `تكييف النص (${adaptPlatforms.length}) 🔄`}
+                </button>
 
+                {/* Adapted Results */}
                 {Object.keys(adaptResults).length > 0 && (
-                  <div className="mt-8 space-y-6">
-                    {Object.entries(adaptResults).map(([platform, text]) => (
-                      <div key={platform} className="animate-in fade-in duration-500 pt-6 border-t border-gray-100">
-                        <div className="flex justify-between items-center mb-4">
-                          <h4 className="font-bold text-[#C4933F]">النص المخصص لـ ({PLATFORMS.find(p => p.id === platform)?.label || platform}):</h4>
-                          <button
-                            onClick={() => handleCopyPlatform(platform, text)}
-                            className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-semibold transition"
-                          >
-                            {copiedPlatform === platform ? "✅ تم النسخ" : "📋 نسخ"}
-                          </button>
+                  <div className="space-y-4 pt-2">
+                    {Object.entries(adaptResults).map(([platform, text]) => {
+                      const platformInfo = PLATFORMS.find(p => p.id === platform);
+                      return (
+                        <div key={platform} className="animate-slide-up bg-white rounded-xl border border-gray-100 overflow-hidden">
+                          <div className="flex justify-between items-center p-3 bg-gray-50">
+                            <span className="font-bold text-sm">
+                              {platformInfo?.icon} {platformInfo?.label}
+                            </span>
+                            <button
+                              onClick={() => handleCopyPlatform(platform, text)}
+                              className="text-xs px-3 py-1 bg-white hover:bg-gray-100 rounded-lg text-gray-600 font-semibold transition border border-gray-200"
+                            >
+                              {copiedPlatform === platform ? "✅ تم" : "📋 نسخ"}
+                            </button>
+                          </div>
+                          <div className="p-4 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{text}</div>
                         </div>
-                        <textarea
-                          className="w-full h-64 p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-0 resize-none text-md leading-relaxed dark:text-gray-800"
-                          value={text}
-                          readOnly
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
             )}
           </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════ */}
+        {/* ─── FLOATING COMPOSER / FAB ─── */}
+        {/* ═══════════════════════════════════════════════════ */}
+
+        {/* FAB Button (when composer is minimized) */}
+        {!isComposerExpanded && (
+          <button
+            onClick={() => setIsComposerExpanded(true)}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gradient-to-l from-[#C4933F] to-[#D4A34F] text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all animate-pulse-glow flex items-center gap-2"
+          >
+            <span className="text-lg">✨</span>
+            فكرة جديدة
+          </button>
+        )}
+
+        {/* Expanded Composer */}
+        {isComposerExpanded && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black/10 z-40 backdrop-blur-[2px]"
+              onClick={() => setIsComposerExpanded(false)}
+            />
+            
+            {/* Composer Panel */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up">
+              <div className="max-w-3xl mx-auto">
+                <div className="bg-white/95 backdrop-blur-md rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.12)] border-t border-x border-[#0D4F5C]/10 p-5 pb-8">
+                  {/* Handle + Minimize */}
+                  <button
+                    onClick={() => setIsComposerExpanded(false)}
+                    className="mx-auto block mb-4"
+                  >
+                    <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-1" />
+                    <span className="text-[10px] text-gray-400 font-semibold">تصغير</span>
+                  </button>
+
+                  <form onSubmit={handleGenerate} className="space-y-3">
+                    <textarea
+                      value={rawInput}
+                      onChange={(e) => setRawInput(e.target.value)}
+                      className="w-full h-28 p-4 rounded-xl border border-[#0D4F5C]/15 bg-[#FAF7F2]/50 focus:ring-2 focus:ring-[#C4933F] focus:border-transparent focus:outline-none resize-none transition-all text-sm"
+                      placeholder="الفكرة الأساسية (بصمتك، صوتك مفرغ، أو نص خام)..."
+                      disabled={isGenerating}
+                      autoFocus
+                    />
+                    <div className="flex gap-3 items-center">
+                      <select
+                        value={postType}
+                        onChange={(e) => setPostType(e.target.value)}
+                        className="flex-1 p-3 rounded-xl border border-[#0D4F5C]/15 bg-white focus:ring-2 focus:ring-[#C4933F] focus:outline-none text-sm"
+                        disabled={isGenerating}
+                      >
+                        <option value="reflection">تأمل</option>
+                        <option value="clinic story">قصة جلسة</option>
+                        <option value="promo">ترويجي</option>
+                        <option value="prayer / reflection">دعاء أو نية</option>
+                      </select>
+                      <button
+                        type="submit"
+                        disabled={isGenerating || !rawInput.trim()}
+                        className={`flex-1 py-3 font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm ${
+                          rawInput.trim() && !isGenerating
+                            ? "bg-gradient-to-l from-[#C4933F] to-[#D4A34F] hover:from-[#b08030] hover:to-[#C4933F] text-white shadow-[0_4px_15px_rgba(196,147,63,0.3)]"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                        }`}
+                      >
+                        {isGenerating ? (
+                          <>
+                            <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spinner" />
+                            جاري الصياغة...
+                          </>
+                        ) : "صياغة المنشور ✨"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </>
