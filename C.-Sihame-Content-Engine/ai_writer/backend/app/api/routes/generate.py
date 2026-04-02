@@ -14,6 +14,8 @@ from app.models.schemas import (
     PostDraftResponse,
     ReviseDraftRequest,
     ReviseDraftResponse,
+    RejectDraftRequest,
+    RejectDraftResponse,
 )
 from app.services.context_builder import DynamicContextBuilder
 from app.services.draft_repository import DraftRepository, build_draft_repository
@@ -85,6 +87,21 @@ async def approve_text(
 ):
     try:
         return await workflow.approve_text(request)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Draft {request.draft_id} not found.") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/reject", response_model=RejectDraftResponse)
+async def reject_draft(
+    request: RejectDraftRequest,
+    workflow: ContentWorkflowService = Depends(get_workflow_service),
+):
+    try:
+        return await workflow.reject_draft(request)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"Draft {request.draft_id} not found.") from exc
     except ValueError as exc:

@@ -9,7 +9,7 @@ class PostStatus(str, Enum):
     DRAFT_GENERATED = "draft_generated"
     UNDER_REVIEW = "under_review"
     APPROVED_TEXT = "approved_text"
-
+    REJECTED = "rejected"
 
 class TextModel(str, Enum):
     GEMINI_3_1_PRO = "gemini-3.1-pro"
@@ -75,6 +75,7 @@ class StoredDraft(BaseModel):
     cta: str
     safety_flags: str = ""
     approved_text: Optional[str] = None
+    rejection_reason: Optional[str] = None
     revision_history: List[RevisionEntry] = Field(default_factory=list)
     routing_metadata: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
@@ -98,7 +99,7 @@ class ReviseDraftResponse(PostDraftResponse):
 
 class ApproveTextRequest(BaseModel):
     draft_id: str = Field(..., description="The draft id being approved")
-    approved_text: str = Field(..., min_length=1, description="The final approved text after human review")
+    approved_text: str = Field(..., min_length=1, description="The final text to be approved")
 
 
 class ApproveTextResponse(BaseModel):
@@ -106,6 +107,17 @@ class ApproveTextResponse(BaseModel):
     status: PostStatus
     approved_text: str
     model_used: TextModel
+
+
+class RejectDraftRequest(BaseModel):
+    draft_id: str = Field(..., description="The draft id being rejected")
+    reason: Optional[str] = Field(None, description="Optional reason for rejection")
+
+
+class RejectDraftResponse(BaseModel):
+    draft_id: str
+    status: PostStatus
+    rejection_reason: Optional[str]
 
 
 class AdaptPlatformRequest(BaseModel):

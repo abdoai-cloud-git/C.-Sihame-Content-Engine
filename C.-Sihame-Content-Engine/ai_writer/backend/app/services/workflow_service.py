@@ -19,6 +19,8 @@ from app.models.schemas import (
     ReviseDraftResponse,
     RevisionEntry,
     StoredDraft,
+    RejectDraftRequest,
+    RejectDraftResponse,
 )
 from app.services.context_builder import DynamicContextBuilder
 from app.services.draft_repository import DraftRepository
@@ -119,6 +121,20 @@ class ContentWorkflowService:
             status=draft.status,
             approved_text=draft.approved_text,
             model_used=draft.model_used,
+        )
+
+    async def reject_draft(self, request: RejectDraftRequest) -> RejectDraftResponse:
+        draft = await self.draft_repository.get(request.draft_id)
+        if draft.status not in {PostStatus.DRAFT_GENERATED, PostStatus.UNDER_REVIEW}:
+            raise ValueError(f"Draft {draft.draft_id} cannot transition from {draft.status} to rejected.")
+        draft.status = PostStatus.REJECTED
+        draft.rejection_reason = request.reason
+        draft.updated_at = datetime.now(timezone.utc)
+        await self.draft_repository.update(draft)
+        return RejectDraftResponse(
+            draft_id=draft.draft_id,
+            status=draft.status,
+            rejection_reason=draft.rejection_reason,
         )
 
     async def get_draft(self, draft_id: str) -> DraftRecordResponse:

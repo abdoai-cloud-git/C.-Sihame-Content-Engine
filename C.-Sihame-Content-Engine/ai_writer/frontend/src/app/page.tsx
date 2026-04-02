@@ -52,6 +52,9 @@ function MainWorkspace() {
   const [editInstruction, setEditInstruction] = useState("");
   const [isRevising, setIsRevising] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [showRejectInput, setShowRejectInput] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   // Adapt State
   const [adaptPlatforms, setAdaptPlatforms] = useState<string[]>([]);
@@ -198,6 +201,36 @@ function MainWorkspace() {
       alert((err as Error).message);
     } finally {
       setIsApproving(false);
+    }
+  };
+
+  // 3b. Reject and Regenerate
+  const handleRejectAndRegenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!draftId || !draft) return;
+    setIsRejecting(true);
+    try {
+      const apiUrl = getApiBaseUrl();
+      // First hit the reject endpoint
+      const res = await fetch(`${apiUrl}/api/v1/content/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft_id: draftId,
+          reason: rejectReason.trim() || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("فشل رفض النص");
+
+      // Reset UI reject state
+      setRejectReason("");
+      setShowRejectInput(false);
+
+      // Now generate a new draft explicitly using the existing rawInput and postType
+      await handleGenerate(e);
+    } catch (err) {
+      alert((err as Error).message);
+      setIsRejecting(false); // only resetting here because handleGenerate resets loading states
     }
   };
 
@@ -381,11 +414,42 @@ function MainWorkspace() {
               </div>
             )}
 
+            {/* ─── Approved Success Banner ─── */}
+            {appState === "approved" && (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3 animate-slide-up">
+                <span className="text-2xl">🎉</span>
+                <div>
+                  <p className="font-bold text-green-800 text-sm">تم اعتماد النص بنجاح</p>
+                  <p className="text-xs text-green-600">يمكنك نسخه أو تكييفه للمنصات الأخرى</p>
+                </div>
+              </div>
+            )}
+
             {/* ─── Main Post — Single Clean Card ─── */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-[#0D4F5C]/10 shadow-sm overflow-hidden">
+            <div className={`bg-white/80 backdrop-blur-sm rounded-2xl border shadow-sm overflow-hidden ${
+              appState === "approved" 
+                ? "border-green-200" 
+                : "border-amber-200"
+            }`}>
+              {/* Status Badge */}
+              <div className={`px-5 py-2.5 flex items-center justify-between ${
+                appState === "approved" 
+                  ? "bg-green-50 border-b border-green-100" 
+                  : "bg-amber-50 border-b border-amber-100"
+              }`}>
+                <span className={`text-xs font-bold flex items-center gap-1.5 ${
+                  appState === "approved" ? "text-green-700" : "text-amber-700"
+                }`}>
+                  {appState === "approved" ? "✅ معتمد — جاهز للنشر" : "⏳ قيد المراجعة"}
+                </span>
+                {draft.model_used && (
+                  <span className="text-[10px] text-gray-400 font-mono">{draft.model_used}</span>
+                )}
+              </div>
+
               {/* Hook */}
               {draft.hook && (
-                <div className="px-5 pt-5 pb-3 border-b border-dashed border-[#0D4F5C]/10">
+                <div className="px-5 pt-4 pb-3 border-b border-dashed border-[#0D4F5C]/10">
                   <p className="text-xs font-bold text-[#C4933F] mb-1.5">الخطاف</p>
                   <p className="text-base font-semibold text-[#0D4F5C] leading-relaxed">{draft.hook}</p>
                 </div>
@@ -447,7 +511,7 @@ function MainWorkspace() {
                 {/* Approve Button */}
                 <button
                   onClick={handleApprove}
-                  disabled={isApproving || isRevising}
+                  disabled={isApproving || isRevising || isRejecting}
                   className="w-full bg-gradient-to-l from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isApproving ? (
@@ -457,6 +521,47 @@ function MainWorkspace() {
                     </>
                   ) : "اعتماد هذا النص ✅"}
                 </button>
+
+                {/* Reject & Regenerate UI */}
+                {showRejectInput ? (
+                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl space-y-3 animate-slide-up mt-2">
+                    <p className="text-sm font-bold text-amber-800">لماذا لم يعجبك هذا النص؟ (اختياري)</p>
+                    <textarea
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm resize-none h-20"
+                      placeholder="مثال: النص طويل جداً ولا يعكس شخصيتي..."
+                      disabled={isRejecting}
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleRejectAndRegenerate as any}
+                        disabled={isRejecting}
+                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
+                      >
+                        {isRejecting ? (
+                          <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spinner" />
+                        ) : "تأكيد الرفض وإعادة التوليد 🔄"}
+                      </button>
+                      <button
+                        onClick={() => { setShowRejectInput(false); setRejectReason(""); }}
+                        disabled={isRejecting}
+                        className="px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl text-sm transition-colors"
+                      >
+                        إلغاء
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowRejectInput(true)}
+                    disabled={isApproving || isRevising || isRejecting}
+                    className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-3 rounded-2xl font-bold text-sm shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+                  >
+                    رفض وإعادة توليد 🔄
+                  </button>
+                )}
               </div>
             )}
 
