@@ -89,6 +89,10 @@ function MainWorkspace() {
     
     try {
       const apiUrl = getApiBaseUrl();
+      if (!apiUrl) {
+        setError("API URL is not configured. Please check environment variables.");
+        return;
+      }
       const res = await fetch(`${apiUrl}/api/v1/content/${id}`);
       if (!res.ok) throw new Error("لم يتم العثور على المسودة");
       const data = await res.json();
@@ -123,6 +127,11 @@ function MainWorkspace() {
 
     try {
       const apiUrl = getApiBaseUrl();
+      if (!apiUrl) {
+        setError("API URL is not configured. Please check environment variables.");
+        setIsGenerating(false);
+        return;
+      }
       const response = await fetch(`${apiUrl}/api/v1/content/draft`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -177,7 +186,10 @@ function MainWorkspace() {
     }
   };
 
-  // 3. Approve draft
+  /**
+   * 3. Approve draft
+   * Transitions the app to the 'approved' state and updates the backend record.
+   */
   const handleApprove = async () => {
     if (!draftId || !draft) return;
     setIsApproving(true);
@@ -204,7 +216,13 @@ function MainWorkspace() {
     }
   };
 
-  // 3b. Reject and Regenerate
+  /**
+   * 3b. Reject and Regenerate
+   * The core of the feedback loop.
+   * 1. Calls the /reject endpoint to mark the current draft as REJECTED and store the reason.
+   * 2. Immediately triggers a fresh handleGenerate() attempt using the original user input.
+   * This effectively 'recycles' the context but aims for a better result based on the negative signal.
+   */
   const handleRejectAndRegenerate = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!draftId || !draft) return;

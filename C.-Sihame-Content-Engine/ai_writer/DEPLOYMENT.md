@@ -5,53 +5,59 @@
 - Frontend: Vercel project rooted at `C.-Sihame-Content-Engine/ai_writer/frontend`
 - Backend: Cloud Run service built from `C.-Sihame-Content-Engine/ai_writer/cloudbuild.yaml` with `backend/Dockerfile`
 
-## Frontend environment variable
+## Environments
 
-Set this in Vercel Preview and Production:
+We maintain two isolated deployment pipelines based on GitHub branches:
 
-```bash
-NEXT_PUBLIC_API_URL=https://YOUR_CLOUD_RUN_SERVICE_URL
+| Environment | GitHub Branch | Deployment Stage |
+| :--- | :--- | :--- |
+| **Production** | `main` | Official production URLs |
+| **Development** | `dev` | Preview deployments for internal testing |
+
+## Frontend Environment Variables (Vercel)
+
+Set `NEXT_PUBLIC_API_URL` based on the environment in Vercel **Settings > Environment Variables**:
+
+- **Production (main)**: `https://c--sihame-content-engine-qxtfqtai5q-ew.a.run.app`
+- **Preview (dev)**: `https://sihame-backend-dev-qxtfqtai5q-ew.a.run.app`
+
+*Tip: In Vercel, you can select "Preview" and check "Specific Branches" to target only the `dev` branch for your dev backend URL.*
+
+## CI/CD (GitHub Actions)
+
+We use GitHub Actions [deploy-backend.yml](file:///c:/Users/hello/OneDrive/Desktop/Abdo/SIham/C.-Sihame-Content-Engine/.github/workflows/deploy-backend.yml) to automate backend deployments to Cloud Run.
+
+### 🔐 Required GitHub Secrets
+
+These must be set in your GitHub repository under **Settings > Secrets and variables > Actions**:
+
+| Secret Name | Description |
+| :--- | :--- |
+| `GCP_SA_KEY` | JSON service account key with `Cloud Run Admin` and `Storage Admin` roles. |
+| `KIE_API_KEY` | AI Model API key. |
+| `SUPABASE_URL` | Your Supabase project URL. |
+| `SUPABASE_ANON_KEY` | Your Supabase anonymous (public) key. |
+| `CORS_ORIGINS_PROD` | Production frontend URL (no trailing slash). |
+| `CORS_ORIGINS_DEV` | Development frontend URL or `*` for internal testing. |
+
+### 🛠️ Troubleshooting
+
+- **Build Failures**: Check the 'ai_writer' context in the Dockerfile. The build expects to run from the root of the project to locate the `knowledge_pack`.
+- **CORS Errors**: Ensure the `CORS_ORIGINS_PROD` or `CORS_ORIGINS_DEV` secrets in GitHub exactly match the URL shown in your browser (no trailing slash).
+- **Service Not Found**: If a new branch is created, GitHub Actions will attempt to deploy to a service named `sihame-backend-dev`. If you want a different name, update the `vars` step in the workflow.
+
+## Database Migration (Supabase)
+
+The **Reject & Regenerate** workflow requires a new column in your `drafts` table:
+```sql
+ALTER TABLE drafts ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
 ```
 
-Local development is wired through `frontend/.env.local`.
+## Health Checks & Monitoring
 
-## Backend environment variables
+- **API Root**: `/` (Returns a welcome message)
+- **Health Endpoint**: `/healthz` (Returns status: "ok")
+- **Logs**: View real-time logs in the Google Cloud Console under **Cloud Run > [Service Name] > Logs**.
 
-Create `backend/.env` locally from `backend/.env.example`. In Cloud Run, set the same values as service environment variables:
-
-```bash
-CORS_ORIGINS=https://YOUR_VERCEL_DOMAIN
-KIE_API_KEY=...
-STORAGE_BACKEND=supabase
-SUPABASE_URL=...
-SUPABASE_ANON_KEY=...
-SUPABASE_DRAFTS_TABLE=content_drafts
-```
-
-`STORAGE_BACKEND=supabase` is required in production so drafts survive Cloud Run restarts and scaling.
-Do not add `PORT` manually in Cloud Run. Cloud Run injects that variable automatically.
-
-## Supabase table
-
-Before the first Cloud Run deployment, create the `content_drafts` table in Supabase using [create_content_drafts_table.sql](C:/Users/hello/OneDrive/Desktop/Abdo/SIham/ai_writer/backend/sql/create_content_drafts_table.sql).
-
-## Vercel
-
-1. Import the GitHub repository into Vercel.
-2. Set the project root directory to `C.-Sihame-Content-Engine/ai_writer/frontend`.
-3. Add `NEXT_PUBLIC_API_URL`.
-4. Push to GitHub to trigger deployments automatically.
-
-## Cloud Run
-
-1. Create a Cloud Build GitHub trigger from the repository root.
-2. Point the trigger config file to `C.-Sihame-Content-Engine/ai_writer/cloudbuild.yaml`.
-3. Set the Cloud Run service environment variables listed above.
-4. Keep the request timeout at `900s` or higher if generation can run long.
-
-The backend image builds from `C.-Sihame-Content-Engine/ai_writer` so it can include `knowledge_pack` and `feedback_log.md` at runtime.
-
-## Health checks
-
-- API root: `/`
-- Health endpoint: `/healthz`
+## Project Context for AI Agents
+See [.ai_context.md](file:///c:/Users/hello/OneDrive/Desktop/Abdo/SIham/C.-Sihame-Content-Engine/.ai_context.md) for specialized guidance on the project's logic and naming conventions.

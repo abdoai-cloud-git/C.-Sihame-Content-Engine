@@ -100,6 +100,20 @@ async def reject_draft(
     request: RejectDraftRequest,
     workflow: ContentWorkflowService = Depends(get_workflow_service),
 ):
+    """
+    Rejects a content draft and records the reason for rejection.
+    
+    Architecture:
+    This endpoint is the 'negative feedback' entry point of the Reject & Regenerate loop.
+    1. It updates the draft status to 'REJECTED' in Supabase.
+    2. It persists the 'rejection_reason' provided by the user.
+    3. This feedback is critical for future model fine-tuning and immediately 
+       informs the frontend to trigger a fresh generation attempt using the 
+       original context combined with this specific feedback.
+    
+    Args:
+        request: Contains draft_id and an optional rejection_reason string.
+    """
     try:
         return await workflow.reject_draft(request)
     except KeyError as exc:

@@ -124,6 +124,30 @@ class ContentWorkflowService:
         )
 
     async def reject_draft(self, request: RejectDraftRequest) -> RejectDraftResponse:
+        """
+        Transitions a draft to the REJECTED status and stores the provided reason.
+        
+        Workflow State Machine:
+        1. Current Status: DRAFT (Pending review)
+        2. Action: User clicks 'Reject' and provides feedback.
+        3. New Status: REJECTED
+        4. Data recorded: `rejection_reason` (string)
+        
+        This transition is a critical feedback signal. By explicitly rejecting 
+        a draft, we preserve the 'negative sample' which is invaluable for 
+        quality tracking and potential model refinement. 
+        
+        In the frontend, this status change is typically the trigger for a 
+        subsequent 'Regenerate' call, where the initial user prompt is 
+        processed again, potentially reaching a better outcome by avoiding 
+        previous mistakes documented in the reason.
+        
+        Args:
+            request (RejectDraftRequest): contains the draft_id and the feedback reason.
+            
+        Returns:
+            RejectDraftResponse: The updated draft status and recorded reason.
+        """
         draft = await self.draft_repository.get(request.draft_id)
         if draft.status not in {PostStatus.DRAFT_GENERATED, PostStatus.UNDER_REVIEW}:
             raise ValueError(f"Draft {draft.draft_id} cannot transition from {draft.status} to rejected.")

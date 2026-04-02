@@ -28,7 +28,9 @@ export default function HistoryDrawer({ isOpen, onClose, onRestore }: HistoryDra
   const { data, isLoading, isError } = useQuery({
     queryKey: ["history"],
     queryFn: async () => {
-      const res = await fetch(`${getApiBaseUrl()}/api/v1/content/history?limit=20`);
+      const apiUrl = getApiBaseUrl();
+      if (!apiUrl) throw new Error("API configuration missing");
+      const res = await fetch(`${apiUrl}/api/v1/content/history?limit=20`);
       if (!res.ok) throw new Error("Failed to fetch history");
       const json = await res.json();
       return json.items as HistoryItem[];

@@ -26,13 +26,16 @@ jobs:
 
       - name: Determine service name
         id: vars
+        env:
+          CORS_PROD: ${{ secrets.CORS_ORIGINS_PROD }}
+          CORS_DEV: ${{ secrets.CORS_ORIGINS_DEV }}
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
             echo "SERVICE=c--sihame-content-engine" >> $GITHUB_OUTPUT
-            echo "CORS=${{ secrets.CORS_ORIGINS_PROD }}" >> $GITHUB_OUTPUT
+            echo "CORS=$CORS_PROD" >> $GITHUB_OUTPUT
           else
             echo "SERVICE=sihame-backend-dev" >> $GITHUB_OUTPUT
-            echo "CORS=${{ secrets.CORS_ORIGINS_DEV }}" >> $GITHUB_OUTPUT
+            echo "CORS=$CORS_DEV" >> $GITHUB_OUTPUT
           fi
 
       - name: Authenticate to Google Cloud
