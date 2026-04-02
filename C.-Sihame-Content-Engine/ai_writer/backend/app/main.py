@@ -28,3 +28,4 @@ def healthcheck():
 
 from app.api.routes import generate
 app.include_router(generate.router, prefix=f"{settings.API_V1_STR}/content", tags=["Content Generation"])
+
