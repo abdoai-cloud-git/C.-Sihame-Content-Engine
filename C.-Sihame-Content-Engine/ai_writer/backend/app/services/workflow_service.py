@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import asyncio
 from uuid import uuid4
 
 from app.models.schemas import (
@@ -10,6 +11,8 @@ from app.models.schemas import (
     ApproveTextResponse,
     DraftRecordResponse,
     GenerateDraftRequest,
+    HistoryItemResponse,
+    HistoryListResponse,
     PostDraftResponse,
     PostStatus,
     ReviseDraftRequest,
@@ -129,11 +132,33 @@ class ContentWorkflowService:
         if not draft.approved_text:
             raise ValueError(f"Draft {draft.draft_id} is missing approved text.")
         
-        result = await self.text_router.adapt_platform_draft(draft.approved_text, request.target_platform)
+        async def _adapt(platform: str):
+            result = await self.text_router.adapt_platform_draft(draft.approved_text, platform)
+            return platform, result
+        
+        results = await asyncio.gather(*[_adapt(p) for p in request.target_platforms])
+        
+        adapted_dict = {p: r.body for p, r in results}
+        # Just use the model_used of the first result as an indicator
+        model_used = results[0][1].model_used if results else draft.model_used
         
         return AdaptPlatformResponse(
             draft_id=draft.draft_id,
-            target_platform=request.target_platform,
-            adapted_text=result.body,
-            model_used=result.model_used
+            results=adapted_dict,
+            model_used=model_used
         )
+
+    async def list_history(self, limit: int = 20) -> HistoryListResponse:
+        drafts = await self.draft_repository.list_history(limit=limit)
+        items = []
+        for d in drafts:
+            # Create a short title from raw_input
+            title = (d.raw_input[:50] + "...") if len(d.raw_input) > 50 else (d.raw_input or "مسودة بدون عنوان")
+            items.append(HistoryItemResponse(
+                draft_id=d.draft_id,
+                title=title,
+                post_type=d.post_type,
+                status=d.status,
+                updated_at=d.updated_at
+            ))
+        return HistoryListResponse(items=items)

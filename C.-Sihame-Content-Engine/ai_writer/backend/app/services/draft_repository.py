@@ -26,6 +26,10 @@ class DraftRepository(ABC):
     async def get(self, draft_id: str) -> StoredDraft:
         raise NotImplementedError
 
+    @abstractmethod
+    async def list_history(self, limit: int = 20) -> list[StoredDraft]:
+        raise NotImplementedError
+
 
 class InMemoryDraftRepository(DraftRepository):
     def __init__(self) -> None:
@@ -43,6 +47,11 @@ class InMemoryDraftRepository(DraftRepository):
         if draft_id not in self._drafts:
             raise KeyError(draft_id)
         return self._drafts[draft_id]
+
+    async def list_history(self, limit: int = 20) -> list[StoredDraft]:
+        drafts = list(self._drafts.values())
+        drafts.sort(key=lambda d: d.updated_at, reverse=True)
+        return drafts[:limit]
 
 
 class SupabaseDraftRepository(DraftRepository):
@@ -66,6 +75,14 @@ class SupabaseDraftRepository(DraftRepository):
         if not response.data:
             raise KeyError(draft_id)
         return StoredDraft.model_validate(response.data[0])
+
+    async def list_history(self, limit: int = 20) -> list[StoredDraft]:
+        # Minimal fetch to optimize fetching. Actually we can simply fetch raw_input, post_type, status, etc.
+        # But for StoredDraft we might need all fields, or we can just fetch all and let mapping happen in route.
+        # Given it's a general repository method, let's just fetch all or specific fields if we create a lighter model,
+        # but StoredDraft requires all fields. Let's just fetch everything for now and limit the fields in the API response.
+        response = self._table().select("*").order("updated_at", desc=True).limit(limit).execute()
+        return [StoredDraft.model_validate(d) for d in response.data]
 
 
 def build_draft_repository() -> DraftRepository:

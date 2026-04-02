@@ -3,17 +3,27 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/api";
-import HistoryDrawer, { HistoryItem } from "@/components/HistoryDrawer";
+import HistoryDrawer from "@/components/HistoryDrawer";
+import { useQueryClient } from "@tanstack/react-query";
+
+const PLATFORMS = [
+  { id: "facebook", label: "فيسبوك (Facebook)" },
+  { id: "instagram", label: "إنستغرام (Instagram)" },
+  { id: "telegram", label: "تليغرام (Telegram)" },
+  { id: "tiktok", label: "تيك توك (TikTok)" },
+];
 
 function MainWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   // Navigation / Drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // App State: compose | review | approved
   const [appState, setAppState] = useState<"compose" | "review" | "approved">("compose");
+  const [isComposerExpanded, setIsComposerExpanded] = useState(true);
 
   // Compose State
   const [rawInput, setRawInput] = useState("");
@@ -35,10 +45,11 @@ function MainWorkspace() {
   const [isApproving, setIsApproving] = useState(false);
 
   // Adopt State
-  const [adaptPlatform, setAdaptPlatform] = useState("telegram");
+  const [adaptPlatforms, setAdaptPlatforms] = useState<string[]>([]);
   const [isAdapting, setIsAdapting] = useState(false);
-  const [adaptedText, setAdaptedText] = useState("");
-  const [copySuccess, setCopySuccess] = useState(false);
+  const [adaptResults, setAdaptResults] = useState<Record<string, string>>({});
+  const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
+  const [mainCopySuccess, setMainCopySuccess] = useState(false);
 
   // Load draft from URL if any
   useEffect(() => {
@@ -51,31 +62,16 @@ function MainWorkspace() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // History Helper
-  const updateHistory = (id: string, title: string, type: string, status: string) => {
-    const stored = localStorage.getItem("draft_history");
-    let history: HistoryItem[] = stored ? JSON.parse(stored) : [];
-    
-    // Remove if exists
-    history = history.filter(item => item.draft_id !== id);
-    
-    // Add to front conceptually (we sort anyway on load)
-    history.push({
-      draft_id: id,
-      title: title || "مسودة بدون عنوان",
-      post_type: type,
-      status: status,
-      updated_at: new Date().toISOString()
-    });
-
-    localStorage.setItem("draft_history", JSON.stringify(history));
+  // History Helper (Database fetch invalidated)
+  const invalidateHistory = () => {
+    queryClient.invalidateQueries({ queryKey: ["history"] });
   };
 
   // Helper load draft
   const loadDraft = async (id: string) => {
     setIsLoadingDraft(true);
     setError("");
-    setAdaptedText("");
+    setAdaptResults({});
     
     try {
       const apiUrl = getApiBaseUrl();
@@ -91,9 +87,11 @@ function MainWorkspace() {
       } else {
         setAppState("review");
       }
+      setIsComposerExpanded(false);
     } catch (err) {
       setError((err as Error).message);
       setAppState("compose");
+      setIsComposerExpanded(true);
     } finally {
       setIsLoadingDraft(false);
     }
@@ -131,7 +129,8 @@ function MainWorkspace() {
       setDraft(data);
       setDraftId(data.draft_id);
       setAppState("review");
-      updateHistory(data.draft_id, rawInput.slice(0, 50), postType, data.status);
+      setIsComposerExpanded(false);
+      invalidateHistory();
     } catch (err) {
       console.error(err);
       setError((err as Error).message || "حدث خطأ غير متوقع. تأكد من تشغيل الخادم الخلفي.");
@@ -158,7 +157,7 @@ function MainWorkspace() {
       const data = await res.json();
       setDraft({ ...draft, ...data });
       setEditInstruction("");
-      updateHistory(draftId, draft.history_title || "مسودة معدلة", draft.post_type, data.status || "review");
+      invalidateHistory();
     } catch (err) {
       alert((err as Error).message);
     } finally {
@@ -185,7 +184,7 @@ function MainWorkspace() {
       const data = await res.json();
       setDraft({ ...draft, status: data.status || "approved_text" });
       setAppState("approved");
-      updateHistory(draftId, rawInput.slice(0, 50) || "مسودة معتمدة", draft.post_type, "approved_text");
+      invalidateHistory();
     } catch (err) {
       alert((err as Error).message);
     } finally {
@@ -195,7 +194,7 @@ function MainWorkspace() {
 
   // 4. Adapt for platform
   const handleAdapt = async () => {
-    if (!draftId) return;
+    if (!draftId || adaptPlatforms.length === 0) return;
     setIsAdapting(true);
     try {
       const apiUrl = getApiBaseUrl();
@@ -204,13 +203,14 @@ function MainWorkspace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft_id: draftId,
-          target_platform: adaptPlatform,
+          target_platforms: adaptPlatforms,
         }),
       });
       if (!res.ok) throw new Error("فشل التكيف مع المنصة");
       const data = await res.json();
-      setAdaptedText(data.adapted_text);
-      setCopySuccess(false);
+      setAdaptResults(data.results);
+      setCopiedPlatform(null);
+      invalidateHistory();
     } catch (err) {
       alert((err as Error).message);
     } finally {
@@ -218,17 +218,24 @@ function MainWorkspace() {
     }
   };
 
-  const handleCopy = () => {
-    if (adaptedText) {
-      navigator.clipboard.writeText(adaptedText);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } else if (draft?.body) {
-      navigator.clipboard.writeText(draft.body);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
+  const handleCopyMainPost = () => {
+    if (draft) {
+      const fullText = [draft.hook, draft.body, draft.cta]
+        .map((s) => s?.trim())
+        .filter(Boolean)
+        .join("\n\n");
+      navigator.clipboard.writeText(fullText);
+      setMainCopySuccess(true);
+      setTimeout(() => setMainCopySuccess(false), 2000);
     }
   };
+
+  const handleCopyPlatform = (platform: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedPlatform(platform);
+    setTimeout(() => setCopiedPlatform(null), 2000);
+  };
+
 
   return (
     <>
@@ -238,7 +245,7 @@ function MainWorkspace() {
         onRestore={loadDraft}
       />
 
-      <div className="max-w-4xl mx-auto mt-8 mb-16 relative">
+      <div className="max-w-4xl mx-auto mt-8 pb-96 relative">
         {/* Header & Drawer Trigger */}
         <div className="flex justify-between items-center mb-8 px-4">
           <div className="flex-1" />
@@ -268,60 +275,54 @@ function MainWorkspace() {
           </div>
         )}
 
-        {/* --- COMPOSE STATE --- */}
-        {!isLoadingDraft && appState === "compose" && (
-          <div className="bg-white/60 backdrop-blur-md p-8 md:p-12 rounded-3xl shadow-sm border border-[#0D4F5C]/10">
-            <div className="text-center mb-8">
-              <p className="text-[#0D4F5C]/70">أدخلي فكرتك الخام، وسيقوم المايسترو بصياغتها بأسلوبك.</p>
-            </div>
+        {/* --- FLOATING COMPOSER --- */}
+        <div 
+          className={`fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-[#0D4F5C]/10 transition-transform duration-500 z-50 ${
+            isComposerExpanded ? "translate-y-0" : "translate-y-[calc(100%-80px)]"
+          }`}
+        >
+          <div className="max-w-4xl mx-auto p-4 md:p-8 relative">
+            <button
+              onClick={() => setIsComposerExpanded(!isComposerExpanded)}
+              className="absolute -top-6 left-1/2 -translate-x-1/2 bg-white px-6 py-2 rounded-t-xl shadow-sm border border-[#0D4F5C]/10 hover:bg-gray-50 flex flex-col items-center justify-center space-y-1"
+            >
+              <div className="w-8 h-1 bg-gray-300 rounded-full" />
+              <span className="text-xs text-gray-500 font-semibold">{isComposerExpanded ? "تصغير" : "فكرة جديدة"}</span>
+            </button>
 
-            <form onSubmit={handleGenerate} className="space-y-6">
-              <div>
-                <label className="block text-lg font-medium mb-3">الفكرة الأساسية (تسجيل صوتي مفرغ أو نص عشوائي)</label>
+            <div className={isComposerExpanded ? "block" : "hidden"}>
+              <form onSubmit={handleGenerate} className="space-y-4">
                 <textarea
                   value={rawInput}
                   onChange={(e) => setRawInput(e.target.value)}
-                  className="w-full h-40 p-4 rounded-xl border border-[#0D4F5C]/20 bg-white/50 focus:ring-2 focus:ring-[#C4933F] focus:outline-none resize-none transition-all"
-                  placeholder="مثال: كنت أتحدث اليوم مع عميلة عن الخوف من الرفض وكيف يمنعها من قول لا..."
+                  className="w-full h-32 p-4 rounded-xl border border-[#0D4F5C]/20 bg-white/50 focus:ring-2 focus:ring-[#C4933F] focus:outline-none resize-none transition-all"
+                  placeholder="الفكرة الأساسية (بصمتك، صوتك مفرغ، أو نص خام)..."
                   disabled={isGenerating}
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">نوع المنشور (Post Type)</label>
-                <select
-                  value={postType}
-                  onChange={(e) => setPostType(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-[#0D4F5C]/20 bg-white/50 focus:ring-2 focus:ring-[#C4933F] focus:outline-none"
-                  disabled={isGenerating}
-                >
-                  <option value="reflection">تأمل (Reflection)</option>
-                  <option value="clinic story">قصة من العيادة (Clinic Story)</option>
-                  <option value="promo">ترويج (Promo / Offer)</option>
-                  <option value="prayer / reflection">دعاء أو نية (Prayer / Intention)</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isGenerating || !rawInput.trim()}
-                className="w-full py-4 text-white font-bold text-lg rounded-xl transition-all shadow-md bg-[#0D4F5C] hover:bg-[#093a44] disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2 rtl:space-x-reverse"
-              >
-                {isGenerating ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>جاري صياغة المحتوى بكل حب...</span>
-                  </>
-                ) : (
-                  <span>صياغة المنشور ✨</span>
-                )}
-              </button>
-            </form>
+                <div className="flex gap-4 items-center">
+                  <select
+                    value={postType}
+                    onChange={(e) => setPostType(e.target.value)}
+                    className="flex-1 p-3 rounded-xl border border-[#0D4F5C]/20 bg-white focus:ring-2 focus:ring-[#C4933F] focus:outline-none"
+                    disabled={isGenerating}
+                  >
+                    <option value="reflection">تأمل (Reflection)</option>
+                    <option value="clinic story">قصة من العيادة (Clinic Story)</option>
+                    <option value="promo">ترويج (Promo / Offer)</option>
+                    <option value="prayer / reflection">دعاء أو نية (Prayer / Intention)</option>
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={isGenerating || !rawInput.trim()}
+                    className="flex-1 py-3 text-white font-bold rounded-xl transition-all shadow-md bg-[#0D4F5C] hover:bg-[#093a44] disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2 rtl:space-x-reverse"
+                  >
+                    {isGenerating ? "جاري الصياغة..." : "صياغة المنشور ✨"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* --- REVIEW & APPROVED STATE SHARED CONTENT --- */}
         {!isLoadingDraft && draft && (appState === "review" || appState === "approved") && (
@@ -360,11 +361,11 @@ function MainWorkspace() {
                   <h3 className="text-sm font-bold text-[#C4933F] uppercase tracking-wider mb-4">النص الرئيسي (Body)</h3>
                   {appState === "approved" && (
                     <button
-                      onClick={handleCopy}
+                      onClick={handleCopyMainPost}
                       className="absolute top-4 left-4 p-2 text-gray-500 hover:text-[#0D4F5C] hover:bg-gray-100 rounded-lg transition-colors"
                       title="نسخ النص"
                     >
-                      {copySuccess && !adaptedText ? "✅ منسوخ" : "📋 نسخ"}
+                      {mainCopySuccess ? "✅ منسوخ" : "📋 نسخ"}
                     </button>
                   )}
                   <textarea
@@ -388,7 +389,7 @@ function MainWorkspace() {
 
                 <div className="bg-white/80 backdrop-blur shadow-sm p-6 rounded-2xl border border-[#0D4F5C]/10">
                   <h3 className="text-sm font-bold text-[#C4933F] uppercase tracking-wider mb-2">الدعوة (CTA)</h3>
-                  <p className="text-sm text-gray-700">{draft.cta}</p>
+                  <p className="text-sm text-gray-700 font-semibold">{draft.cta}</p>
                 </div>
               </div>
             </div>
@@ -435,43 +436,62 @@ function MainWorkspace() {
                 <h3 className="text-xl font-bold text-[#0D4F5C] mb-4">تكييف النص لمنصة محددة 📱</h3>
                 <p className="text-gray-600 mb-6 text-sm">النص المعتمد جاهز للنشر. يمكنك هنا تكييفه تلقائياً ليتناسب مع طبيعة المنصات الأخرى.</p>
                 
-                <div className="flex gap-4 mb-6">
-                  <select
-                    value={adaptPlatform}
-                    onChange={(e) => setAdaptPlatform(e.target.value)}
-                    className="flex-1 p-4 rounded-xl border border-[#0D4F5C]/20 bg-white focus:ring-2 focus:ring-[#C4933F] focus:outline-none text-gray-800"
-                    disabled={isAdapting}
-                  >
-                    <option value="telegram">تليغرام (Telegram)</option>
-                    <option value="instagram">إنستغرام (Instagram)</option>
-                    <option value="email">إيميل (Newsletter)</option>
-                    <option value="x">إكس (X / Twitter)</option>
-                  </select>
+                <div className="flex flex-wrap gap-3 mb-6">
+                  {PLATFORMS.map((p) => {
+                    const isSelected = adaptPlatforms.includes(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          if (isSelected) {
+                            setAdaptPlatforms(adaptPlatforms.filter(id => id !== p.id));
+                          } else {
+                            setAdaptPlatforms([...adaptPlatforms, p.id]);
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-full border text-sm font-semibold transition-colors ${
+                          isSelected 
+                            ? "bg-[#C4933F] text-white border-[#C4933F]" 
+                            : "bg-white text-gray-600 border-gray-200 hover:border-[#C4933F]"
+                        }`}
+                        disabled={isAdapting}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-4">
                   <button
                     onClick={handleAdapt}
-                    disabled={isAdapting}
-                    className="bg-[#0D4F5C] hover:bg-[#093a44] text-white px-8 font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center shadow-md"
+                    disabled={isAdapting || adaptPlatforms.length === 0}
+                    className="bg-[#0D4F5C] hover:bg-[#093a44] text-white px-8 py-3 font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center shadow-md w-full justify-center"
                   >
-                    {isAdapting ? "جاري التكييف..." : "تكييف النص 🔄"}
+                    {isAdapting ? "جاري التكييف..." : "تكييف النص للمنصات المحددة 🔄"}
                   </button>
                 </div>
 
-                {adaptedText && (
-                  <div className="animate-in fade-in duration-500 mt-6 pt-6 border-t border-gray-100">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-bold text-[#C4933F]">النص المخصص لـ ({adaptPlatform}):</h4>
-                      <button
-                        onClick={handleCopy}
-                        className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-semibold transition"
-                      >
-                        {copySuccess ? "✅ تم النسخ" : "📋 نسخ"}
-                      </button>
-                    </div>
-                    <textarea
-                      className="w-full h-64 p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-0 resize-none text-md leading-relaxed dark:text-gray-800"
-                      value={adaptedText}
-                      readOnly
-                    />
+                {Object.keys(adaptResults).length > 0 && (
+                  <div className="mt-8 space-y-6">
+                    {Object.entries(adaptResults).map(([platform, text]) => (
+                      <div key={platform} className="animate-in fade-in duration-500 pt-6 border-t border-gray-100">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-bold text-[#C4933F]">النص المخصص لـ ({PLATFORMS.find(p => p.id === platform)?.label || platform}):</h4>
+                          <button
+                            onClick={() => handleCopyPlatform(platform, text)}
+                            className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-semibold transition"
+                          >
+                            {copiedPlatform === platform ? "✅ تم النسخ" : "📋 نسخ"}
+                          </button>
+                        </div>
+                        <textarea
+                          className="w-full h-64 p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-0 resize-none text-md leading-relaxed dark:text-gray-800"
+                          value={text}
+                          readOnly
+                        />
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

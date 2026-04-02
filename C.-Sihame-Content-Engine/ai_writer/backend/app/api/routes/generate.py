@@ -9,6 +9,8 @@ from app.models.schemas import (
     ApproveTextResponse,
     DraftRecordResponse,
     GenerateDraftRequest,
+    HistoryItemResponse,
+    HistoryListResponse,
     PostDraftResponse,
     ReviseDraftRequest,
     ReviseDraftResponse,
@@ -87,6 +89,17 @@ async def approve_text(
         raise HTTPException(status_code=404, detail=f"Draft {request.draft_id} not found.") from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/history", response_model=HistoryListResponse)
+async def get_history(
+    limit: int = 20,
+    workflow: ContentWorkflowService = Depends(get_workflow_service),
+):
+    try:
+        return await workflow.list_history(limit=limit)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

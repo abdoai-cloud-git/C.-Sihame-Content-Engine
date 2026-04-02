@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getApiBaseUrl } from "@/lib/api";
 
 export type HistoryItem = {
   draft_id: string;
@@ -17,23 +18,18 @@ interface HistoryDrawerProps {
 }
 
 export default function HistoryDrawer({ isOpen, onClose, onRestore }: HistoryDrawerProps) {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["history"],
+    queryFn: async () => {
+      const res = await fetch(`${getApiBaseUrl()}/api/v1/content/history?limit=20`);
+      if (!res.ok) throw new Error("Failed to fetch history");
+      const json = await res.json();
+      return json.items as HistoryItem[];
+    },
+    enabled: isOpen,
+  });
 
-  useEffect(() => {
-    if (isOpen) {
-      const stored = localStorage.getItem("draft_history");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored) as HistoryItem[];
-          // sort by updated_at desc
-          parsed.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-          setHistory(parsed);
-        } catch (e) {
-          console.error("Failed to parse history", e);
-        }
-      }
-    }
-  }, [isOpen]);
+  const history = data || [];
 
   if (!isOpen) return null;
 
@@ -58,7 +54,11 @@ export default function HistoryDrawer({ isOpen, onClose, onRestore }: HistoryDra
           </div>
 
           <div className="space-y-4">
-            {history.length === 0 ? (
+            {isLoading ? (
+              <p className="text-gray-500 text-sm text-center mt-10 animate-pulse">جاري جلب المسودات...</p>
+            ) : isError ? (
+              <p className="text-red-500 text-sm text-center mt-10">حدث خطأ في جلب السجل.</p>
+            ) : history.length === 0 ? (
               <p className="text-gray-500 text-sm text-center mt-10">لا يوجد سجل حتى الآن.</p>
             ) : (
               history.map((item) => (

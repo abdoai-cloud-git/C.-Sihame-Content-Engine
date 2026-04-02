@@ -110,14 +110,25 @@ class ApproveTextResponse(BaseModel):
 
 class AdaptPlatformRequest(BaseModel):
     draft_id: str = Field(..., description="The approved draft id being adapted")
-    target_platform: str = Field(..., description="The platform to adapt the content for (e.g., instagram, telegram, facebook, tiktok)")
+    target_platforms: List[str] = Field(..., description="The platforms to adapt the content for (e.g., instagram, telegram, facebook, tiktok)")
 
 
 class AdaptPlatformResponse(BaseModel):
     draft_id: str
-    target_platform: str
-    adapted_text: str
+    results: Dict[str, str] = Field(..., description="Dictionary mapping platform name to adapted text")
     model_used: TextModel
+
+
+class HistoryItemResponse(BaseModel):
+    draft_id: str
+    title: str
+    post_type: str
+    status: str
+    updated_at: datetime
+
+
+class HistoryListResponse(BaseModel):
+    items: List[HistoryItemResponse]
 
 
 class DraftRecordResponse(PostDraftResponse):
