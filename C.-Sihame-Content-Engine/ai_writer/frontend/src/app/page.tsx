@@ -205,7 +205,7 @@ function MainWorkspace() {
   };
 
   // 3b. Reject and Regenerate
-  const handleRejectAndRegenerate = async (e: React.FormEvent) => {
+  const handleRejectAndRegenerate = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!draftId || !draft) return;
     setIsRejecting(true);
@@ -536,7 +536,7 @@ function MainWorkspace() {
                     />
                     <div className="flex gap-2">
                       <button
-                        onClick={handleRejectAndRegenerate as any}
+                        onClick={handleRejectAndRegenerate}
                         disabled={isRejecting}
                         className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
                       >
