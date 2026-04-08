@@ -27,12 +27,20 @@ Given the following approved post text, extract exactly THREE elements for an im
 2. **support**: A supporting sentence or key takeaway (body text). Maximum 15 words in Arabic.
 3. **symbol**: A rich, cinematic, still-life VISUAL COMPOSITION paragraph that physically describes a scene containing a symbolic element representing the post's core meaning.
    
-SYMBOL RULES:
-- The symbol MUST be described physically on a "warm cream linen surface" or "soft textured cotton paper".
-- It must vividly use our strict brand colors: warm cream (#F5E6D3), muted terracotta (#C67B5C), warm sage green (#A8B89C), and champagne gold (#D4AF37).
-- It should describe the placement of the symbol, fabrics, shadows, and lighting.
-- Example 1 (Letting Go): "A warm intimate still-life shot from above on a warm cream linen surface. In the center: a small handmade lantern of soft ivory frosted glass, glowing warmly from inside with muted champagne gold light. Around it: soft silk fabric trails. On the left side the silk is gathered and knotted in muted terracotta (tension). On the right it flows freely in warm sage green (expansion). Large editorial negative space."
-- Example 2 (Deep Focus): "A warm intimate still-life shot from above. In the center: an open, perfectly smooth ceramic ring in warm cream lying on textured sage green paper. Through the center of the ring passes a single taut thread of champagne gold. Soft dramatic lighting fading into muted terracotta at the edges. Generous negative space."
+SYMBOL RULES & EXAMPLES:
+- The symbol MUST be described physically as a cinematic still-life on a "warm cream linen surface".
+- It must vividly map psychological states to our strict brand colors: muted terracotta/sienna for tension/chaos, warm sage green for healing/expansion, and champagne gold for the central anchor/glow.
+- Include explicit lighting and shadow descriptions.
+- Below are 3 golden examples of how to write the "symbol" parameter:
+
+Golden Example 1 (Theme: expansion, letting go):
+"A warm intimate still-life shot from above on a warm cream linen surface. In the center: a small handmade lantern of soft ivory frosted glass, glowing warmly from inside with muted champagne gold light. Around it: soft silk fabric trails. On the left side the silk is slightly gathered and loosely knotted — in warm greige and muted terracotta tones (the old self, tension). On the right the silk opens, unfurls, and flows freely downward — in warm cream and hints of warm sage green (expansion, breath, the inner maestro). Background: warm cream linen at center transitioning to muted terracotta at top edges, with soft warm sage green in bottom corners. Warm overhead lighting, soft internal lantern glow. Large editorial negative space in the upper third."
+
+Golden Example 2 (Theme: integration, the healing compass):
+"A warm intimate still-life shot from above on a warm cream linen surface. In the absolute center: a thin elegant compass needle, crafted from polished warm greige metal with a muted champagne gold tip. The surface beneath the needle transitions from left to right — on the left a soft muted terracotta zone (tension, chaos, the knotted self) and on the right a muted warm sage green zone (healing, calm, integration). The color boundary beneath the needle is seamless and gradient-soft, not sharp. Warm overhead studio lighting, soft deep shadows. Wide margins, large editorial negative space in the upper half for text."
+
+Golden Example 3 (Theme: nervous system, processing trauma):
+"A warm still-life shot from above on a warm cream linen surface. In the center: a delicate network of translucent ivory silk threads (representing the nervous system). On the left side, threads are slightly knotted and tangled — rendered in warm terracotta and deep greige tones. Moving right, the threads untangle, lighten, and glow gently from within. A small perfect ivory-colored sphere rests at the center of the untangled zone. Warm, soft overhead lighting. Photorealistic silk and linen texture. Large negative space in the upper third for text."
 
 Rules:
 - Give ONLY the 3 values in STRICT JSON exactly: {{"title": "...", "support": "...", "symbol": "..."}}
