@@ -157,20 +157,6 @@ async def adapt_platform(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-
-@router.get("/{draft_id}", response_model=DraftRecordResponse)
-async def get_draft(
-    draft_id: str,
-    workflow: ContentWorkflowService = Depends(get_workflow_service),
-):
-    try:
-        return await workflow.get_draft(draft_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"Draft {draft_id} not found.") from exc
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-
-
 # ---------------------------------------------------------------------------
 # Graphics Designer endpoints
 # ---------------------------------------------------------------------------
@@ -262,4 +248,21 @@ async def generate_design_image(
         draft_id=draft.draft_id,
         design_image_url=image_url,
     )
+
+
+# ---------------------------------------------------------------------------
+# Catch-all: Must be LAST (/{draft_id} matches any path segment)
+# ---------------------------------------------------------------------------
+
+@router.get("/{draft_id}", response_model=DraftRecordResponse)
+async def get_draft(
+    draft_id: str,
+    workflow: ContentWorkflowService = Depends(get_workflow_service),
+):
+    try:
+        return await workflow.get_draft(draft_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Draft {draft_id} not found.") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
