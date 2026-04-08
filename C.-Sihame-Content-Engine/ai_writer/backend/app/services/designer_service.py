@@ -135,9 +135,9 @@ Luxurious, psychologically safe, deeply grounded, handcrafted, quiet, editorial,
         except ModelAdapterError as e:
             raise DesignerServiceError(f"Text extraction failed: {e}") from e
 
-    def build_image_prompt(self, title: str, support: str) -> str:
+    def build_image_prompt(self, title: str, support: str, symbol: str) -> str:
         """Construct the full image generation prompt from brand rules."""
-        return self.IMAGE_PROMPT_TEMPLATE.format(title=title, support=support)
+        return self.IMAGE_PROMPT_TEMPLATE.format(title=title, support=support, symbol=symbol)
 
     async def generate_image(self, prompt: str) -> str:
         """Call Kie.ai Nano Banana 2 API and poll for result.
