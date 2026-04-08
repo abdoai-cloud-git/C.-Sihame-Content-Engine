@@ -47,10 +47,6 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Copy designer pack into build context
-        run: |
-          cp -r c.siham-designer-main/coach-siham-graphics-designer ai_writer/coach-siham-graphics-designer
-
       - name: Deploy to Cloud Run (from source)
         run: |
           gcloud run deploy ${{ steps.vars.outputs.SERVICE }} \
