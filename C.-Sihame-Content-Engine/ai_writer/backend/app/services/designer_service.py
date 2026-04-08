@@ -20,67 +20,59 @@ class DesignerServiceError(RuntimeError):
 class DesignerService:
     """Handles text extraction from approved posts and image generation via Kie.ai."""
 
-    EXTRACTION_PROMPT = """You are a visual content strategist for Coach Sihame, a somatic trauma therapy coach.
+    EXTRACTION_PROMPT = """You are a master visual content director for Coach Sihame, a somatic trauma therapy coach.
 Given the following approved post text, extract exactly THREE elements for an image design:
 
 1. **title**: The single most powerful sentence or phrase (headline). Maximum 8 words in Arabic.
 2. **support**: A supporting sentence or key takeaway (body text). Maximum 15 words in Arabic.
-3. **symbol**: A simple symbolic visual element that represents the post's core meaning.
-
-SYMBOL RULES — choose ONE from these meaning categories:
-
-Growth / flourishing: "delicate stem", "small unfolding leaf", "subtle green shoot", "expanding rings"
-Safety / containment: "nested forms", "soft enclosing curve", "centered held shape", "warm contained light"
-Chaos / overwhelm: "tangled line", "scattered points", "compressed shape" (must contrast with calm)
-Clarity / integration: "untangled line", "open ring", "aligned pathway", "coherent center"
-Reflection / stillness: "soft light beam", "horizon line", "still water", "empty calm space"
-Spiritual groundedness: "subtle light", "opening shape", "horizon sky-wash", "still reflective surface"
-Educational contrast: "split composition", "two-state comparison", "tangled vs clear", "dense vs breathable"
-Nervous system: "smooth circle", "concentric rings", "gentle ripple", "soft pulse motif"
-Inner parts: "small circles orbiting a larger calm center", "multiple threads converging", "central anchor with movement"
+3. **symbol**: A rich, cinematic, still-life VISUAL COMPOSITION paragraph that physically describes a scene containing a symbolic element representing the post's core meaning.
+   
+SYMBOL RULES:
+- The symbol MUST be described physically on a "warm cream linen surface" or "soft textured cotton paper".
+- It must vividly use our strict brand colors: warm cream (#F5E6D3), muted terracotta (#C67B5C), warm sage green (#A8B89C), and champagne gold (#D4AF37).
+- It should describe the placement of the symbol, fabrics, shadows, and lighting.
+- Example 1 (Letting Go): "A warm intimate still-life shot from above on a warm cream linen surface. In the center: a small handmade lantern of soft ivory frosted glass, glowing warmly from inside with muted champagne gold light. Around it: soft silk fabric trails. On the left side the silk is gathered and knotted in muted terracotta (tension). On the right it flows freely in warm sage green (expansion). Large editorial negative space."
+- Example 2 (Deep Focus): "A warm intimate still-life shot from above. In the center: an open, perfectly smooth ceramic ring in warm cream lying on textured sage green paper. Through the center of the ring passes a single taut thread of champagne gold. Soft dramatic lighting fading into muted terracotta at the edges. Generous negative space."
 
 Rules:
-- Choose text that is visually impactful and meaningful
-- The title should be the emotional anchor of the post
-- The support should complement, not repeat, the title
-- The symbol should be a single, simple, meaning-led visual — NOT decoration
-- Keep title and support in Arabic
-- Return STRICT JSON: {{"title": "...", "support": "...", "symbol": "..."}}
-- Do not include markdown fences or any other formatting
+- Give ONLY the 3 values in STRICT JSON exactly: {{"title": "...", "support": "...", "symbol": "..."}}
+- Do not include markdown fences.
 
 APPROVED POST:
 {approved_text}"""
 
     IMAGE_PROMPT_TEMPLATE = """Portrait-format social media card, 4:5 aspect ratio.
 
-BACKGROUND: Warm earth-toned gradient. Soft textured cotton paper with subtle grain.
-Palette: Terracotta (#C67B5C), Warm Cream Linen (#F5E6D3), Warm Sage (#A8B89C), Champagne Gold (#D4AF37).
-Generous negative space. Quiet editorial elegance. Handcrafted, not machine-generated.
+### DESIGN DIRECTION
+A premium, deeply grounded, editorial visual for Coach Sihame. Theme: somatic awakening and psychological safety.
 
-CENTRAL SYMBOL:
-Element: {symbol}
-Style: Minimal, smooth, soft-edged, refined. Drawn as delicate ink illustration on the textured paper.
-Color: Muted earth tones — warm terracotta or champagne gold, never bold or loud.
-Placement: Center of the composition, between headline and body text. Sized to support meaning without competing with typography.
-Rule: This symbol is a meaning container — it visually represents the core idea of the post. It must feel elegant, psychologically intelligent, and emotionally safe. NOT decorative, NOT clipart, NOT generic.
+VISUAL COMPOSITION: {symbol}
 
-TYPOGRAPHY RULE:
-HEADLINE: "{title}"
-Style: Flowing Farsi-style Arabic calligraphy (خط الفارسي) with gentle diagonal lean. Fluid connected letterforms with elegant thin-to-thick stroke variation, drawn with a fine pointed nib. Warm champagne gold ink color — not black. Gold leaf accents on diacritics (tashkeel). Poetic, spoken, artistic.
-Placement: Upper-center area, above the symbol. Primary hierarchy.
+### COLOR PALETTE
+Warm comforting earth tones. Background: natural linen and cotton tones transitioning to muted terracotta. Accents of warm sage green and champagne gold. 
+CRITICAL RULE: Do NOT use cold teal, blue, pure white, or cool gray anywhere in the image.
 
-BODY: "{support}"
-Style: Clean, thick, geometric sans-serif Arabic letterforms. Sharp, precise strokes with even weight. Modern Kufic-inspired clarity.
-Placement: Below the symbol. Secondary hierarchy.
+### TYPOGRAPHY RULE
+- Typeface Definition: Use an elegant, fine-pointed-nib Farsi-style Arabic calligraphy (خط الفارسي) for the main headline, blending fluid, connected, thin-to-thick strokes. Use a modern, thick, geometric Kufic-inspired sans-serif for secondary text. Use a delicate cursive for the signature. Apply warm champagne gold ink for calligraphy and muted terracotta for body text. Real ink and paper textures only.
 
-SIGNATURE: "Siham Atamnia"
-Style: Delicate pen-written cursive, fine-point ink, light and restrained.
-Placement: Bottom-right corner. Tertiary hierarchy.
+### TEXT BLOCKS
+- Title: "{title}"
+  Placement: Upper-center area, beautifully balanced in negative space.
+  Materiality: Flowing Farsi calligraphy, champagne gold ink, gold leaf accents on diacritics.
+  Importance: Primary
 
-COMPOSITION: Symbol sits between headline and body, creating a visual breathing point. Large negative space surrounds all elements. One main symbolic idea — do not combine multiple metaphors.
+- Support: "{support}"
+  Placement: Lower-center area, perfectly aligned.
+  Materiality: Clean geometric sans-serif Arabic, warm greige or terracotta ink.
+  Importance: Secondary
 
-PAPER: All elements rendered as real calligraphy ink and illustration on soft, textured cotton paper with subtle grain.
-Do NOT render as a template or mockup. This is a finished artwork."""
+- Signature: "Siham Atamnia"
+  Placement: Bottom-right corner.
+  Materiality: Delicate pen-written cursive, fine ink.
+  Importance: Tertiary
+
+### ATMOSPHERE
+Luxurious, psychologically safe, deeply grounded, handcrafted, quiet, editorial, poetic. Hand-drawn on premium textured cotton paper. Warm overhead lighting. No digital gloss, no templates. This is a finished physical artwork."""
 
     # Polling configuration
     POLL_INITIAL_DELAY: float = 5.0

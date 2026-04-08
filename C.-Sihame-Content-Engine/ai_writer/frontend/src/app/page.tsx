@@ -774,13 +774,12 @@ function MainWorkspace() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">الرمز التجريدي (Symbol)</label>
-                      <input
-                        type="text"
+                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">الوصف البصري (Visual Composition)</label>
+                      <textarea
                         value={designSymbol}
                         onChange={(e) => setDesignSymbol(e.target.value)}
-                        className="w-full p-3 rounded-xl border border-[#C67B5C]/20 bg-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none text-sm text-right"
-                        placeholder="مثال: untangled line, concentric rings..."
+                        className="w-full p-3 rounded-xl border border-[#C67B5C]/20 bg-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none text-sm text-right resize-none h-32 leading-relaxed"
+                        placeholder="مثال: A warm intimate still-life shot from above..."
                         disabled={designLoading}
                         dir="ltr"
                       />
