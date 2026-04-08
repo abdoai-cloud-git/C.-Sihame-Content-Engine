@@ -129,9 +129,10 @@ Luxurious, psychologically safe, deeply grounded, handcrafted, quiet, editorial,
             result = self._extract_json(raw_text)
             title = result.get("title", "").strip()
             support = result.get("support", "").strip()
+            symbol = result.get("symbol", "").strip()
             if not title or not support:
                 raise DesignerServiceError("LLM returned empty title or support text.")
-            return {"title": title, "support": support}
+            return {"title": title, "support": support, "symbol": symbol}
         except ModelAdapterError as e:
             raise DesignerServiceError(f"Text extraction failed: {e}") from e
 
