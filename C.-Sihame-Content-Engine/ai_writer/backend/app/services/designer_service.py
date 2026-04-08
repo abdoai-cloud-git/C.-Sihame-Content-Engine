@@ -21,17 +21,31 @@ class DesignerService:
     """Handles text extraction from approved posts and image generation via Kie.ai."""
 
     EXTRACTION_PROMPT = """You are a visual content strategist for Coach Sihame, a somatic trauma therapy coach.
-Given the following approved post text, extract exactly TWO text blocks for an image design:
+Given the following approved post text, extract exactly THREE elements for an image design:
 
 1. **title**: The single most powerful sentence or phrase (headline). Maximum 8 words in Arabic.
 2. **support**: A supporting sentence or key takeaway (body text). Maximum 15 words in Arabic.
+3. **symbol**: A simple symbolic visual element that represents the post's core meaning.
+
+SYMBOL RULES — choose ONE from these meaning categories:
+
+Growth / flourishing: "delicate stem", "small unfolding leaf", "subtle green shoot", "expanding rings"
+Safety / containment: "nested forms", "soft enclosing curve", "centered held shape", "warm contained light"
+Chaos / overwhelm: "tangled line", "scattered points", "compressed shape" (must contrast with calm)
+Clarity / integration: "untangled line", "open ring", "aligned pathway", "coherent center"
+Reflection / stillness: "soft light beam", "horizon line", "still water", "empty calm space"
+Spiritual groundedness: "subtle light", "opening shape", "horizon sky-wash", "still reflective surface"
+Educational contrast: "split composition", "two-state comparison", "tangled vs clear", "dense vs breathable"
+Nervous system: "smooth circle", "concentric rings", "gentle ripple", "soft pulse motif"
+Inner parts: "small circles orbiting a larger calm center", "multiple threads converging", "central anchor with movement"
 
 Rules:
 - Choose text that is visually impactful and meaningful
 - The title should be the emotional anchor of the post
 - The support should complement, not repeat, the title
-- Keep both in Arabic
-- Return STRICT JSON with exactly these keys: {{"title": "...", "support": "..."}}
+- The symbol should be a single, simple, meaning-led visual — NOT decoration
+- Keep title and support in Arabic
+- Return STRICT JSON: {{"title": "...", "support": "...", "symbol": "..."}}
 - Do not include markdown fences or any other formatting
 
 APPROVED POST:
@@ -43,20 +57,29 @@ BACKGROUND: Warm earth-toned gradient. Soft textured cotton paper with subtle gr
 Palette: Terracotta (#C67B5C), Warm Cream Linen (#F5E6D3), Warm Sage (#A8B89C), Champagne Gold (#D4AF37).
 Generous negative space. Quiet editorial elegance. Handcrafted, not machine-generated.
 
+CENTRAL SYMBOL:
+Element: {symbol}
+Style: Minimal, smooth, soft-edged, refined. Drawn as delicate ink illustration on the textured paper.
+Color: Muted earth tones — warm terracotta or champagne gold, never bold or loud.
+Placement: Center of the composition, between headline and body text. Sized to support meaning without competing with typography.
+Rule: This symbol is a meaning container — it visually represents the core idea of the post. It must feel elegant, psychologically intelligent, and emotionally safe. NOT decorative, NOT clipart, NOT generic.
+
 TYPOGRAPHY RULE:
 HEADLINE: "{title}"
 Style: Flowing Farsi-style Arabic calligraphy (خط الفارسي) with gentle diagonal lean. Fluid connected letterforms with elegant thin-to-thick stroke variation, drawn with a fine pointed nib. Warm champagne gold ink color — not black. Gold leaf accents on diacritics (tashkeel). Poetic, spoken, artistic.
-Placement: Upper-center area. Primary hierarchy.
+Placement: Upper-center area, above the symbol. Primary hierarchy.
 
 BODY: "{support}"
 Style: Clean, thick, geometric sans-serif Arabic letterforms. Sharp, precise strokes with even weight. Modern Kufic-inspired clarity.
-Placement: Center, below headline. Secondary hierarchy.
+Placement: Below the symbol. Secondary hierarchy.
 
 SIGNATURE: "Siham Atamnia"
 Style: Delicate pen-written cursive, fine-point ink, light and restrained.
 Placement: Bottom-right corner. Tertiary hierarchy.
 
-PAPER: All typography rendered as real calligraphy ink on soft, textured cotton paper with subtle grain.
+COMPOSITION: Symbol sits between headline and body, creating a visual breathing point. Large negative space surrounds all elements. One main symbolic idea — do not combine multiple metaphors.
+
+PAPER: All elements rendered as real calligraphy ink and illustration on soft, textured cotton paper with subtle grain.
 Do NOT render as a template or mockup. This is a finished artwork."""
 
     # Polling configuration

@@ -66,6 +66,7 @@ function MainWorkspace() {
   // Design State
   const [designTitle, setDesignTitle] = useState('');
   const [designSupport, setDesignSupport] = useState('');
+  const [designSymbol, setDesignSymbol] = useState('');
   const [designImageUrl, setDesignImageUrl] = useState('');
   const [designLoading, setDesignLoading] = useState(false);
   const [extractLoading, setExtractLoading] = useState(false);
@@ -312,6 +313,7 @@ function MainWorkspace() {
     setIsComposerExpanded(false);
     setDesignTitle('');
     setDesignSupport('');
+    setDesignSymbol('');
     setDesignImageUrl('');
   };
 
@@ -350,6 +352,7 @@ function MainWorkspace() {
       const data = await res.json();
       setDesignTitle(data.design_title);
       setDesignSupport(data.design_support);
+      setDesignSymbol(data.design_symbol || '');
     } catch (err) {
       alert((err as Error).message);
     } finally {
@@ -370,6 +373,7 @@ function MainWorkspace() {
           draft_id: draftId,
           design_title: designTitle,
           design_support: designSupport,
+          design_symbol: designSymbol,
         }),
       });
       if (!res.ok) {
@@ -767,6 +771,18 @@ function MainWorkspace() {
                         placeholder="النص الداعم للصورة..."
                         disabled={designLoading}
                         dir="rtl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">الرمز التجريدي (Symbol)</label>
+                      <input
+                        type="text"
+                        value={designSymbol}
+                        onChange={(e) => setDesignSymbol(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-[#C67B5C]/20 bg-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none text-sm text-right"
+                        placeholder="مثال: untangled line, concentric rings..."
+                        disabled={designLoading}
+                        dir="ltr"
                       />
                     </div>
 

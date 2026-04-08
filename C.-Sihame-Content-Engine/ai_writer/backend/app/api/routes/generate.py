@@ -196,6 +196,7 @@ async def extract_design_text(
     from datetime import datetime, timezone
     draft.design_title = text_blocks["title"]
     draft.design_support = text_blocks["support"]
+    draft.design_symbol = text_blocks.get("symbol", "")
     draft.updated_at = datetime.now(timezone.utc)
     await draft_repo.update(draft)
 
@@ -203,6 +204,7 @@ async def extract_design_text(
         draft_id=draft.draft_id,
         design_title=text_blocks["title"],
         design_support=text_blocks["support"],
+        design_symbol=text_blocks.get("symbol", ""),
     )
 
 
@@ -228,6 +230,7 @@ async def generate_design_image(
     prompt = designer.build_image_prompt(
         title=request.design_title,
         support=request.design_support,
+        symbol=request.design_symbol,
     )
 
     try:
@@ -239,6 +242,7 @@ async def generate_design_image(
     from datetime import datetime, timezone
     draft.design_title = request.design_title
     draft.design_support = request.design_support
+    draft.design_symbol = request.design_symbol
     draft.design_prompt = prompt
     draft.design_image_url = image_url
     draft.updated_at = datetime.now(timezone.utc)

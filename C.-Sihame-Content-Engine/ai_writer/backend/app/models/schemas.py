@@ -80,6 +80,7 @@ class StoredDraft(BaseModel):
     routing_metadata: Dict[str, Any] = Field(default_factory=dict)
     design_title: Optional[str] = None
     design_support: Optional[str] = None
+    design_symbol: Optional[str] = None
     design_prompt: Optional[str] = None
     design_image_url: Optional[str] = None
     created_at: datetime
@@ -156,6 +157,7 @@ class DraftRecordResponse(PostDraftResponse):
     routing_metadata: Dict[str, Any] = Field(default_factory=dict)
     design_title: Optional[str] = None
     design_support: Optional[str] = None
+    design_symbol: Optional[str] = None
     design_image_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
@@ -169,12 +171,14 @@ class DesignExtractResponse(BaseModel):
     draft_id: str
     design_title: str = Field(..., description="Extracted headline for the image")
     design_support: str = Field(..., description="Extracted body/support text for the image")
+    design_symbol: str = Field(..., description="Extracted symbolic element for the image")
 
 
 class DesignGenerateRequest(BaseModel):
     draft_id: str = Field(..., description="The approved draft id")
     design_title: str = Field(..., description="Coach-approved headline text")
     design_support: str = Field(..., description="Coach-approved body text")
+    design_symbol: str = Field(..., description="Coach-approved symbolic element")
 
 
 class DesignGenerateResponse(BaseModel):

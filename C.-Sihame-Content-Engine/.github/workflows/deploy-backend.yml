@@ -11,6 +11,7 @@ on:
       - 'knowledge_pack/**'
       - 'feedback_log.md'
       - 'c.siham-designer-main/**'
+      - '.github/workflows/**'
 
 jobs:
   deploy:
