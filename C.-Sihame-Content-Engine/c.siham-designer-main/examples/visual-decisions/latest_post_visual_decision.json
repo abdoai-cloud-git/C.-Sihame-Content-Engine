@@ -1,0 +1,54 @@
+{
+  "provider": "kie",
+  "model": "gemini-3-flash",
+  "raw_text": "```json\n{\n  \"visual_type\": \"Educational post\",\n  \"design_goal\": \"To visually differentiate between the 'surface' of a technique and the 'depth' of regulated consciousness, establishing Coach Sihame's authority in the PEAT method.\",\n  \"emotional_tone\": \"Authoritative clarity, grounded warmth, and professional depth.\",\n  \"layout_direction\": \"Strong left-aligned hierarchy with massive negative space on the left for Arabic typography; visual anchor placed on the right.\",\n  \"text_hierarchy\": \"Headline: 'من تطبيق تقنية.. إلى وعي يقود التحول' (Hero). Sub-points: The three benefits of PEAT (Secondary). Context: 'الشفاء يحدث عندما يتوفر الأمان' (Tertiary/Emphasis).\",\n  \"color_direction\": \"Deep teal background (#2F6F6D) for regulation and trust, with warm ivory (#F4EFE6) text and a subtle muted gold (#C8A96B) accent for the 'transformation' element.\",\n  \"visual_elements\": [\"Soft light diffusion\", \"Minimalist geometric container\", \"Subtle organic texture\"],\n  \"image_prompt\": \"A minimalist, high-end editorial composition. On the right side, a single, elegant translucent glass sphere rests on a textured stone surface. Inside the sphere, a soft, warm, golden ethereal glow emanates from the center, representing 'contained consciousness.' The background is a deep, matte teal with a very subtle gradient. Massive negative space on the left half of the frame for text placement. Soft cinematic lighting, sharp focus on the sphere, premium and calm atmosphere.\",\n  \"avoid\": [\"Stock photos of people in therapy\", \"Generic brain icons\", \"Loud 'Join Now' stickers\", \"Bright primary colors\", \"Cluttered diagrams\"],\n  \"reasoning_summary\": \"This visual uses the 'Mصباح والزجاجة' (Lamp and Glass) metaphor to show that techniques (the glass) only shine when powered by regulated consciousness (the light). The deep teal background provides the 'safety' and 'regulation' cues essential to the PEAT training message.\"\n}\n```",
+  "parsed": {
+    "visual_type": "Educational post",
+    "design_goal": "To visually differentiate between the 'surface' of a technique and the 'depth' of regulated consciousness, establishing Coach Sihame's authority in the PEAT method.",
+    "emotional_tone": "Authoritative clarity, grounded warmth, and professional depth.",
+    "layout_direction": "Strong left-aligned hierarchy with massive negative space on the left for Arabic typography; visual anchor placed on the right.",
+    "text_hierarchy": "Headline: 'من تطبيق تقنية.. إلى وعي يقود التحول' (Hero). Sub-points: The three benefits of PEAT (Secondary). Context: 'الشفاء يحدث عندما يتوفر الأمان' (Tertiary/Emphasis).",
+    "color_direction": "Deep teal background (#2F6F6D) for regulation and trust, with warm ivory (#F4EFE6) text and a subtle muted gold (#C8A96B) accent for the 'transformation' element.",
+    "visual_elements": [
+      "Soft light diffusion",
+      "Minimalist geometric container",
+      "Subtle organic texture"
+    ],
+    "image_prompt": "A minimalist, high-end editorial composition. On the right side, a single, elegant translucent glass sphere rests on a textured stone surface. Inside the sphere, a soft, warm, golden ethereal glow emanates from the center, representing 'contained consciousness.' The background is a deep, matte teal with a very subtle gradient. Massive negative space on the left half of the frame for text placement. Soft cinematic lighting, sharp focus on the sphere, premium and calm atmosphere.",
+    "avoid": [
+      "Stock photos of people in therapy",
+      "Generic brain icons",
+      "Loud 'Join Now' stickers",
+      "Bright primary colors",
+      "Cluttered diagrams"
+    ],
+    "reasoning_summary": "This visual uses the 'Mصباح والزجاجة' (Lamp and Glass) metaphor to show that techniques (the glass) only shine when powered by regulated consciousness (the light). The deep teal background provides the 'safety' and 'regulation' cues essential to the PEAT training message."
+  },
+  "raw_response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "```json\n{\n  \"visual_type\": \"Educational post\",\n  \"design_goal\": \"To visually differentiate between the 'surface' of a technique and the 'depth' of regulated consciousness, establishing Coach Sihame's authority in the PEAT method.\",\n  \"emotional_tone\": \"Authoritative clarity, grounded warmth, and professional depth.\",\n  \"layout_direction\": \"Strong left-aligned hierarchy with massive negative space on the left for Arabic typography; visual anchor placed on the right.\",\n  \"text_hierarchy\": \"Headline: 'من تطبيق تقنية.. إلى وعي يقود التحول' (Hero). Sub-points: The three benefits of PEAT (Secondary). Context: 'الشفاء يحدث عندما يتوفر الأمان' (Tertiary/Emphasis).\",\n  \"color_direction\": \"Deep teal background (#2F6F6D) for regulation and trust, with warm ivory (#F4EFE6) text and a subtle muted gold (#C8A96B) accent for the 'transformation' element.\",\n  \"visual_elements\": [\"Soft light diffusion\", \"Minimalist geometric container\", \"Subtle organic texture\"],\n  \"image_prompt\": \"A minimalist, high-end editorial composition. On the right side, a single, elegant translucent glass sphere rests on a textured stone surface. Inside the sphere, a soft, warm, golden ethereal glow emanates from the center, representing 'contained consciousness.' The background is a deep, matte teal with a very subtle gradient. Massive negative space on the left half of the frame for text placement. Soft cinematic lighting, sharp focus on the sphere, premium and calm atmosphere.\",\n  \"avoid\": [\"Stock photos of people in therapy\", \"Generic brain icons\", \"Loud 'Join Now' stickers\", \"Bright primary colors\", \"Cluttered diagrams\"],\n  \"reasoning_summary\": \"This visual uses the 'Mصباح والزجاجة' (Lamp and Glass) metaphor to show that techniques (the glass) only shine when powered by regulated consciousness (the light). The deep teal background provides the 'safety' and 'regulation' cues essential to the PEAT training message.\"\n}\n```",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1774832820,
+    "credits_consumed": 0.5,
+    "id": "chatcmpl-20260330090649706312434CwuwKd5d",
+    "model": "gemini-3-flash",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 458,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "reasoning_tokens": 849,
+        "text_tokens": 0
+      },
+      "prompt_tokens": 13808,
+      "total_tokens": 15115
+    }
+  }
+}

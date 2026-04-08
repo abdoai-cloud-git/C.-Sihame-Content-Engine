@@ -53,6 +53,15 @@ The **Reject & Regenerate** workflow requires a new column in your `drafts` tabl
 ALTER TABLE drafts ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
 ```
 
+The **Graphics Designer** workflow requires four new columns:
+```sql
+ALTER TABLE drafts
+  ADD COLUMN IF NOT EXISTS design_title TEXT,
+  ADD COLUMN IF NOT EXISTS design_support TEXT,
+  ADD COLUMN IF NOT EXISTS design_prompt TEXT,
+  ADD COLUMN IF NOT EXISTS design_image_url TEXT;
+```
+
 ## Health Checks & Monitoring
 
 - **API Root**: `/` (Returns a welcome message)

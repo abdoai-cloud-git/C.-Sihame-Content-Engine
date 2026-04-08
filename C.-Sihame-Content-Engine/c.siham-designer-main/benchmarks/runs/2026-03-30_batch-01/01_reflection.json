@@ -1,0 +1,16 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "taskId": "9fa8540e34d7a5e59890782767648073",
+    "model": "nano-banana-pro",
+    "state": "success",
+    "param": "{\"input\":\"{\\\"aspect_ratio\\\":\\\"4:5\\\",\\\"output_format\\\":\\\"png\\\",\\\"prompt\\\":\\\"Premium Arabic Instagram editorial design for a trauma-aware psychological coach. Reflection post. Meaning-first, calm, elegant, emotionally safe, Arabic-first, premium. The post says the person is not overreacting; the nervous system is tired and the body is reading old memory with the present. Visual must communicate embodied psychological meaning, gentle awareness, safety, and self-compassion. Paragraph-led or very quiet reflective hierarchy. Avoid generic linen-only moodboard, random sphere-only editorial, cliché spirituality, stock therapy imagery. Use warm ivory, soft stone, muted taupe, subtle olive-gray, restrained charcoal. If text appears, use only: 'أنتِ لا تبالغين في ردّة فعلك' and 'أنا لا أعيش هذا الموقف وحده' and 'أنا أعيش معه كل ما أيقظه داخلي' and a small subtle bottom signature 'Siham Atamnia'.\\\"}\",\"model\":\"nano-banana-pro\"}",
+    "resultJson": "{\"resultUrls\":[\"https://tempfile.aiquickdraw.com/f/9fa8540e34d7a5e59890782767648073_1774884604_n5xmdj8o.png\"]}",
+    "failCode": null,
+    "failMsg": null,
+    "costTime": 37,
+    "completeTime": 1774884607667,
+    "createTime": 1774884569974
+  }
+}

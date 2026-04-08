@@ -14,6 +14,11 @@ COPY backend /app/backend
 COPY knowledge_pack /app/knowledge_pack
 COPY feedback_log.md /app/feedback_log.md
 
+# Graphics Designer pack (brand rules, materiality, typography)
+# NOTE: CI workflow copies this into the build context before building
+COPY coach-siham-graphics-designer /app/coach-siham-graphics-designer
+ENV DESIGNER_PACK_DIR=/app/coach-siham-graphics-designer
+
 EXPOSE 8080
 
 WORKDIR /app/backend

@@ -1,0 +1,16 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "taskId": "3836d912c2038f5360b449e97d6aaa18",
+    "model": "nano-banana-pro",
+    "state": "success",
+    "param": "{\"input\":\"{\\\"aspect_ratio\\\":\\\"4:5\\\",\\\"output_format\\\":\\\"png\\\",\\\"prompt\\\":\\\"Premium Arabic Instagram concept-contrast design for a psychological coach brand. The post contrasts boundaries versus walls. Visual must make the contrast immediately understandable without becoming cartoonish or diagram-heavy. One side should feel open, grounded, self-respecting; the other side should feel closed, defensive, fear-based. Elegant, minimal, emotionally intelligent, Arabic-first. Avoid literal brick-wall cliché if possible. If text appears, use only: 'الحدود ليست جدارًا' and 'أنا أحمي نفسي وأبقى حاضرة' and 'أنا أختفي كي لا أتأذى' and subtle bottom signature 'Siham Atamnia'.\\\"}\",\"model\":\"nano-banana-pro\"}",
+    "resultJson": "{\"resultUrls\":[\"https://tempfile.aiquickdraw.com/f/3836d912c2038f5360b449e97d6aaa18_1774884607_c6vuhx5i.png\"]}",
+    "failCode": null,
+    "failMsg": null,
+    "costTime": 114,
+    "completeTime": 1774884686407,
+    "createTime": 1774884572384
+  }
+}

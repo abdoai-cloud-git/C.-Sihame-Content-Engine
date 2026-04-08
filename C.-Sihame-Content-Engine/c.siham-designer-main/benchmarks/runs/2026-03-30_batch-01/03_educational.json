@@ -1,0 +1,16 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "taskId": "7cd279ca3664ab1d6cfcec9bfdf0890d",
+    "model": "nano-banana-pro",
+    "state": "success",
+    "param": "{\"input\":\"{\\\"aspect_ratio\\\":\\\"4:5\\\",\\\"output_format\\\":\\\"png\\\",\\\"prompt\\\":\\\"Premium Arabic Instagram educational post for a trauma-aware coach brand. The concept is: 'التنظيم ليس هو التهدئة'. The visual must clearly teach the distinction between calming and regulation. Strong title-led hierarchy, clear educational structure, no cluttered infographic style, no generic wellness visuals. Concept clarity first, beauty second. Use a restrained premium palette: warm ivory, muted teal-gray, soft stone, gentle charcoal, tiny muted gold accent only if useful. If text appears, use only: 'التنظيم ليس هو التهدئة' and 'التهدئة تخفف الشعور' and 'التنظيم يبني اتساعًا داخليًا' and subtle bottom signature 'Siham Atamnia'.\\\"}\",\"model\":\"nano-banana-pro\"}",
+    "resultJson": "{\"resultUrls\":[\"https://tempfile.aiquickdraw.com/f/7cd279ca3664ab1d6cfcec9bfdf0890d_1774884605_vy3u2qac.png\"]}",
+    "failCode": null,
+    "failMsg": null,
+    "costTime": 37,
+    "completeTime": 1774884609606,
+    "createTime": 1774884571694
+  }
+}

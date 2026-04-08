@@ -63,6 +63,13 @@ function MainWorkspace() {
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
   const [mainCopySuccess, setMainCopySuccess] = useState(false);
 
+  // Design State
+  const [designTitle, setDesignTitle] = useState('');
+  const [designSupport, setDesignSupport] = useState('');
+  const [designImageUrl, setDesignImageUrl] = useState('');
+  const [designLoading, setDesignLoading] = useState(false);
+  const [extractLoading, setExtractLoading] = useState(false);
+
   // Load draft from URL if any
   useEffect(() => {
     const urlDraftId = searchParams.get("draftId");
@@ -303,6 +310,9 @@ function MainWorkspace() {
     setRawInput("");
     setAdaptResults({});
     setIsComposerExpanded(false);
+    setDesignTitle('');
+    setDesignSupport('');
+    setDesignImageUrl('');
   };
 
   const handleQuickStart = (type: string) => {
@@ -321,6 +331,59 @@ function MainWorkspace() {
     : appState === "review" 
     ? "bg-amber-100 text-amber-800" 
     : "bg-green-100 text-green-800";
+
+  // ─── Design Handlers ───
+  const handleExtractDesignText = async () => {
+    if (!draftId) return;
+    setExtractLoading(true);
+    try {
+      const apiUrl = getApiBaseUrl();
+      const res = await fetch(`${apiUrl}/api/v1/content/design/extract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || 'فشل استخراج النص');
+      }
+      const data = await res.json();
+      setDesignTitle(data.design_title);
+      setDesignSupport(data.design_support);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setExtractLoading(false);
+    }
+  };
+
+  const handleGenerateDesignImage = async () => {
+    if (!draftId || !designTitle.trim() || !designSupport.trim()) return;
+    setDesignLoading(true);
+    setDesignImageUrl('');
+    try {
+      const apiUrl = getApiBaseUrl();
+      const res = await fetch(`${apiUrl}/api/v1/content/design/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          draft_id: draftId,
+          design_title: designTitle,
+          design_support: designSupport,
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || 'فشل توليد الصورة');
+      }
+      const data = await res.json();
+      setDesignImageUrl(data.design_image_url);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setDesignLoading(false);
+    }
+  };
 
   return (
     <>
@@ -653,6 +716,105 @@ function MainWorkspace() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ═══ APPROVED ONLY — 🎨 Graphics Designer Section ═══ */}
+            {appState === "approved" && (
+              <div className="bg-gradient-to-br from-[#C67B5C]/5 via-[#F5E6D3]/10 to-[#D4AF37]/5 p-5 rounded-2xl border border-[#C67B5C]/20 space-y-4">
+                <div className="text-center">
+                  <h3 className="font-bold text-[#0D4F5C] mb-1">🎨 تصميم المنشور</h3>
+                  <p className="text-xs text-gray-500">استخرجي النص ثم عدّليه وولّدي صورة احترافية</p>
+                </div>
+
+                {/* Extract Button */}
+                <button
+                  onClick={handleExtractDesignText}
+                  disabled={extractLoading || designLoading}
+                  className="w-full bg-[#C67B5C] hover:bg-[#b06a4d] text-white py-3 font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                >
+                  {extractLoading ? (
+                    <>
+                      <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spinner" />
+                      جاري استخراج النص...
+                    </>
+                  ) : '📝 استخراج النص من المنشور'}
+                </button>
+
+                {/* Editable Text Fields */}
+                {(designTitle || designSupport) && (
+                  <div className="space-y-3 animate-slide-up">
+                    <div>
+                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">العنوان (Headline)</label>
+                      <input
+                        type="text"
+                        value={designTitle}
+                        onChange={(e) => setDesignTitle(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-[#C67B5C]/20 bg-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none text-sm text-right"
+                        placeholder="العنوان الرئيسي للصورة..."
+                        disabled={designLoading}
+                        dir="rtl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">النص الداعم (Body)</label>
+                      <textarea
+                        value={designSupport}
+                        onChange={(e) => setDesignSupport(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-[#C67B5C]/20 bg-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none text-sm text-right resize-none h-20"
+                        placeholder="النص الداعم للصورة..."
+                        disabled={designLoading}
+                        dir="rtl"
+                      />
+                    </div>
+
+                    {/* Generate Image Button */}
+                    <button
+                      onClick={handleGenerateDesignImage}
+                      disabled={designLoading || !designTitle.trim() || !designSupport.trim()}
+                      className="w-full bg-gradient-to-l from-[#D4AF37] to-[#C4933F] hover:from-[#C4933F] hover:to-[#b08030] text-white py-3.5 font-bold rounded-xl transition-all disabled:opacity-40 flex items-center justify-center gap-2 text-sm shadow-md"
+                    >
+                      {designLoading ? (
+                        <>
+                          <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spinner" />
+                          جاري توليد الصورة... (قد يستغرق دقيقة)
+                        </>
+                      ) : '🎨 توليد الصورة'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Image Preview */}
+                {designImageUrl && (
+                  <div className="space-y-3 animate-slide-up">
+                    <div className="bg-white rounded-xl border border-[#D4AF37]/30 overflow-hidden shadow-sm">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={designImageUrl}
+                        alt="التصميم المولّد"
+                        className="w-full h-auto"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <a
+                        href={designImageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 bg-[#0D4F5C] hover:bg-[#093a44] text-white py-2.5 font-bold rounded-xl transition-all text-sm text-center flex items-center justify-center gap-2"
+                      >
+                        ⬇️ تحميل الصورة
+                      </a>
+                      <button
+                        onClick={handleGenerateDesignImage}
+                        disabled={designLoading}
+                        className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-2.5 font-bold rounded-xl text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        🔄 إعادة التوليد
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 text-center">⏳ رابط الصورة صالح لمدة 14 يوم</p>
                   </div>
                 )}
               </div>

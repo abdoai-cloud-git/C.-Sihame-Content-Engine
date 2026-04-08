@@ -1,0 +1,56 @@
+{
+  "provider": "kie",
+  "model": "gemini-3-flash",
+  "raw_text": "```json\n{\n  \"visual_type\": \"Educational post\",\n  \"design_goal\": \"To visually anchor the psychological distinction between temporary surface relief (calming) and deep structural safety (regulation).\",\n  \"emotional_tone\": \"Authoritative clarity, grounded safety, psychologically intelligent.\",\n  \"layout_direction\": \"Strong vertical hierarchy or split-concept alignment. The headline should be the hero at the top, followed by a clear contrast-based layout for the body text.\",\n  \"text_hierarchy\": \"Headline: 'التنظيم ليس هو التهدئة' (Large/Bold). Sub-points: Contrast between 'التهدئة' and 'التنظيم' (Medium). Closing anchor: 'حضور + شعور + اتساع' (Distinct/Italicized or boxed).\",\n  \"color_direction\": \"Deep Teal (#2F6F6D) for the 'Regulation' elements and Warm Ivory (#F4EFE6) for the background to ensure high readability and a premium feel.\",\n  \"visual_elements\": [\"Subtle dividing line\", \"Symbolic contrast (surface vs. depth)\", \"Clean margins\", \"Premium paper texture\"],\n  \"image_prompt\": \"A minimalist conceptual still-life. A single, thin, floating thread on the left contrasting with a thick, deeply textured, grounded rope or woven pillar on the right. Muted teal and warm stone grey tones. Soft, diffused side-lighting casting gentle shadows. Massive negative space in the upper and center areas for Arabic typography. High-end editorial photography, clean composition, profoundly calm and stable atmosphere.\",\n  \"avoid\": [\"Clipart of brains\", \"Medical diagrams\", \"Stock photos of people meditating\", \"Neon colors\", \"Chaotic layouts\", \"Aggressive arrows\"],\n  \"reasoning_summary\": \"This post is a conceptual 'Concept Contrast.' The visual uses a symbolic metaphor of surface vs. depth to mirror the text's message that regulation is a deeper, more grounded state than simple calming, while the layout provides the structured clarity needed for educational content.\"\n}\n```",
+  "parsed": {
+    "visual_type": "Educational post",
+    "design_goal": "To visually anchor the psychological distinction between temporary surface relief (calming) and deep structural safety (regulation).",
+    "emotional_tone": "Authoritative clarity, grounded safety, psychologically intelligent.",
+    "layout_direction": "Strong vertical hierarchy or split-concept alignment. The headline should be the hero at the top, followed by a clear contrast-based layout for the body text.",
+    "text_hierarchy": "Headline: 'التنظيم ليس هو التهدئة' (Large/Bold). Sub-points: Contrast between 'التهدئة' and 'التنظيم' (Medium). Closing anchor: 'حضور + شعور + اتساع' (Distinct/Italicized or boxed).",
+    "color_direction": "Deep Teal (#2F6F6D) for the 'Regulation' elements and Warm Ivory (#F4EFE6) for the background to ensure high readability and a premium feel.",
+    "visual_elements": [
+      "Subtle dividing line",
+      "Symbolic contrast (surface vs. depth)",
+      "Clean margins",
+      "Premium paper texture"
+    ],
+    "image_prompt": "A minimalist conceptual still-life. A single, thin, floating thread on the left contrasting with a thick, deeply textured, grounded rope or woven pillar on the right. Muted teal and warm stone grey tones. Soft, diffused side-lighting casting gentle shadows. Massive negative space in the upper and center areas for Arabic typography. High-end editorial photography, clean composition, profoundly calm and stable atmosphere.",
+    "avoid": [
+      "Clipart of brains",
+      "Medical diagrams",
+      "Stock photos of people meditating",
+      "Neon colors",
+      "Chaotic layouts",
+      "Aggressive arrows"
+    ],
+    "reasoning_summary": "This post is a conceptual 'Concept Contrast.' The visual uses a symbolic metaphor of surface vs. depth to mirror the text's message that regulation is a deeper, more grounded state than simple calming, while the layout provides the structured clarity needed for educational content."
+  },
+  "raw_response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "```json\n{\n  \"visual_type\": \"Educational post\",\n  \"design_goal\": \"To visually anchor the psychological distinction between temporary surface relief (calming) and deep structural safety (regulation).\",\n  \"emotional_tone\": \"Authoritative clarity, grounded safety, psychologically intelligent.\",\n  \"layout_direction\": \"Strong vertical hierarchy or split-concept alignment. The headline should be the hero at the top, followed by a clear contrast-based layout for the body text.\",\n  \"text_hierarchy\": \"Headline: 'التنظيم ليس هو التهدئة' (Large/Bold). Sub-points: Contrast between 'التهدئة' and 'التنظيم' (Medium). Closing anchor: 'حضور + شعور + اتساع' (Distinct/Italicized or boxed).\",\n  \"color_direction\": \"Deep Teal (#2F6F6D) for the 'Regulation' elements and Warm Ivory (#F4EFE6) for the background to ensure high readability and a premium feel.\",\n  \"visual_elements\": [\"Subtle dividing line\", \"Symbolic contrast (surface vs. depth)\", \"Clean margins\", \"Premium paper texture\"],\n  \"image_prompt\": \"A minimalist conceptual still-life. A single, thin, floating thread on the left contrasting with a thick, deeply textured, grounded rope or woven pillar on the right. Muted teal and warm stone grey tones. Soft, diffused side-lighting casting gentle shadows. Massive negative space in the upper and center areas for Arabic typography. High-end editorial photography, clean composition, profoundly calm and stable atmosphere.\",\n  \"avoid\": [\"Clipart of brains\", \"Medical diagrams\", \"Stock photos of people meditating\", \"Neon colors\", \"Chaotic layouts\", \"Aggressive arrows\"],\n  \"reasoning_summary\": \"This post is a conceptual 'Concept Contrast.' The visual uses a symbolic metaphor of surface vs. depth to mirror the text's message that regulation is a deeper, more grounded state than simple calming, while the layout provides the structured clarity needed for educational content.\"\n}\n```",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1774833222,
+    "credits_consumed": 0.49,
+    "id": "chatcmpl-20260330091333399189548bmlGWRvw",
+    "model": "gemini-3-flash",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 441,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "reasoning_tokens": 842,
+        "text_tokens": 0
+      },
+      "prompt_tokens": 13782,
+      "total_tokens": 15065
+    }
+  }
+}

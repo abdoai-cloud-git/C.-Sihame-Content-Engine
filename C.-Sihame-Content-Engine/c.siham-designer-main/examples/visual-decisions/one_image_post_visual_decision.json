@@ -1,0 +1,54 @@
+{
+  "provider": "kie",
+  "model": "gemini-3-flash",
+  "raw_text": "```json\n{\n  \"visual_type\": \"Reflection visual\",\n  \"design_goal\": \"To create a sense of 'holding' and somatic safety for a long-form text about nervous system memory and self-compassion.\",\n  \"emotional_tone\": \"Compassionate stillness, warm intimacy, grounded clarity.\",\n  \"layout_direction\": \"Editorial-style layout with wide, generous margins. The long Arabic text should be centered with significant line-height (leading) to ensure it feels breathable and easy to digest.\",\n  \"text_hierarchy\": \"A cohesive, poetic paragraph structure. The opening word 'أحيانًا' (Sometimes) can be slightly more prominent, while the body remains consistent. The signature #سهام_عثامنية should be small and elegant at the bottom.\",\n  \"color_direction\": \"Muted sand, warm taupe, and soft linen cream.\",\n  \"visual_elements\": [\"Subtle fabric texture\", \"Soft morning light gradient\", \"Massive negative space\"],\n  \"image_prompt\": \"A minimalist, high-end editorial photograph of soft, layered linen fabrics in muted sand and warm beige tones. The focus is soft and ethereal, with gentle morning sunlight creating a subtle gradient across the textures. Massive negative space in the center and upper half of the frame to accommodate a long Arabic text block. The atmosphere is profoundly calm, safe, and premium.\",\n  \"avoid\": [\"Literal medical or brain imagery\", \"Harsh shadows\", \"Busy backgrounds\", \"Cramped text boxes\", \"Bright or neon colors\"],\n  \"reasoning_summary\": \"Since the text discusses the nervous system 'reading' old memories and the need for self-compassion, the visual uses soft, layered textures as a somatic metaphor for the internal layers of the self. The vast negative space ensures the long Arabic reflection remains the hero without feeling overwhelming.\"\n}\n```",
+  "parsed": {
+    "visual_type": "Reflection visual",
+    "design_goal": "To create a sense of 'holding' and somatic safety for a long-form text about nervous system memory and self-compassion.",
+    "emotional_tone": "Compassionate stillness, warm intimacy, grounded clarity.",
+    "layout_direction": "Editorial-style layout with wide, generous margins. The long Arabic text should be centered with significant line-height (leading) to ensure it feels breathable and easy to digest.",
+    "text_hierarchy": "A cohesive, poetic paragraph structure. The opening word 'أحيانًا' (Sometimes) can be slightly more prominent, while the body remains consistent. The signature #سهام_عثامنية should be small and elegant at the bottom.",
+    "color_direction": "Muted sand, warm taupe, and soft linen cream.",
+    "visual_elements": [
+      "Subtle fabric texture",
+      "Soft morning light gradient",
+      "Massive negative space"
+    ],
+    "image_prompt": "A minimalist, high-end editorial photograph of soft, layered linen fabrics in muted sand and warm beige tones. The focus is soft and ethereal, with gentle morning sunlight creating a subtle gradient across the textures. Massive negative space in the center and upper half of the frame to accommodate a long Arabic text block. The atmosphere is profoundly calm, safe, and premium.",
+    "avoid": [
+      "Literal medical or brain imagery",
+      "Harsh shadows",
+      "Busy backgrounds",
+      "Cramped text boxes",
+      "Bright or neon colors"
+    ],
+    "reasoning_summary": "Since the text discusses the nervous system 'reading' old memories and the need for self-compassion, the visual uses soft, layered textures as a somatic metaphor for the internal layers of the self. The vast negative space ensures the long Arabic reflection remains the hero without feeling overwhelming."
+  },
+  "raw_response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "```json\n{\n  \"visual_type\": \"Reflection visual\",\n  \"design_goal\": \"To create a sense of 'holding' and somatic safety for a long-form text about nervous system memory and self-compassion.\",\n  \"emotional_tone\": \"Compassionate stillness, warm intimacy, grounded clarity.\",\n  \"layout_direction\": \"Editorial-style layout with wide, generous margins. The long Arabic text should be centered with significant line-height (leading) to ensure it feels breathable and easy to digest.\",\n  \"text_hierarchy\": \"A cohesive, poetic paragraph structure. The opening word 'أحيانًا' (Sometimes) can be slightly more prominent, while the body remains consistent. The signature #سهام_عثامنية should be small and elegant at the bottom.\",\n  \"color_direction\": \"Muted sand, warm taupe, and soft linen cream.\",\n  \"visual_elements\": [\"Subtle fabric texture\", \"Soft morning light gradient\", \"Massive negative space\"],\n  \"image_prompt\": \"A minimalist, high-end editorial photograph of soft, layered linen fabrics in muted sand and warm beige tones. The focus is soft and ethereal, with gentle morning sunlight creating a subtle gradient across the textures. Massive negative space in the center and upper half of the frame to accommodate a long Arabic text block. The atmosphere is profoundly calm, safe, and premium.\",\n  \"avoid\": [\"Literal medical or brain imagery\", \"Harsh shadows\", \"Busy backgrounds\", \"Cramped text boxes\", \"Bright or neon colors\"],\n  \"reasoning_summary\": \"Since the text discusses the nervous system 'reading' old memories and the need for self-compassion, the visual uses soft, layered textures as a somatic metaphor for the internal layers of the self. The vast negative space ensures the long Arabic reflection remains the hero without feeling overwhelming.\"\n}\n```",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1774827205,
+    "credits_consumed": 0.3,
+    "id": "chatcmpl-20260330073317993689003GM405Bwu",
+    "model": "gemini-3-flash",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 397,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "reasoning_tokens": 755,
+        "text_tokens": 0
+      },
+      "prompt_tokens": 7731,
+      "total_tokens": 8883
+    }
+  }
+}

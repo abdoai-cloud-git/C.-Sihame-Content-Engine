@@ -1,0 +1,56 @@
+{
+  "provider": "kie",
+  "model": "gemini-3-flash",
+  "raw_text": "```json\n{\n  \"visual_type\": \"Reflection visual\",\n  \"design_goal\": \"To provide a serene, safe visual container for a somatic and spiritual grounding practice, mirroring the 'message of safety' mentioned in the text.\",\n  \"emotional_tone\": \"Warm intimacy, quiet pacing, and grounded presence.\",\n  \"layout_direction\": \"Editorial-style layout with text positioned to respect a large area of negative space. High line-height (leading) for the Arabic script to ensure the reading experience feels unhurried and spacious.\",\n  \"text_hierarchy\": \"Opening hook (Soft Headline), step-by-step somatic guidance (Body), Divine Names (Emphasized/Centered), and a gentle closing invitation (Secondary).\",\n  \"color_direction\": \"Warm sand, muted linen, and soft charcoal for typography to maintain a premium, grounded feel.\",\n  \"visual_elements\": [\"Subtle fabric texture\", \"Soft diffused light shadow\", \"Massive negative space\", \"Minimalist composition\"],\n  \"image_prompt\": \"A high-end minimalist editorial photograph of a soft, textured linen fabric draped gently, captured in the warm, low-angled light of dusk. The composition features massive negative space in the upper two-thirds of the frame to allow for Arabic typography. Muted beige and warm cream tones, soft diffused shadows, deeply calming and tactile atmosphere, premium and still.\",\n  \"avoid\": [\"Literal illustrations of hands on chest\", \"Bright or neon colors\", \"Busy patterns\", \"Generic spiritual icons like lotuses\", \"Cramped text boxes\", \"Default social media templates\"],\n  \"reasoning_summary\": \"Since the text guides the reader through a somatic practice of self-witnessing and safety, the visual uses tactile textures (linen) and soft evening light to physically represent the 'message of safety' and the 'before sleep' context provided in the caption.\"\n}\n```",
+  "parsed": {
+    "visual_type": "Reflection visual",
+    "design_goal": "To provide a serene, safe visual container for a somatic and spiritual grounding practice, mirroring the 'message of safety' mentioned in the text.",
+    "emotional_tone": "Warm intimacy, quiet pacing, and grounded presence.",
+    "layout_direction": "Editorial-style layout with text positioned to respect a large area of negative space. High line-height (leading) for the Arabic script to ensure the reading experience feels unhurried and spacious.",
+    "text_hierarchy": "Opening hook (Soft Headline), step-by-step somatic guidance (Body), Divine Names (Emphasized/Centered), and a gentle closing invitation (Secondary).",
+    "color_direction": "Warm sand, muted linen, and soft charcoal for typography to maintain a premium, grounded feel.",
+    "visual_elements": [
+      "Subtle fabric texture",
+      "Soft diffused light shadow",
+      "Massive negative space",
+      "Minimalist composition"
+    ],
+    "image_prompt": "A high-end minimalist editorial photograph of a soft, textured linen fabric draped gently, captured in the warm, low-angled light of dusk. The composition features massive negative space in the upper two-thirds of the frame to allow for Arabic typography. Muted beige and warm cream tones, soft diffused shadows, deeply calming and tactile atmosphere, premium and still.",
+    "avoid": [
+      "Literal illustrations of hands on chest",
+      "Bright or neon colors",
+      "Busy patterns",
+      "Generic spiritual icons like lotuses",
+      "Cramped text boxes",
+      "Default social media templates"
+    ],
+    "reasoning_summary": "Since the text guides the reader through a somatic practice of self-witnessing and safety, the visual uses tactile textures (linen) and soft evening light to physically represent the 'message of safety' and the 'before sleep' context provided in the caption."
+  },
+  "raw_response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "```json\n{\n  \"visual_type\": \"Reflection visual\",\n  \"design_goal\": \"To provide a serene, safe visual container for a somatic and spiritual grounding practice, mirroring the 'message of safety' mentioned in the text.\",\n  \"emotional_tone\": \"Warm intimacy, quiet pacing, and grounded presence.\",\n  \"layout_direction\": \"Editorial-style layout with text positioned to respect a large area of negative space. High line-height (leading) for the Arabic script to ensure the reading experience feels unhurried and spacious.\",\n  \"text_hierarchy\": \"Opening hook (Soft Headline), step-by-step somatic guidance (Body), Divine Names (Emphasized/Centered), and a gentle closing invitation (Secondary).\",\n  \"color_direction\": \"Warm sand, muted linen, and soft charcoal for typography to maintain a premium, grounded feel.\",\n  \"visual_elements\": [\"Subtle fabric texture\", \"Soft diffused light shadow\", \"Massive negative space\", \"Minimalist composition\"],\n  \"image_prompt\": \"A high-end minimalist editorial photograph of a soft, textured linen fabric draped gently, captured in the warm, low-angled light of dusk. The composition features massive negative space in the upper two-thirds of the frame to allow for Arabic typography. Muted beige and warm cream tones, soft diffused shadows, deeply calming and tactile atmosphere, premium and still.\",\n  \"avoid\": [\"Literal illustrations of hands on chest\", \"Bright or neon colors\", \"Busy patterns\", \"Generic spiritual icons like lotuses\", \"Cramped text boxes\", \"Default social media templates\"],\n  \"reasoning_summary\": \"Since the text guides the reader through a somatic practice of self-witnessing and safety, the visual uses tactile textures (linen) and soft evening light to physically represent the 'message of safety' and the 'before sleep' context provided in the caption.\"\n}\n```",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1774827622,
+    "credits_consumed": 0.3,
+    "id": "chatcmpl-20260330074013928301090XsVAWWiJ",
+    "model": "gemini-3-flash",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 403,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "reasoning_tokens": 948,
+        "text_tokens": 0
+      },
+      "prompt_tokens": 7694,
+      "total_tokens": 9045
+    }
+  }
+}

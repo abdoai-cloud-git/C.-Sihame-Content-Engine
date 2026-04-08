@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     # Kie.ai
     KIE_API_KEY: str = os.getenv("KIE_API_KEY", "")
     KIE_BASE_URL: str = "https://api.kie.ai"
+    KIE_IMAGE_API_URL: str = "https://api.kie.ai/api/v1/jobs/createTask"
+    KIE_TASK_STATUS_URL: str = "https://api.kie.ai/api/v1/jobs/recordInfo"
 
     # PRD-aligned text model roles
     MODEL_PRIMARY: str = "gemini-3.1-pro"
@@ -49,6 +51,14 @@ class Settings(BaseSettings):
             os.getenv(
                 "FEEDBACK_LOG_PATH",
                 str(Path(__file__).resolve().parents[3] / "feedback_log.md"),
+            )
+        )
+    )
+    DESIGNER_PACK_DIR: str = str(
+        Path(
+            os.getenv(
+                "DESIGNER_PACK_DIR",
+                str(Path(__file__).resolve().parents[3] / "c.siham-designer-main" / "coach-siham-graphics-designer"),
             )
         )
     )

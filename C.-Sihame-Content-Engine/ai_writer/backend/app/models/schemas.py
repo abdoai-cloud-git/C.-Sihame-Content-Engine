@@ -78,6 +78,10 @@ class StoredDraft(BaseModel):
     rejection_reason: Optional[str] = None
     revision_history: List[RevisionEntry] = Field(default_factory=list)
     routing_metadata: Dict[str, Any] = Field(default_factory=dict)
+    design_title: Optional[str] = None
+    design_support: Optional[str] = None
+    design_prompt: Optional[str] = None
+    design_image_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -150,5 +154,29 @@ class DraftRecordResponse(PostDraftResponse):
     approved_text: Optional[str] = None
     revision_history: List[RevisionEntry] = Field(default_factory=list)
     routing_metadata: Dict[str, Any] = Field(default_factory=dict)
+    design_title: Optional[str] = None
+    design_support: Optional[str] = None
+    design_image_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+
+
+class DesignExtractRequest(BaseModel):
+    draft_id: str = Field(..., description="The approved draft to extract text from")
+
+
+class DesignExtractResponse(BaseModel):
+    draft_id: str
+    design_title: str = Field(..., description="Extracted headline for the image")
+    design_support: str = Field(..., description="Extracted body/support text for the image")
+
+
+class DesignGenerateRequest(BaseModel):
+    draft_id: str = Field(..., description="The approved draft id")
+    design_title: str = Field(..., description="Coach-approved headline text")
+    design_support: str = Field(..., description="Coach-approved body text")
+
+
+class DesignGenerateResponse(BaseModel):
+    draft_id: str
+    design_image_url: str = Field(..., description="URL of the generated image (Kie.ai hosted, 14-day TTL)")

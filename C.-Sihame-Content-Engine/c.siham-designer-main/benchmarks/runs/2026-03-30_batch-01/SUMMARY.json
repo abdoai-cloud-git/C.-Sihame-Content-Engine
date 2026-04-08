@@ -1,0 +1,42 @@
+[
+  {
+    "benchmark_id": "01_reflection",
+    "task_id": "9fa8540e34d7a5e59890782767648073",
+    "state": "success",
+    "urls": [
+      "https://tempfile.aiquickdraw.com/f/9fa8540e34d7a5e59890782767648073_1774884604_n5xmdj8o.png"
+    ]
+  },
+  {
+    "benchmark_id": "02_guided_practice",
+    "task_id": "7ca0b447975728f8113cddec3a7eb356",
+    "state": "success",
+    "urls": [
+      "https://tempfile.aiquickdraw.com/f/7ca0b447975728f8113cddec3a7eb356_1774884697_x3xjkjo3.png"
+    ]
+  },
+  {
+    "benchmark_id": "03_educational",
+    "task_id": "7cd279ca3664ab1d6cfcec9bfdf0890d",
+    "state": "success",
+    "urls": [
+      "https://tempfile.aiquickdraw.com/f/7cd279ca3664ab1d6cfcec9bfdf0890d_1774884605_vy3u2qac.png"
+    ]
+  },
+  {
+    "benchmark_id": "04_concept_contrast",
+    "task_id": "3836d912c2038f5360b449e97d6aaa18",
+    "state": "success",
+    "urls": [
+      "https://tempfile.aiquickdraw.com/f/3836d912c2038f5360b449e97d6aaa18_1774884607_c6vuhx5i.png"
+    ]
+  },
+  {
+    "benchmark_id": "05_promo",
+    "task_id": "5e072550c7d4de33702f5eba3ec119bc",
+    "state": "success",
+    "urls": [
+      "https://tempfile.aiquickdraw.com/f/5e072550c7d4de33702f5eba3ec119bc_1774884602_5n1axgar.png"
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "taskId": "7ca0b447975728f8113cddec3a7eb356",
+    "model": "nano-banana-pro",
+    "state": "success",
+    "param": "{\"input\":\"{\\\"aspect_ratio\\\":\\\"4:5\\\",\\\"output_format\\\":\\\"png\\\",\\\"prompt\\\":\\\"Premium Arabic Instagram design for a psychological coach. Guided-practice post. Meaning-first, calm, elegant, emotionally safe, Arabic-first. This post guides self-contact and regulation: hand on chest, hand on abdomen, slow breath, message of safety to the body. Visual must communicate safety, containment, embodied reassurance, self-contact, and slowness. Text-first with somatic support or abstract embodied cue. Must include one embodiment cue and one containment cue. Avoid generic calm-only background, meditation clichés, unrelated softness. Palette: warm ivory, soft sand, dusty beige, muted olive-gray, soft charcoal. If text appears, use only: 'ضعي يدكِ على صدركِ' and 'أنا الآن هنا' and 'المطلوب أن تصلي إلى داخلكِ رسالة أمان' and a subtle bottom signature 'Siham Atamnia'.\\\"}\",\"model\":\"nano-banana-pro\"}",
+    "resultJson": "{\"resultUrls\":[\"https://tempfile.aiquickdraw.com/f/7ca0b447975728f8113cddec3a7eb356_1774884697_x3xjkjo3.png\"]}",
+    "failCode": null,
+    "failMsg": null,
+    "costTime": 138,
+    "completeTime": 1774884709096,
+    "createTime": 1774884571005
+  }
+}

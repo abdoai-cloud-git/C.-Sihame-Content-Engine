@@ -1,0 +1,16 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "taskId": "5e072550c7d4de33702f5eba3ec119bc",
+    "model": "nano-banana-pro",
+    "state": "success",
+    "param": "{\"input\":\"{\\\"aspect_ratio\\\":\\\"4:5\\\",\\\"output_format\\\":\\\"png\\\",\\\"prompt\\\":\\\"Premium Arabic Instagram promo design for a psychological coach brand. The post invites people into a training space without pressure. It must feel elegant, grounded, warm, safe, and high-trust. No loud CTA, no sales-y sticker energy, no fake luxury. The offer should feel like a calm invitation to deep inner work. Use soft premium palette, strong readability, refined composition. If text appears, use only: 'هذه المساحة لكِ' and 'مساحة هادئة عميقة' and 'تدعم التحول من الجذر' and subtle bottom signature 'Siham Atamnia'.\\\"}\",\"model\":\"nano-banana-pro\"}",
+    "resultJson": "{\"resultUrls\":[\"https://tempfile.aiquickdraw.com/f/5e072550c7d4de33702f5eba3ec119bc_1774884602_5n1axgar.png\"]}",
+    "failCode": null,
+    "failMsg": null,
+    "costTime": 126,
+    "completeTime": 1774884699066,
+    "createTime": 1774884573062
+  }
+}

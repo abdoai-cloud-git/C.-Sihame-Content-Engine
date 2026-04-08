@@ -7,17 +7,23 @@ from app.models.schemas import (
     AdaptPlatformResponse,
     ApproveTextRequest,
     ApproveTextResponse,
+    DesignExtractRequest,
+    DesignExtractResponse,
+    DesignGenerateRequest,
+    DesignGenerateResponse,
     DraftRecordResponse,
     GenerateDraftRequest,
     HistoryItemResponse,
     HistoryListResponse,
     PostDraftResponse,
+    PostStatus,
     ReviseDraftRequest,
     ReviseDraftResponse,
     RejectDraftRequest,
     RejectDraftResponse,
 )
 from app.services.context_builder import DynamicContextBuilder
+from app.services.designer_service import DesignerService, DesignerServiceError
 from app.services.draft_repository import DraftRepository, build_draft_repository
 from app.services.llm_router import ModelAdapterError, TextModelRouter
 from app.services.workflow_service import ContentWorkflowService
@@ -163,3 +169,97 @@ async def get_draft(
         raise HTTPException(status_code=404, detail=f"Draft {draft_id} not found.") from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
+# Graphics Designer endpoints
+# ---------------------------------------------------------------------------
+
+def get_designer_service():
+    return DesignerService()
+
+
+@router.post("/design/extract", response_model=DesignExtractResponse)
+async def extract_design_text(
+    request: DesignExtractRequest,
+    draft_repo: DraftRepository = Depends(get_draft_repository),
+    designer: DesignerService = Depends(get_designer_service),
+):
+    """
+    Auto-extract headline + body text from an approved draft for image design.
+    The coach can then review and edit these before generating the image.
+    """
+    try:
+        draft = await draft_repo.get(request.draft_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Draft {request.draft_id} not found.") from exc
+
+    if draft.status != PostStatus.APPROVED_TEXT:
+        raise HTTPException(status_code=409, detail="Draft must be approved before extracting design text.")
+
+    source_text = draft.approved_text or draft.body
+    if not source_text:
+        raise HTTPException(status_code=400, detail="No approved text available for extraction.")
+
+    try:
+        text_blocks = await designer.extract_text_blocks(source_text)
+    except DesignerServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    # Persist extracted text
+    from datetime import datetime, timezone
+    draft.design_title = text_blocks["title"]
+    draft.design_support = text_blocks["support"]
+    draft.updated_at = datetime.now(timezone.utc)
+    await draft_repo.update(draft)
+
+    return DesignExtractResponse(
+        draft_id=draft.draft_id,
+        design_title=text_blocks["title"],
+        design_support=text_blocks["support"],
+    )
+
+
+@router.post("/design/generate", response_model=DesignGenerateResponse)
+async def generate_design_image(
+    request: DesignGenerateRequest,
+    draft_repo: DraftRepository = Depends(get_draft_repository),
+    designer: DesignerService = Depends(get_designer_service),
+):
+    """
+    Generate a branded image from coach-approved text blocks via Kie.ai Nano Banana 2.
+    The image URL is stored in Supabase (Kie hosts media for 14 days).
+    """
+    try:
+        draft = await draft_repo.get(request.draft_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Draft {request.draft_id} not found.") from exc
+
+    if draft.status != PostStatus.APPROVED_TEXT:
+        raise HTTPException(status_code=409, detail="Draft must be approved before generating design image.")
+
+    # Build the full image prompt from brand rules
+    prompt = designer.build_image_prompt(
+        title=request.design_title,
+        support=request.design_support,
+    )
+
+    try:
+        image_url = await designer.generate_image(prompt)
+    except DesignerServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    # Persist design data
+    from datetime import datetime, timezone
+    draft.design_title = request.design_title
+    draft.design_support = request.design_support
+    draft.design_prompt = prompt
+    draft.design_image_url = image_url
+    draft.updated_at = datetime.now(timezone.utc)
+    await draft_repo.update(draft)
+
+    return DesignGenerateResponse(
+        draft_id=draft.draft_id,
+        design_image_url=image_url,
+    )
+

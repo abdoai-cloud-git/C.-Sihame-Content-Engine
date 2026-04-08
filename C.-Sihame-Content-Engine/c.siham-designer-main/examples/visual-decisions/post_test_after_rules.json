@@ -1,0 +1,55 @@
+{
+  "provider": "kie",
+  "model": "gemini-3-flash",
+  "raw_text": "```json\n{\n  \"visual_type\": \"Reflection visual\",\n  \"design_goal\": \"To create a sense of embodied safety and containment that mirrors the somatic practice of placing hands on the chest and belly.\",\n  \"emotional_tone\": \"Warm intimacy, quiet pacing, and grounded reassurance.\",\n  \"layout_direction\": \"Editorial-style layout with a strong vertical text block. Massive negative space on the left to allow the atmospheric visual to breathe, with text aligned for high readability on the right.\",\n  \"text_hierarchy\": \"Hook: 'إذا شعرتِ اليوم' (Prominent but soft). Body: The guided steps (Regular weight with generous line-height). Dhikr: 'يا سلام، يا مؤمن، يا لطيف' (Centered or slightly emphasized). Conclusion: 'المطلوب أن يصل جسدك رسالة أمان' (Soft emphasis).\",\n  \"color_direction\": \"Warm sand, muted taupe, and soft cream with deep charcoal typography.\",\n  \"visual_elements\": [\"Soft fabric textures\", \"Gentle light leak\", \"Vast negative space\", \"Subtle organic folds\"],\n  \"image_prompt\": \"A high-end minimalist editorial photograph of soft, layered organic linen fabric in warm sand and cream tones. The fabric has gentle, flowing folds that suggest a sense of holding, containment, and soft touch. Soft, warm evening sunlight creates long, diffused shadows across the texture. Massive negative space on the left side of the frame for text placement. The atmosphere is profoundly calm, safe, and embodied. 4k resolution, clean and premium composition.\",\n  \"avoid\": [\"Literal stock photos of people\", \"Yoga poses\", \"Bright or neon colors\", \"Cluttered backgrounds\", \"Sharp geometric shapes\"],\n  \"reasoning_summary\": \"This visual follows 'Mode 3' (Embodied/Atmospheric) to match the somatic nature of the practice. The soft linen and warm light evoke the 'message of safety' the text aims to deliver, while the editorial layout preserves the premium brand feel and ensures the long Arabic text is easy to digest.\"\n}\n```",
+  "parsed": {
+    "visual_type": "Reflection visual",
+    "design_goal": "To create a sense of embodied safety and containment that mirrors the somatic practice of placing hands on the chest and belly.",
+    "emotional_tone": "Warm intimacy, quiet pacing, and grounded reassurance.",
+    "layout_direction": "Editorial-style layout with a strong vertical text block. Massive negative space on the left to allow the atmospheric visual to breathe, with text aligned for high readability on the right.",
+    "text_hierarchy": "Hook: 'إذا شعرتِ اليوم' (Prominent but soft). Body: The guided steps (Regular weight with generous line-height). Dhikr: 'يا سلام، يا مؤمن، يا لطيف' (Centered or slightly emphasized). Conclusion: 'المطلوب أن يصل جسدك رسالة أمان' (Soft emphasis).",
+    "color_direction": "Warm sand, muted taupe, and soft cream with deep charcoal typography.",
+    "visual_elements": [
+      "Soft fabric textures",
+      "Gentle light leak",
+      "Vast negative space",
+      "Subtle organic folds"
+    ],
+    "image_prompt": "A high-end minimalist editorial photograph of soft, layered organic linen fabric in warm sand and cream tones. The fabric has gentle, flowing folds that suggest a sense of holding, containment, and soft touch. Soft, warm evening sunlight creates long, diffused shadows across the texture. Massive negative space on the left side of the frame for text placement. The atmosphere is profoundly calm, safe, and embodied. 4k resolution, clean and premium composition.",
+    "avoid": [
+      "Literal stock photos of people",
+      "Yoga poses",
+      "Bright or neon colors",
+      "Cluttered backgrounds",
+      "Sharp geometric shapes"
+    ],
+    "reasoning_summary": "This visual follows 'Mode 3' (Embodied/Atmospheric) to match the somatic nature of the practice. The soft linen and warm light evoke the 'message of safety' the text aims to deliver, while the editorial layout preserves the premium brand feel and ensures the long Arabic text is easy to digest."
+  },
+  "raw_response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "```json\n{\n  \"visual_type\": \"Reflection visual\",\n  \"design_goal\": \"To create a sense of embodied safety and containment that mirrors the somatic practice of placing hands on the chest and belly.\",\n  \"emotional_tone\": \"Warm intimacy, quiet pacing, and grounded reassurance.\",\n  \"layout_direction\": \"Editorial-style layout with a strong vertical text block. Massive negative space on the left to allow the atmospheric visual to breathe, with text aligned for high readability on the right.\",\n  \"text_hierarchy\": \"Hook: 'إذا شعرتِ اليوم' (Prominent but soft). Body: The guided steps (Regular weight with generous line-height). Dhikr: 'يا سلام، يا مؤمن، يا لطيف' (Centered or slightly emphasized). Conclusion: 'المطلوب أن يصل جسدك رسالة أمان' (Soft emphasis).\",\n  \"color_direction\": \"Warm sand, muted taupe, and soft cream with deep charcoal typography.\",\n  \"visual_elements\": [\"Soft fabric textures\", \"Gentle light leak\", \"Vast negative space\", \"Subtle organic folds\"],\n  \"image_prompt\": \"A high-end minimalist editorial photograph of soft, layered organic linen fabric in warm sand and cream tones. The fabric has gentle, flowing folds that suggest a sense of holding, containment, and soft touch. Soft, warm evening sunlight creates long, diffused shadows across the texture. Massive negative space on the left side of the frame for text placement. The atmosphere is profoundly calm, safe, and embodied. 4k resolution, clean and premium composition.\",\n  \"avoid\": [\"Literal stock photos of people\", \"Yoga poses\", \"Bright or neon colors\", \"Cluttered backgrounds\", \"Sharp geometric shapes\"],\n  \"reasoning_summary\": \"This visual follows 'Mode 3' (Embodied/Atmospheric) to match the somatic nature of the practice. The soft linen and warm light evoke the 'message of safety' the text aims to deliver, while the editorial layout preserves the premium brand feel and ensures the long Arabic text is easy to digest.\"\n}\n```",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1774828529,
+    "credits_consumed": 0.34,
+    "id": "chatcmpl-20260330075519103074823W4Chp3sZ",
+    "model": "gemini-3-flash",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 445,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "reasoning_tokens": 886,
+        "text_tokens": 0
+      },
+      "prompt_tokens": 8560,
+      "total_tokens": 9891
+    }
+  }
+}

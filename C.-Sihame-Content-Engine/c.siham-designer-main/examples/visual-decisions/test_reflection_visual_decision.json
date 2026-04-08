@@ -1,0 +1,55 @@
+{
+  "provider": "kie",
+  "model": "gemini-3-flash",
+  "raw_text": "```json\n{\n  \"visual_type\": \"Reflection visual\",\n  \"design_goal\": \"To create a sense of 'holding' and 'containment' for the reader's emotions, allowing the deep psychological message to land with softness and safety.\",\n  \"emotional_tone\": \"Warm intimacy, quiet pacing, and compassionate clarity.\",\n  \"layout_direction\": \"Clean editorial layout with wide margins. Text should be centered with significant negative space at the top to symbolize a 'clearing' or 'calm' for the nervous system.\",\n  \"text_hierarchy\": \"Headline: 'أحيانًا أنتِ لا تبالغين في ردّة فعلك' (Slightly larger/bold). Body: The middle sections with ample line-spacing (leading) for Arabic readability. Closing: 'ومن هنا يبدأ الوعي' (Subtle emphasis).\",\n  \"color_direction\": \"Muted sand, warm taupe, and soft cream tones.\",\n  \"visual_elements\": [\"Subtle paper texture\", \"Soft organic shadow\", \"Minimalist composition\", \"Ample leading\"],\n  \"image_prompt\": \"A close-up of a soft, high-quality linen fabric with gentle, natural folds, bathed in warm, diffused morning light. Muted beige and cream tones. Massive negative space in the upper half of the frame. High-end editorial photography, deeply calming and tactile, minimalist and premium aesthetic.\",\n  \"avoid\": [\"Harsh shadows\", \"Busy patterns\", \"Literal representations of stress or brains\", \"Bright/Neon colors\", \"Cluttered layouts\"],\n  \"reasoning_summary\": \"The text addresses the 'tired nervous system' and the need for self-compassion; therefore, the visual must provide immediate sensory relief through soft textures and vast negative space, aligning with Coach Sihame's brand of 'emotional safety'.\"\n}\n```",
+  "parsed": {
+    "visual_type": "Reflection visual",
+    "design_goal": "To create a sense of 'holding' and 'containment' for the reader's emotions, allowing the deep psychological message to land with softness and safety.",
+    "emotional_tone": "Warm intimacy, quiet pacing, and compassionate clarity.",
+    "layout_direction": "Clean editorial layout with wide margins. Text should be centered with significant negative space at the top to symbolize a 'clearing' or 'calm' for the nervous system.",
+    "text_hierarchy": "Headline: 'أحيانًا أنتِ لا تبالغين في ردّة فعلك' (Slightly larger/bold). Body: The middle sections with ample line-spacing (leading) for Arabic readability. Closing: 'ومن هنا يبدأ الوعي' (Subtle emphasis).",
+    "color_direction": "Muted sand, warm taupe, and soft cream tones.",
+    "visual_elements": [
+      "Subtle paper texture",
+      "Soft organic shadow",
+      "Minimalist composition",
+      "Ample leading"
+    ],
+    "image_prompt": "A close-up of a soft, high-quality linen fabric with gentle, natural folds, bathed in warm, diffused morning light. Muted beige and cream tones. Massive negative space in the upper half of the frame. High-end editorial photography, deeply calming and tactile, minimalist and premium aesthetic.",
+    "avoid": [
+      "Harsh shadows",
+      "Busy patterns",
+      "Literal representations of stress or brains",
+      "Bright/Neon colors",
+      "Cluttered layouts"
+    ],
+    "reasoning_summary": "The text addresses the 'tired nervous system' and the need for self-compassion; therefore, the visual must provide immediate sensory relief through soft textures and vast negative space, aligning with Coach Sihame's brand of 'emotional safety'."
+  },
+  "raw_response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "```json\n{\n  \"visual_type\": \"Reflection visual\",\n  \"design_goal\": \"To create a sense of 'holding' and 'containment' for the reader's emotions, allowing the deep psychological message to land with softness and safety.\",\n  \"emotional_tone\": \"Warm intimacy, quiet pacing, and compassionate clarity.\",\n  \"layout_direction\": \"Clean editorial layout with wide margins. Text should be centered with significant negative space at the top to symbolize a 'clearing' or 'calm' for the nervous system.\",\n  \"text_hierarchy\": \"Headline: 'أحيانًا أنتِ لا تبالغين في ردّة فعلك' (Slightly larger/bold). Body: The middle sections with ample line-spacing (leading) for Arabic readability. Closing: 'ومن هنا يبدأ الوعي' (Subtle emphasis).\",\n  \"color_direction\": \"Muted sand, warm taupe, and soft cream tones.\",\n  \"visual_elements\": [\"Subtle paper texture\", \"Soft organic shadow\", \"Minimalist composition\", \"Ample leading\"],\n  \"image_prompt\": \"A close-up of a soft, high-quality linen fabric with gentle, natural folds, bathed in warm, diffused morning light. Muted beige and cream tones. Massive negative space in the upper half of the frame. High-end editorial photography, deeply calming and tactile, minimalist and premium aesthetic.\",\n  \"avoid\": [\"Harsh shadows\", \"Busy patterns\", \"Literal representations of stress or brains\", \"Bright/Neon colors\", \"Cluttered layouts\"],\n  \"reasoning_summary\": \"The text addresses the 'tired nervous system' and the need for self-compassion; therefore, the visual must provide immediate sensory relief through soft textures and vast negative space, aligning with Coach Sihame's brand of 'emotional safety'.\"\n}\n```",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1774820666,
+    "credits_consumed": 0.23,
+    "id": "chatcmpl-20260330054417145562539HOCGvYT3",
+    "model": "gemini-3-flash",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 397,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "reasoning_tokens": 924,
+        "text_tokens": 0
+      },
+      "prompt_tokens": 5411,
+      "total_tokens": 6732
+    }
+  }
+}
