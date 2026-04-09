@@ -25,62 +25,78 @@ Given the following approved post text, extract exactly THREE elements for an im
 
 1. **title**: The single most powerful sentence or phrase (headline). Maximum 8 words in Arabic.
 2. **support**: A supporting sentence or key takeaway (body text). Maximum 15 words in Arabic.
-3. **symbol**: A rich, cinematic, still-life VISUAL COMPOSITION paragraph that physically describes a scene containing a symbolic element representing the post's core meaning.
-   
+3. **symbol**: The COMPLETE visual concept paragraph that encompasses the DESIGN DIRECTION, VISUAL COMPOSITION, and COLOR PALETTE.
+
 SYMBOL RULES & EXAMPLES:
-- The symbol MUST be described physically as a cinematic still-life on a "warm cream linen surface".
+- The symbol MUST include 3 sections exactly: "### DESIGN DIRECTION", "VISUAL COMPOSITION:", and "### COLOR PALETTE".
+- The composition MUST be described physically as a cinematic still-life on a "warm cream linen surface".
 - It must vividly map psychological states to our strict brand colors: muted terracotta/sienna for tension/chaos, warm sage green for healing/expansion, and champagne gold for the central anchor/glow.
 - Include explicit lighting and shadow descriptions.
 - Below are 3 golden examples of how to write the "symbol" parameter:
 
-Golden Example 1 (Theme: expansion, letting go):
-"A warm intimate still-life shot from above on a warm cream linen surface. In the center: a small handmade lantern of soft ivory frosted glass, glowing warmly from inside with muted champagne gold light. Around it: soft silk fabric trails. On the left side the silk is slightly gathered and loosely knotted — in warm greige and muted terracotta tones (the old self, tension). On the right the silk opens, unfurls, and flows freely downward — in warm cream and hints of warm sage green (expansion, breath, the inner maestro). Background: warm cream linen at center transitioning to muted terracotta at top edges, with soft warm sage green in bottom corners. Warm overhead lighting, soft internal lantern glow. Large editorial negative space in the upper third."
+Golden Example 1:
+### DESIGN DIRECTION
+A premium breath-like editorial visual for Coach Sihame. Theme: expansion, letting go, awakening the inner maestro.
 
-Golden Example 2 (Theme: integration, the healing compass):
-"A warm intimate still-life shot from above on a warm cream linen surface. In the absolute center: a thin elegant compass needle, crafted from polished warm greige metal with a muted champagne gold tip. The surface beneath the needle transitions from left to right — on the left a soft muted terracotta zone (tension, chaos, the knotted self) and on the right a muted warm sage green zone (healing, calm, integration). The color boundary beneath the needle is seamless and gradient-soft, not sharp. Warm overhead studio lighting, soft deep shadows. Wide margins, large editorial negative space in the upper half for text."
+VISUAL COMPOSITION: A warm intimate still-life shot from above on a warm cream linen surface. In the center: a small handmade lantern of soft ivory frosted glass, glowing warmly from inside with muted champagne gold light. Around it: soft silk fabric trails. On the left side the silk is slightly gathered and loosely knotted — in warm greige and muted terracotta tones (the old self, tension). On the right the silk opens, unfurls, and flows freely downward — in warm cream and hints of warm sage green (expansion, breath, the inner maestro). Background: warm cream linen at center transitioning to muted terracotta at top edges, with soft warm sage green in bottom corners. Warm overhead lighting, soft internal lantern glow. Large editorial negative space in the upper third.
 
-Golden Example 3 (Theme: nervous system, processing trauma):
-"A warm still-life shot from above on a warm cream linen surface. In the center: a delicate network of translucent ivory silk threads (representing the nervous system). On the left side, threads are slightly knotted and tangled — rendered in warm terracotta and deep greige tones. Moving right, the threads untangle, lighten, and glow gently from within. A small perfect ivory-colored sphere rests at the center of the untangled zone. Warm, soft overhead lighting. Photorealistic silk and linen texture. Large negative space in the upper third for text."
+### COLOR PALETTE
+Warm comforting earth tones. Background: warm cream linen. Left tension accent: muted terracotta/burnt orange. Right expansion accent: muted warm sage green, earthy olive-tinted, not teal. Center glow: muted champagne gold lantern light, warm antique gold, not bright metallic. Neutral: warm greige/taupe. Do NOT use cold teal, blue, pure white, or cool gray.
+
+Golden Example 2:
+### DESIGN DIRECTION
+A premium precision-warm program visual for Coach Sihame. Theme: integration of opposites, the healing compass.
+
+VISUAL COMPOSITION: A warm intimate still-life shot from above on a warm cream linen surface. In the absolute center: a thin elegant compass needle, crafted from polished warm greige metal with a muted champagne gold tip. The surface beneath the needle transitions from left to right — on the left a soft muted terracotta zone (tension, chaos, the knotted self) and on the right a muted warm sage green zone (healing, calm, integration). The color boundary beneath the needle is seamless and gradient-soft, not sharp. Warm overhead studio lighting, soft deep shadows. Wide margins, large editorial negative space in the upper half for text.
+
+### COLOR PALETTE
+Warm comforting earth tones. Background: warm cream linen. Left zone: muted terracotta/burnt orange earthy sienna. Right zone: muted warm sage green, earthy olive-tinted, not teal. Compass accent: muted champagne gold, warm antique gold, not bright metallic. Neutral: warm greige/taupe. Do NOT use cold teal, blue, pure white, or cool gray.
+
+Golden Example 3:
+### DESIGN DIRECTION
+A premium editorial visual for Coach Sihame. Theme: the nervous system caught between betrayal and healing.
+
+VISUAL COMPOSITION: A warm still-life shot from above on a warm cream linen surface. In the center: a delicate network of translucent ivory silk threads (representing the nervous system). On the left side, threads are slightly knotted and tangled — rendered in warm terracotta and deep greige tones. Moving right, the threads untangle, lighten, and glow gently from within. A small perfect ivory-colored sphere rests at the center of the untangled zone. Warm, soft overhead lighting. Photorealistic silk and linen texture. Large negative space in the upper third for text.
+
+### COLOR PALETTE
+Warm comforting earth tones. Background: warm cream linen. Left tension zone: muted terracotta/burnt orange earthy sienna. Right healing zone: muted warm sage green, earthy olive-tinted, not teal. Center glow: muted champagne gold, warm antique gold, not bright metallic. Do NOT use cold teal, blue, pure white, or cool gray.
 
 Rules:
 - Give ONLY the 3 values in STRICT JSON exactly: {{"title": "...", "support": "...", "symbol": "..."}}
 - Do not include markdown fences.
+- Use \\n for line breaks inside the symbol string so it remains valid JSON.
 
 APPROVED POST:
 {approved_text}"""
 
     IMAGE_PROMPT_TEMPLATE = """Portrait-format social media card, 4:5 aspect ratio.
 
-### DESIGN DIRECTION
-A premium, deeply grounded, editorial visual for Coach Sihame. Theme: somatic awakening and psychological safety.
-
-VISUAL COMPOSITION: {symbol}
-
-### COLOR PALETTE
-Warm comforting earth tones. Background: natural linen and cotton tones transitioning to muted terracotta. Accents of warm sage green and champagne gold. 
-CRITICAL RULE: Do NOT use cold teal, blue, pure white, or cool gray anywhere in the image.
+{symbol}
 
 ### TYPOGRAPHY RULE
-- Typeface Definition: Use an elegant, fine-pointed-nib Farsi-style Arabic calligraphy (خط الفارسي) for the main headline, blending fluid, connected, thin-to-thick strokes. Use a modern, thick, geometric Kufic-inspired sans-serif for secondary text. Use a delicate cursive for the signature. Apply warm champagne gold ink for calligraphy and muted terracotta for body text. Real ink and paper textures only.
+HEADLINE: Flowing Farsi-style Arabic calligraphy (خط الفارسي) with a gentle diagonal lean. Fluid connected letterforms with elegant thin-to-thick stroke variation, drawn with a fine pointed nib. Warm champagne gold ink color — not black. Gold leaf accents on diacritics (tashkeel) in the same warm gold tone. Poetic, spoken, artistic.
+BODY: Clean, thick, geometric sans-serif Arabic letterforms. Sharp, precise strokes with even weight. Modern Kufic-inspired clarity.
+SIGNATURE: "Siham Atamnia" in delicate pen-written cursive, fine-point ink, light and restrained.
+PAPER: All typography rendered as real calligraphy ink on soft, textured cotton paper with subtle grain.
 
 ### TEXT BLOCKS
 - Title: "{title}"
-  Placement: Upper-center area, beautifully balanced in negative space.
-  Materiality: Flowing Farsi calligraphy, champagne gold ink, gold leaf accents on diacritics.
+  Placement: Top Center, upper area
+  Materiality: HEADLINE (warm champagne gold ink, Farsi-style)
   Importance: Primary
 
 - Support: "{support}"
-  Placement: Lower-center area, perfectly aligned.
-  Materiality: Clean geometric sans-serif Arabic, warm greige or terracotta ink.
+  Placement: Center, below title
+  Materiality: BODY (warm dark greige ink)
   Importance: Secondary
 
 - Signature: "Siham Atamnia"
-  Placement: Bottom-right corner.
-  Materiality: Delicate pen-written cursive, fine ink.
+  Placement: Bottom Right Corner
+  Materiality: SIGNATURE (fine cursive, restrained)
   Importance: Tertiary
 
 ### ATMOSPHERE
-Luxurious, psychologically safe, deeply grounded, handcrafted, quiet, editorial, poetic. Hand-drawn on premium textured cotton paper. Warm overhead lighting. No digital gloss, no templates. This is a finished physical artwork."""
+Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Handcrafted physical reality, not machine-generated. 8K resolution, photorealistic linen and silk texture."""
 
     # Polling configuration
     POLL_INITIAL_DELAY: float = 5.0
@@ -105,9 +121,39 @@ Luxurious, psychologically safe, deeply grounded, handcrafted, quiet, editorial,
             cleaned = cleaned[:-3]
         return cleaned.strip()
 
+    @staticmethod
+    def _fix_json_newlines(raw: str) -> str:
+        """Escape literal newlines/carriage-returns inside JSON string values.
+
+        The LLM often puts real line-breaks inside the multi-line `symbol`
+        value instead of the escaped \\n sequence, producing invalid JSON.
+        This parser walks the string character-by-character so it only
+        replaces newlines that sit inside a quoted string value.
+        """
+        result: list[str] = []
+        in_string = False
+        escape_next = False
+        for ch in raw:
+            if escape_next:
+                result.append(ch)
+                escape_next = False
+            elif ch == "\\" and in_string:
+                result.append(ch)
+                escape_next = True
+            elif ch == '"':
+                result.append(ch)
+                in_string = not in_string
+            elif ch in ("\n", "\r") and in_string:
+                result.append("\\n")
+            else:
+                result.append(ch)
+        return "".join(result)
+
     @classmethod
     def _extract_json(cls, raw_text: str) -> Dict[str, Any]:
         cleaned = cls._strip_code_fences(raw_text)
+        # Fix literal newlines inside string values (common with multi-line symbol)
+        cleaned = cls._fix_json_newlines(cleaned)
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError:
@@ -118,20 +164,32 @@ Luxurious, psychologically safe, deeply grounded, handcrafted, quiet, editorial,
             return json.loads(cleaned[start : end + 1])
 
     async def extract_text_blocks(self, approved_text: str) -> Dict[str, str]:
-        """Use LLM to extract headline + body from approved text.
+        """Use LLM to extract headline, body, and visual concept from approved text.
 
         Returns:
-            dict with keys 'title' and 'support'
+            dict with keys 'title', 'support', and 'symbol'
         """
         prompt = self.EXTRACTION_PROMPT.format(approved_text=approved_text)
         try:
             raw_text = await self.llm_adapter.complete_text(prompt)
+            logger.debug("[extract_text_blocks] raw LLM response: %s", raw_text[:500])
             result = self._extract_json(raw_text)
             title = result.get("title", "").strip()
             support = result.get("support", "").strip()
             symbol = result.get("symbol", "").strip()
             if not title or not support:
                 raise DesignerServiceError("LLM returned empty title or support text.")
+            if not symbol:
+                logger.warning(
+                    "[extract_text_blocks] symbol field is empty. "
+                    "LLM keys returned: %s. Raw (first 800 chars): %s",
+                    list(result.keys()),
+                    raw_text[:800],
+                )
+            logger.debug(
+                "[extract_text_blocks] extracted — title=%r, support=%r, symbol_len=%d",
+                title, support, len(symbol),
+            )
             return {"title": title, "support": support, "symbol": symbol}
         except ModelAdapterError as e:
             raise DesignerServiceError(f"Text extraction failed: {e}") from e
