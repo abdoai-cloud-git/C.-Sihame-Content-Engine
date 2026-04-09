@@ -179,7 +179,8 @@ class DesignGenerateRequest(BaseModel):
     draft_id: str = Field(..., description="The approved draft id")
     design_title: str = Field(..., description="Coach-approved headline text")
     design_support: str = Field(..., description="Coach-approved body text")
-    design_symbol: str = Field(..., description="Coach-approved symbolic element")
+    design_symbol: str = Field(default="", description="Technical English image prompt (auto-generated)")
+    design_concept_ar: str = Field(default="", description="Coach's Arabic visual concept — if provided, overrides design_symbol via LLM expansion")
 
 
 class DesignGenerateResponse(BaseModel):

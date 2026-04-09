@@ -228,11 +228,23 @@ async def generate_design_image(
     if draft.status != PostStatus.APPROVED_TEXT:
         raise HTTPException(status_code=409, detail="Draft must be approved before generating design image.")
 
+    # Determine the visual symbol to use for image generation.
+    # If the coach provided/edited an Arabic concept, expand it into a full English prompt.
+    # Otherwise fall back to the stored technical symbol.
+    concept_ar = request.design_concept_ar.strip()
+    if concept_ar:
+        try:
+            symbol = await designer.expand_arabic_concept(concept_ar)
+        except DesignerServiceError as exc:
+            raise HTTPException(status_code=502, detail=f"Concept expansion failed: {exc}") from exc
+    else:
+        symbol = request.design_symbol
+
     # Build the full image prompt from brand rules
     prompt = designer.build_image_prompt(
         title=request.design_title,
         support=request.design_support,
-        symbol=request.design_symbol,
+        symbol=symbol,
     )
 
     try:
@@ -244,7 +256,7 @@ async def generate_design_image(
     from datetime import datetime, timezone
     draft.design_title = request.design_title
     draft.design_support = request.design_support
-    draft.design_symbol = request.design_symbol
+    draft.design_symbol = symbol  # always persist the final expanded symbol
     draft.design_prompt = prompt
     draft.design_image_url = image_url
     draft.updated_at = datetime.now(timezone.utc)
@@ -254,6 +266,7 @@ async def generate_design_image(
         draft_id=draft.draft_id,
         design_image_url=image_url,
     )
+
 
 
 # ---------------------------------------------------------------------------

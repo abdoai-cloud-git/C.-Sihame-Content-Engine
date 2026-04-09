@@ -377,6 +377,7 @@ function MainWorkspace() {
           design_title: designTitle,
           design_support: designSupport,
           design_symbol: designSymbol,
+          design_concept_ar: designConceptAr,
         }),
       });
       if (!res.ok) {
@@ -776,18 +777,18 @@ function MainWorkspace() {
                         dir="rtl"
                       />
                     </div>
-                    {/* Visual Concept Card — shown in clear Arabic for the coach */}
+                    {/* Visual Concept — editable Arabic field for the coach */}
                     <div>
-                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">الفكرة البصرية 🖼️</label>
-                      {designConceptAr ? (
-                        <div className="w-full p-3 rounded-xl border border-[#D4AF37]/30 bg-[#FDF8F0] text-sm text-right leading-relaxed text-[#3d2b1a]" dir="rtl">
-                          {designConceptAr}
-                        </div>
-                      ) : (
-                        <div className="w-full p-3 rounded-xl border border-dashed border-[#C67B5C]/20 bg-white/50 text-sm text-right text-gray-400" dir="rtl">
-                          سيتم عرض وصف الصورة هنا بعد الاستخراج...
-                        </div>
-                      )}
+                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">الفكرة البصرية 🖼️ <span className="text-gray-400 font-normal">(يمكنك تعديلها بكلماتك الخاصة)</span></label>
+                      <textarea
+                        value={designConceptAr}
+                        onChange={(e) => setDesignConceptAr(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-[#D4AF37]/30 bg-[#FDF8F0] focus:ring-2 focus:ring-[#D4AF37] focus:outline-none text-sm text-right resize-none h-24 leading-relaxed text-[#3d2b1a]"
+                        placeholder="صفي ما تريدين أن تغؚ الصورة... مثلاً: أريد صورة تُظهِر يدين واحدة شديدة وأخرى مرتاحة"
+                        disabled={designLoading}
+                        dir="rtl"
+                      />
+                      <p className="text-[10px] text-gray-400 mt-1 text-right" dir="rtl">✨ سيتولى النظام تحويل فكرتك تلقائياً إلى تعليمات تقنية للمولد</p>
                     </div>
 
                     {/* Generate Image Button */}

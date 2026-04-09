@@ -65,7 +65,28 @@ KEY RULES:
 APPROVED POST:
 {approved_text}"""
 
+    CONCEPT_EXPANSION_PROMPT = """You are a visual content director for Coach Sihame, a somatic trauma therapy coach.
+
+A coach has described what she wants the image to show, in Arabic:
+"{concept_ar}"
+
+Expand this into a detailed English image generation prompt. Follow these mandatory brand rules:
+• Scene: cinematic still-life shot from above on a warm cream linen surface
+• Left side (FROM state — tension/chaos): muted terracotta / burnt sienna tones
+• Right side (TO state — healing/release): warm sage green tones
+• Center (the turning point): muted champagne gold glow
+• Lighting: soft warm overhead light, deep shadows, large negative space in upper third for text
+• Style: warm, intimate editorial. Photorealistic silk, linen, ceramic, botanical textures.
+• NEVER use cold teal, blue, pure white, or cool gray
+
+If the coach's description doesn't mention specific objects, invent objects that physically represent her concept while following the brand rules above.
+
+Write ONE or TWO descriptive paragraphs in clean English prose. No markdown headers. No ### labels. Be specific about: what objects are placed where, their colors, the lighting, and the final color palette.
+
+Return ONLY the expanded English image prompt. Nothing else."""
+
     IMAGE_PROMPT_TEMPLATE = """Portrait-format social media card, 4:5 aspect ratio.
+
 
 {symbol}
 
@@ -197,12 +218,37 @@ Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Han
         """Construct the full image generation prompt from brand rules."""
         return self.IMAGE_PROMPT_TEMPLATE.format(title=title, support=support, symbol=symbol)
 
+    async def expand_arabic_concept(self, concept_ar: str) -> str:
+        """Expand the coach's natural Arabic visual description into a full technical English image prompt.
+
+        The coach writes what she *feels* the image should show (in Arabic).
+        This method translates + expands that into the detailed English prompt
+        that the image generator needs, while enforcing all brand visual rules.
+
+        Args:
+            concept_ar: Natural Arabic description from the coach, e.g.
+                        "أريد صورة تُظهر يدين: واحدة مشدودة وأخرى مرتاحة"
+        Returns:
+            Full English image generation prompt following brand guidelines.
+        """
+        prompt = self.CONCEPT_EXPANSION_PROMPT.format(concept_ar=concept_ar)
+        try:
+            expanded = await self.llm_adapter.complete_text(prompt)
+            expanded = expanded.strip()
+            # Strip any accidental code fences
+            expanded = self._strip_code_fences(expanded)
+            logger.debug("[expand_arabic_concept] expanded symbol length=%d", len(expanded))
+            return expanded
+        except ModelAdapterError as e:
+            raise DesignerServiceError(f"Concept expansion failed: {e}") from e
+
     async def generate_image(self, prompt: str) -> str:
         """Call Kie.ai Nano Banana 2 API and poll for result.
 
         Returns:
             The image URL from the successful task result.
         """
+
         # Step 1: Create task
         task_id = await self._create_kie_task(prompt)
         logger.info(f"Kie.ai task created: {task_id}")
