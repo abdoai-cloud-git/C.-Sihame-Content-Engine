@@ -21,50 +21,46 @@ class DesignerService:
     """Handles text extraction from approved posts and image generation via Kie.ai."""
 
     EXTRACTION_PROMPT = """You are a master visual content director for Coach Sihame, a somatic trauma therapy coach.
-Given the following approved post text, extract exactly THREE elements for an image design:
 
-1. **title**: The single most powerful sentence or phrase (headline). Maximum 8 words in Arabic.
-2. **support**: A supporting sentence or key takeaway (body text). Maximum 15 words in Arabic.
-3. **symbol**: The COMPLETE visual concept paragraph that encompasses the DESIGN DIRECTION, VISUAL COMPOSITION, and COLOR PALETTE.
+Read the approved post carefully first. Your job is to design an image that MIRRORS what this specific post is about — not a generic coaching image.
 
-SYMBOL RULES & EXAMPLES:
-- The symbol MUST include 3 sections exactly: "### DESIGN DIRECTION", "VISUAL COMPOSITION:", and "### COLOR PALETTE".
-- The composition MUST be described physically as a cinematic still-life on a "warm cream linen surface".
-- It must vividly map psychological states to our strict brand colors: muted terracotta/sienna for tension/chaos, warm sage green for healing/expansion, and champagne gold for the central anchor/glow.
-- Include explicit lighting and shadow descriptions.
-- Below are 3 golden examples of how to write the "symbol" parameter:
+━━━ STEP 1 — UNDERSTAND THE POST ━━━
+Identify:
+• The core emotion or psychological theme (e.g., shame, grief, body trust, control, release, clarity)
+• The specific metaphor or physical sensation mentioned (e.g., knots in the chest, shallow breath, frozen limbs, a heavy stone)
+• The transformation arc: what state is the reader moving FROM → TO?
 
-Golden Example 1:
-### DESIGN DIRECTION
-A premium breath-like editorial visual for Coach Sihame. Theme: expansion, letting go, awakening the inner maestro.
+━━━ STEP 2 — DESIGN A SPECIFIC VISUAL ━━━
+Design a cinematic still-life from above on a warm cream linen surface.
+Choose objects that PHYSICALLY embody THIS post's exact theme.
 
-VISUAL COMPOSITION: A warm intimate still-life shot from above on a warm cream linen surface. In the center: a small handmade lantern of soft ivory frosted glass, glowing warmly from inside with muted champagne gold light. Around it: soft silk fabric trails. On the left side the silk is slightly gathered and loosely knotted — in warm greige and muted terracotta tones (the old self, tension). On the right the silk opens, unfurls, and flows freely downward — in warm cream and hints of warm sage green (expansion, breath, the inner maestro). Background: warm cream linen at center transitioning to muted terracotta at top edges, with soft warm sage green in bottom corners. Warm overhead lighting, soft internal lantern glow. Large editorial negative space in the upper third.
+Object selection examples (use these as style guides only — invent new ones that fit the post):
+• Post about body armor / defense → twisted wire mesh on the left, slowly unwinding into silk threads on the right
+• Post about grief / loss → a half-wilted dried rose on the left, a fresh herb sprig on the right
+• Post about breath / expansion → a tightly knotted rope on the left, flowing ribbon on the right
+• Post about nervous system → tangled silk threads on the left, gently arranged on the right
+• Post about shame / hiding → dense shadow cloth on the left, warm lamp light on the right
+• Post about control / resistance → a rigid angular ceramic piece on the left, a soft curved bowl on the right
+• Post about body listening / awareness → a closed fist sculpted in clay on the left, open palm in sage clay on the right
 
-### COLOR PALETTE
-Warm comforting earth tones. Background: warm cream linen. Left tension accent: muted terracotta/burnt orange. Right expansion accent: muted warm sage green, earthy olive-tinted, not teal. Center glow: muted champagne gold lantern light, warm antique gold, not bright metallic. Neutral: warm greige/taupe. Do NOT use cold teal, blue, pure white, or cool gray.
+MANDATORY BRAND RULES:
+• Left (FROM state — tension/chaos): muted terracotta / burnt sienna tones
+• Right (TO state — healing/release): warm sage green tones
+• Center (the turning point / anchor): muted champagne gold glow
+• Surface always: warm cream linen
+• Lighting: soft warm overhead light, deep shadows, large negative space in upper third for text
+• NEVER use cold teal, blue, pure white, or cool gray
 
-Golden Example 2:
-### DESIGN DIRECTION
-A premium precision-warm program visual for Coach Sihame. Theme: integration of opposites, the healing compass.
+━━━ STEP 3 — OUTPUT ━━━
+Return ONLY valid JSON with exactly 4 keys. No markdown fences. No extra text. No ### headers.
 
-VISUAL COMPOSITION: A warm intimate still-life shot from above on a warm cream linen surface. In the absolute center: a thin elegant compass needle, crafted from polished warm greige metal with a muted champagne gold tip. The surface beneath the needle transitions from left to right — on the left a soft muted terracotta zone (tension, chaos, the knotted self) and on the right a muted warm sage green zone (healing, calm, integration). The color boundary beneath the needle is seamless and gradient-soft, not sharp. Warm overhead studio lighting, soft deep shadows. Wide margins, large editorial negative space in the upper half for text.
-
-### COLOR PALETTE
-Warm comforting earth tones. Background: warm cream linen. Left zone: muted terracotta/burnt orange earthy sienna. Right zone: muted warm sage green, earthy olive-tinted, not teal. Compass accent: muted champagne gold, warm antique gold, not bright metallic. Neutral: warm greige/taupe. Do NOT use cold teal, blue, pure white, or cool gray.
-
-Golden Example 3:
-### DESIGN DIRECTION
-A premium editorial visual for Coach Sihame. Theme: the nervous system caught between betrayal and healing.
-
-VISUAL COMPOSITION: A warm still-life shot from above on a warm cream linen surface. In the center: a delicate network of translucent ivory silk threads (representing the nervous system). On the left side, threads are slightly knotted and tangled — rendered in warm terracotta and deep greige tones. Moving right, the threads untangle, lighten, and glow gently from within. A small perfect ivory-colored sphere rests at the center of the untangled zone. Warm, soft overhead lighting. Photorealistic silk and linen texture. Large negative space in the upper third for text.
-
-### COLOR PALETTE
-Warm comforting earth tones. Background: warm cream linen. Left tension zone: muted terracotta/burnt orange earthy sienna. Right healing zone: muted warm sage green, earthy olive-tinted, not teal. Center glow: muted champagne gold, warm antique gold, not bright metallic. Do NOT use cold teal, blue, pure white, or cool gray.
-
-Rules:
-- Give ONLY the 3 values in STRICT JSON exactly: {{"title": "...", "support": "...", "symbol": "..."}}
-- Do not include markdown fences.
-- Use \\n for line breaks inside the symbol string so it remains valid JSON.
+KEY RULES:
+• "title": Most powerful phrase from the post. Max 8 Arabic words.
+• "support": One supporting sentence. Max 15 Arabic words. Direct and grounded.
+• "symbol": Full image generation prompt as clean flowing English prose. NO markdown headers (absolutely no ###, no "VISUAL COMPOSITION:", no "COLOR PALETTE:" labels). Write it as one or two descriptive paragraphs: what objects are placed where, what colors, what lighting, what texture. This text goes directly into an AI image generator — be specific and visual.
+• "concept_ar": 1 to 2 short Arabic sentences describing what the image will show and why it connects to the post. Written for a non-technical Arabic-speaking person. Warm and simple. No English words. No technical terms.
+• Use \\n for line breaks inside strings to keep valid JSON.
+• JSON format exactly: {{"title": "...", "support": "...", "symbol": "...", "concept_ar": "..."}}
 
 APPROVED POST:
 {approved_text}"""
@@ -164,10 +160,10 @@ Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Han
             return json.loads(cleaned[start : end + 1])
 
     async def extract_text_blocks(self, approved_text: str) -> Dict[str, str]:
-        """Use LLM to extract headline, body, and visual concept from approved text.
+        """Use LLM to extract headline, body, visual concept, and Arabic summary from approved text.
 
         Returns:
-            dict with keys 'title', 'support', and 'symbol'
+            dict with keys 'title', 'support', 'symbol', and 'concept_ar'
         """
         prompt = self.EXTRACTION_PROMPT.format(approved_text=approved_text)
         try:
@@ -177,6 +173,7 @@ Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Han
             title = result.get("title", "").strip()
             support = result.get("support", "").strip()
             symbol = result.get("symbol", "").strip()
+            concept_ar = result.get("concept_ar", "").strip()
             if not title or not support:
                 raise DesignerServiceError("LLM returned empty title or support text.")
             if not symbol:
@@ -186,11 +183,13 @@ Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Han
                     list(result.keys()),
                     raw_text[:800],
                 )
+            if not concept_ar:
+                logger.warning("[extract_text_blocks] concept_ar field is empty. LLM keys: %s", list(result.keys()))
             logger.debug(
-                "[extract_text_blocks] extracted — title=%r, support=%r, symbol_len=%d",
-                title, support, len(symbol),
+                "[extract_text_blocks] extracted — title=%r, support=%r, symbol_len=%d, concept_ar=%r",
+                title, support, len(symbol), concept_ar[:80] if concept_ar else "",
             )
-            return {"title": title, "support": support, "symbol": symbol}
+            return {"title": title, "support": support, "symbol": symbol, "concept_ar": concept_ar}
         except ModelAdapterError as e:
             raise DesignerServiceError(f"Text extraction failed: {e}") from e
 

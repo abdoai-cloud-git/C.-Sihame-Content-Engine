@@ -67,6 +67,7 @@ function MainWorkspace() {
   const [designTitle, setDesignTitle] = useState('');
   const [designSupport, setDesignSupport] = useState('');
   const [designSymbol, setDesignSymbol] = useState('');
+  const [designConceptAr, setDesignConceptAr] = useState('');
   const [designImageUrl, setDesignImageUrl] = useState('');
   const [designLoading, setDesignLoading] = useState(false);
   const [extractLoading, setExtractLoading] = useState(false);
@@ -314,6 +315,7 @@ function MainWorkspace() {
     setDesignTitle('');
     setDesignSupport('');
     setDesignSymbol('');
+    setDesignConceptAr('');
     setDesignImageUrl('');
   };
 
@@ -353,6 +355,7 @@ function MainWorkspace() {
       setDesignTitle(data.design_title);
       setDesignSupport(data.design_support);
       setDesignSymbol(data.design_symbol || '');
+      setDesignConceptAr(data.design_concept_ar || '');
     } catch (err) {
       alert((err as Error).message);
     } finally {
@@ -773,16 +776,18 @@ function MainWorkspace() {
                         dir="rtl"
                       />
                     </div>
+                    {/* Visual Concept Card — shown in clear Arabic for the coach */}
                     <div>
-                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">الوصف البصري (Visual Composition)</label>
-                      <textarea
-                        value={designSymbol}
-                        onChange={(e) => setDesignSymbol(e.target.value)}
-                        className="w-full p-3 rounded-xl border border-[#C67B5C]/20 bg-white focus:ring-2 focus:ring-[#D4AF37] focus:outline-none text-sm text-right resize-none h-32 leading-relaxed"
-                        placeholder="مثال: A warm intimate still-life shot from above..."
-                        disabled={designLoading}
-                        dir="ltr"
-                      />
+                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">الفكرة البصرية 🖼️</label>
+                      {designConceptAr ? (
+                        <div className="w-full p-3 rounded-xl border border-[#D4AF37]/30 bg-[#FDF8F0] text-sm text-right leading-relaxed text-[#3d2b1a]" dir="rtl">
+                          {designConceptAr}
+                        </div>
+                      ) : (
+                        <div className="w-full p-3 rounded-xl border border-dashed border-[#C67B5C]/20 bg-white/50 text-sm text-right text-gray-400" dir="rtl">
+                          سيتم عرض وصف الصورة هنا بعد الاستخراج...
+                        </div>
+                      )}
                     </div>
 
                     {/* Generate Image Button */}

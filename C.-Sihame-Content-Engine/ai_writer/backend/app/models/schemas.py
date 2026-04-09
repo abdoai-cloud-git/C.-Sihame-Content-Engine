@@ -172,6 +172,7 @@ class DesignExtractResponse(BaseModel):
     design_title: str = Field(..., description="Extracted headline for the image")
     design_support: str = Field(..., description="Extracted body/support text for the image")
     design_symbol: str = Field(..., description="Extracted symbolic element for the image")
+    design_concept_ar: str = Field(default="", description="Brief Arabic description of the visual concept for the coach")
 
 
 class DesignGenerateRequest(BaseModel):

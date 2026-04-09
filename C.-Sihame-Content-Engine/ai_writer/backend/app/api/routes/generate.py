@@ -205,7 +205,9 @@ async def extract_design_text(
         design_title=text_blocks["title"],
         design_support=text_blocks["support"],
         design_symbol=text_blocks.get("symbol", ""),
+        design_concept_ar=text_blocks.get("concept_ar", ""),
     )
+
 
 
 @router.post("/design/generate", response_model=DesignGenerateResponse)
