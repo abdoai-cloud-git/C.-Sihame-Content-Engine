@@ -755,7 +755,7 @@ function MainWorkspace() {
                 {(designTitle || designSupport) && (
                   <div className="space-y-3 animate-slide-up">
                     <div>
-                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">العنوان (Headline)</label>
+                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">العنوان</label>
                       <input
                         type="text"
                         value={designTitle}
@@ -767,7 +767,7 @@ function MainWorkspace() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">النص الداعم (Body)</label>
+                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">النص الداعم</label>
                       <textarea
                         value={designSupport}
                         onChange={(e) => setDesignSupport(e.target.value)}
