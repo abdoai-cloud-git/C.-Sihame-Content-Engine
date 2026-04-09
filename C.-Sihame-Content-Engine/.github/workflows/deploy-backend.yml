@@ -12,6 +12,7 @@ on:
       - 'feedback_log.md'
       - 'c.siham-designer-main/**'
       - '.github/workflows/**'
+  workflow_dispatch:   # ← allows manual trigger from GitHub UI
 
 jobs:
   deploy:
@@ -26,7 +27,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Determine service name
+      - name: Determine service name and CORS
         id: vars
         env:
           CORS_PROD: ${{ secrets.CORS_ORIGINS_PROD }}
@@ -39,6 +40,7 @@ jobs:
             echo "SERVICE=sihame-backend-dev" >> $GITHUB_OUTPUT
             echo "CORS=$CORS_DEV" >> $GITHUB_OUTPUT
           fi
+          echo "Branch: ${{ github.ref_name }} → service: $(cat $GITHUB_OUTPUT | grep SERVICE | cut -d= -f2)"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -56,4 +58,5 @@ jobs:
             --project ${{ env.PROJECT_ID }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars="KIE_API_KEY=${{ secrets.KIE_API_KEY }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_DRAFTS_TABLE=drafts,STORAGE_BACKEND=supabase,CORS_ORIGINS=${{ steps.vars.outputs.CORS }}"
+            --set-env-vars="KIE_API_KEY=${{ secrets.KIE_API_KEY }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }},SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }},SUPABASE_DRAFTS_TABLE=drafts,STORAGE_BACKEND=supabase,CORS_ORIGINS=${{ steps.vars.outputs.CORS }}"
+          echo "✅ Deployed ${{ steps.vars.outputs.SERVICE }} successfully."
