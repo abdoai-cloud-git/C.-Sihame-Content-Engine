@@ -31,24 +31,26 @@ Identify:
 • The transformation arc: what state is the reader moving FROM → TO?
 
 ━━━ STEP 2 — DESIGN A SPECIFIC VISUAL ━━━
-Design a cinematic still-life from above on a warm cream linen surface.
-Choose objects that PHYSICALLY embody THIS post's exact theme.
+Design a cinematic visual that perfectly matches the post's depth.
+You have the freedom to choose the visual modality that best delivers the meaning:
+- Modality A: Photorealistic Still-Life (features tactile physical objects like ceramics, stones, linen, silk, botanical elements).
+- Modality B: Abstract & Atmospheric (features sensory textures, flowing light, fluid lines, water ripples, scattered forms, soft horizons).
 
-Object selection examples (use these as style guides only — invent new ones that fit the post):
-• Post about body armor / defense → twisted wire mesh on the left, slowly unwinding into silk threads on the right
-• Post about grief / loss → a half-wilted dried rose on the left, a fresh herb sprig on the right
-• Post about breath / expansion → a tightly knotted rope on the left, flowing ribbon on the right
-• Post about nervous system → tangled silk threads on the left, gently arranged on the right
-• Post about shame / hiding → dense shadow cloth on the left, warm lamp light on the right
-• Post about control / resistance → a rigid angular ceramic piece on the left, a soft curved bowl on the right
-• Post about body listening / awareness → a closed fist sculpted in clay on the left, open palm in sage clay on the right
+Choose the modality and forms that PHYSICALLY embody THIS post's exact theme.
 
-MANDATORY BRAND RULES:
+Metaphor examples (use these as style guides only — invent new ones that fit the post):
+• Tension vs Release → tangled wire turning into smooth silk threads, OR a dense knot opening into vast space
+• Mindful vs Mind-full → turbulent dark water vs a smooth, quiet ripple
+• Inner Parts / Maestro → scattered shapes gathering gently around a warm glowing center
+• Control vs Surrender → a rigid cracked stone leaning on a soft warm fabric, OR rigid architecture softening into fluid light
+• Shame vs Safety → dense shadow cloth on the left, warm inviting lamp light on the right
+
+MANDATORY BRAND RULES (Applies to all modalities):
 • Left (FROM state — tension/chaos): muted terracotta / burnt sienna tones
 • Right (TO state — healing/release): warm sage green tones
 • Center (the turning point / anchor): muted champagne gold glow
-• Surface always: warm cream linen
-• Lighting: soft warm overhead light, deep shadows, large negative space in upper third for text
+• Background/Surface: warm cream / soft parchment (#F5EDE0)
+• Lighting: soft warm cinematic light, deep shadows, large negative space in upper third for text
 • NEVER use cold teal, blue, pure white, or cool gray
 
 ━━━ STEP 3 — OUTPUT ━━━
@@ -71,12 +73,13 @@ A coach has described what she wants the image to show, in Arabic:
 "{concept_ar}"
 
 Expand this into a detailed English image generation prompt. Follow these mandatory brand rules:
-• Scene: cinematic still-life shot from above on a warm cream linen surface
+• Visual Modality: Based on the coach's description, you can choose "Photorealistic Still-Life" (tactile objects like pottery/fabric) OR "Abstract/Atmospheric" (sensory textures, flowing light, fluid water, vast spaces). Choose what delivers the meaning best.
 • Left side (FROM state — tension/chaos): muted terracotta / burnt sienna tones
 • Right side (TO state — healing/release): warm sage green tones
 • Center (the turning point): muted champagne gold glow
-• Lighting: soft warm overhead light, deep shadows, large negative space in upper third for text
-• Style: warm, intimate editorial. Photorealistic silk, linen, ceramic, botanical textures.
+• Background/Space: warm cream (#F5EDE0)
+• Lighting: soft warm cinematic light, deep shadows, large negative space in upper third for text
+• Style: warm, elegant, highly tactile. Use photorealistic textures suited to your modality (e.g., linen/ceramic for still-life; flowing water/light rays for atmospheric).
 • NEVER use cold teal, blue, pure white, or cool gray
 
 If the coach's description doesn't mention specific objects, invent objects that physically represent her concept while following the brand rules above.
