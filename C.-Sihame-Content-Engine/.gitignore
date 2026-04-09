@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.env
+.venv
+venv/
+env/
+*.log
+
+# Local scratch / test scripts (never commit)
+output.txt
+prompt_output.txt
+**/scratch/
+**/check_*.py
+**/test_*.py
+**/run_sql.py
+
+# Node / Next.js
+node_modules/
+.next/
+.vercel/
+.env.local
+.env.production
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
