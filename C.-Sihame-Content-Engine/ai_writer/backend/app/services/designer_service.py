@@ -46,10 +46,12 @@ Metaphor examples (use these as style guides only — invent new ones that fit t
 • Shame vs Safety → dense shadow cloth on the left, warm inviting lamp light on the right
 
 MANDATORY BRAND RULES (Applies to all modalities):
-• Left (FROM state — tension/chaos): muted terracotta / burnt sienna tones
-• Right (TO state — healing/release): warm sage green tones
-• Center (the turning point / anchor): muted champagne gold glow
-• Background/Surface: warm cream / soft parchment (#F5EDE0)
+• Color Palette:
+  - Left (FROM state — tension/chaos): muted terracotta / burnt sienna tones
+  - Right (TO state — healing/release): warm sage green tones
+  - Center (the turning point / anchor): muted champagne gold glow
+  - Background/Surface: warm cream / soft parchment (#F5EDE0)
+• CRITICAL: Do NOT just default to using physical stones to show these colors. You must creatively apply these colors to whatever material or metaphor you chose (e.g. terracotta-colored silk, sage-tinted water ripples, soft sage gradients, glowing gold light, burnt sienna shadows). The objects and materials you choose MUST vary widely across posts.
 • Lighting: soft warm cinematic light, deep shadows, large negative space in upper third for text
 • NEVER use cold teal, blue, pure white, or cool gray
 
@@ -74,10 +76,12 @@ A coach has described what she wants the image to show, in Arabic:
 
 Expand this into a detailed English image generation prompt. Follow these mandatory brand rules:
 • Visual Modality: Based on the coach's description, you can choose "Photorealistic Still-Life" (tactile objects like pottery/fabric) OR "Abstract/Atmospheric" (sensory textures, flowing light, fluid water, vast spaces). Choose what delivers the meaning best.
-• Left side (FROM state — tension/chaos): muted terracotta / burnt sienna tones
-• Right side (TO state — healing/release): warm sage green tones
-• Center (the turning point): muted champagne gold glow
-• Background/Space: warm cream (#F5EDE0)
+• Brand Color Palette:
+  - Left side (FROM state — tension/chaos): muted terracotta / burnt sienna tones
+  - Right side (TO state — healing/release): warm sage green tones
+  - Center (the turning point): muted champagne gold glow
+  - Background/Space: warm cream (#F5EDE0)
+• CRITICAL: Do NOT simply default to generating "red and green stones". Apply these brand colors creatively to the materials you chose (e.g. terracotta fabric, sage water, sage-tinted glass, glowing gold light, burnt sienna shadows). Vary the materials widely.
 • Lighting: soft warm cinematic light, deep shadows, large negative space in upper third for text
 • Style: warm, elegant, highly tactile. Use photorealistic textures suited to your modality (e.g., linen/ceramic for still-life; flowing water/light rays for atmospheric).
 • NEVER use cold teal, blue, pure white, or cool gray
