@@ -131,8 +131,8 @@ Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Han
     def __init__(self, llm_adapter: GeminiChatAdapter | None = None) -> None:
         self.llm_adapter = llm_adapter or GeminiChatAdapter(
             api_key=settings.KIE_API_KEY,
-            base_url=settings.KIE_GEMINI_FLASH_BASE_URL,
-            model_name=settings.MODEL_EDITOR,
+            base_url=settings.KIE_GEMINI_PRO_BASE_URL,
+            model_name=settings.MODEL_PRIMARY,
         )
 
     @staticmethod
