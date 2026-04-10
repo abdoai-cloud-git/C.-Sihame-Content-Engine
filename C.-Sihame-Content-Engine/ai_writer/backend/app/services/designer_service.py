@@ -123,9 +123,10 @@ PAPER: All typography rendered as real calligraphy ink on soft, textured cotton 
 Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Handcrafted physical reality, not machine-generated. 8K resolution, photorealistic linen and silk texture."""
 
     # Polling configuration
-    POLL_INITIAL_DELAY: float = 5.0
-    POLL_INTERVAL: float = 3.0
-    POLL_MAX_ATTEMPTS: int = 40  # ~2 minutes total
+    # Kie.ai image generation takes 250-300s in practice; budget 6 minutes to be safe.
+    POLL_INITIAL_DELAY: float = 10.0   # wait a bit longer before first check
+    POLL_INTERVAL: float = 6.0         # check every 6 seconds
+    POLL_MAX_ATTEMPTS: int = 60        # 60 × 6s = 360s (~6 minutes)
 
     def __init__(self, llm_adapter: GeminiChatAdapter | None = None) -> None:
         self.llm_adapter = llm_adapter or GeminiChatAdapter(
