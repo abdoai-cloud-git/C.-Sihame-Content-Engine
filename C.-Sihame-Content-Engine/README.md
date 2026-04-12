@@ -23,7 +23,7 @@ We use a separate **Production** and **Development** environment to ensure stabl
 ### 1. Reject & Regenerate Loop
 Located in the **Review** stage. Users can provide feedback on a generated draft.
 - **Reject**: Transition draft to `REJECTED` status and store a `rejection_reason`.
-- **Regenerate**: Triggers a fresh generation attempt using the initial prompt + the rejection feedback.
+- **Regenerate**: Triggers a fresh generation attempt using the stored draft context (`raw_input`, `post_type`, `platform`) plus the rejection feedback as an active correction constraint.
 
 ## 🛠️ Local Development
 

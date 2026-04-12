@@ -43,6 +43,7 @@ class ContentWorkflowService:
             user_raw_input=request.raw_input,
             post_type=request.post_type,
             platform=request.platform,
+            rejection_feedback=request.rejection_feedback,
         )
         result = await self.text_router.generate_primary_draft(assembled.prompt)
         now = datetime.now(timezone.utc)
