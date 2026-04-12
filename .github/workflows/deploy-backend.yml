@@ -11,6 +11,11 @@ jobs:
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
+    # Bind the job to the matching GitHub Environment so environment-scoped secrets become available.
+    # Expected setup:
+    # - dev  -> Preview
+    # - main -> Production
+    environment: ${{ github.ref_name == 'main' && 'Production' || 'Preview' }}
 
     env:
       PROJECT_ID: c-sihame-atamnia
