@@ -28,6 +28,10 @@ class GenerateDraftRequest(BaseModel):
     raw_input: str = Field(..., min_length=1, description="The raw voice note or text from Coach Sihame")
     post_type: str = Field(default="Reflection", description="The intended post type")
     platform: str = Field(default="general", description="Target platform (telegram vs instagram vs general)")
+    rejection_feedback: Optional[str] = Field(
+        default=None,
+        description="Optional rejection feedback to guide regeneration away from the previous failure.",
+    )
 
 
 class DraftContent(BaseModel):
@@ -104,7 +108,10 @@ class ReviseDraftResponse(PostDraftResponse):
 
 class ApproveTextRequest(BaseModel):
     draft_id: str = Field(..., description="The draft id being approved")
-    approved_text: str = Field(..., min_length=1, description="The final text to be approved")
+    approved_text: Optional[str] = Field(
+        default=None,
+        description="Optional final text override. If omitted, the backend assembles the approved post from the current structured draft.",
+    )
 
 
 class ApproveTextResponse(BaseModel):

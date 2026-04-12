@@ -132,10 +132,29 @@ class TextModelRouter:
                     f"Primary writer failed: {primary_error}. Secondary writer failed: {secondary_error}."
                 ) from secondary_error
 
-    async def revise_draft(self, current_draft: Dict[str, str], instruction: str) -> DraftGenerationResult:
+    async def revise_draft(
+        self,
+        current_draft: Dict[str, str],
+        instruction: str,
+        *,
+        post_type: str,
+        platform: str,
+        voice_route: str,
+        route_note: str,
+    ) -> DraftGenerationResult:
         prompt = f"""
 You are the PRD-aligned worker/editor for Coach Sihame.
-Revise the structured draft below exactly according to the instruction while preserving the same schema.
+Revise the structured draft below according to the instruction while preserving the same schema and the same brand/methodology discipline.
+
+ACTIVE CONTEXT
+- Post type: {post_type}
+- Platform: {platform}
+- Voice route: {voice_route}
+- Route note: {route_note}
+- Preserve somatic precision, clinical safety, and the intended Coach Sihame register.
+- Do not flatten the text into generic wellness language.
+- Keep the distinction between temporary soothing and deeper regulation intact when relevant.
+
 Return STRICT JSON with exactly these keys: "angle", "hook", "body", "cta", "safety_flags".
 Do not include markdown fences.
 
@@ -147,13 +166,29 @@ CURRENT DRAFT:
 """.strip()
         return await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)
 
-    async def adapt_platform_draft(self, approved_text: str, platform: str) -> DraftGenerationResult:
+    async def adapt_platform_draft(
+        self,
+        approved_text: str,
+        platform: str,
+        *,
+        post_type: str,
+        voice_route: str,
+        route_note: str,
+    ) -> DraftGenerationResult:
         prompt = f"""
 You are the PRD-aligned worker/editor for Coach Sihame.
-Your task is to take this approved post and specifically adapt its formatting, structure, and spacing for the {platform} platform.
-Do NOT change the core meaning or the voice. Adjust only paragraph lengths, text formatting constraints, use of emojis, or hashtags appropriate for {platform}.
-Return EXACTLY the adapted text inside the "body" field of the JSON. For "angle", "hook", "cta", and "safety_flags", provide empty strings.
+Your task is to adapt this approved post for the {platform} platform without changing its core meaning, route, or methodology integrity.
 
+ACTIVE CONTEXT
+- Original post type: {post_type}
+- Voice route: {voice_route}
+- Route note: {route_note}
+- Preserve the Coach's calm, grounded voice and methodological precision.
+- Keep the content structure intact unless platform formatting requires compression or spacing changes.
+- Do not rewrite this into generic promotional or generic soft-healing language.
+- Adjust only what is necessary for {platform}: spacing, paragraph length, visual scannability, hashtags, and platform-native formatting.
+
+Return EXACTLY the adapted text inside the "body" field of the JSON. For "angle", "hook", "cta", and "safety_flags", provide empty strings.
 Return STRICT JSON with exactly these keys: "angle", "hook", "body", "cta", "safety_flags".
 Do not include markdown fences.
 

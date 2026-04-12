@@ -38,11 +38,24 @@ class ContentWorkflowService:
         self.text_router = text_router
         self.draft_repository = draft_repository
 
+    @staticmethod
+    def _assemble_post_text(*parts: str | None) -> str:
+        return "\n\n".join(part.strip() for part in parts if part and part.strip())
+
+    @staticmethod
+    def _get_route_context(draft: StoredDraft) -> tuple[str, str]:
+        metadata = draft.routing_metadata or {}
+        voice_route = str(metadata.get("voice_route", "methodology"))
+        notes = metadata.get("notes") or []
+        route_note = notes[0] if notes else "Respect the stored route and methodology constraints."
+        return voice_route, route_note
+
     async def generate_draft(self, request: GenerateDraftRequest) -> PostDraftResponse:
         assembled = self.context_builder.build_payload(
             user_raw_input=request.raw_input,
             post_type=request.post_type,
             platform=request.platform,
+            rejection_feedback=request.rejection_feedback,
         )
         result = await self.text_router.generate_primary_draft(assembled.prompt)
         now = datetime.now(timezone.utc)
@@ -69,6 +82,7 @@ class ContentWorkflowService:
         draft = await self.draft_repository.get(request.draft_id)
         if draft.status == PostStatus.APPROVED_TEXT:
             raise ValueError(f"Draft {draft.draft_id} is already approved and cannot be revised.")
+        voice_route, route_note = self._get_route_context(draft)
         revised = await self.text_router.revise_draft(
             current_draft={
                 "angle": draft.angle,
@@ -78,6 +92,10 @@ class ContentWorkflowService:
                 "safety_flags": draft.safety_flags,
             },
             instruction=request.edit_instruction,
+            post_type=draft.post_type,
+            platform=draft.platform,
+            voice_route=voice_route,
+            route_note=route_note,
         )
         revision = RevisionEntry(
             instruction=request.edit_instruction,
@@ -112,7 +130,12 @@ class ContentWorkflowService:
         draft = await self.draft_repository.get(request.draft_id)
         if draft.status not in {PostStatus.DRAFT_GENERATED, PostStatus.UNDER_REVIEW}:
             raise ValueError(f"Draft {draft.draft_id} cannot transition from {draft.status}.")
-        draft.approved_text = request.approved_text
+        approved_text = (request.approved_text or "").strip()
+        if not approved_text:
+            approved_text = self._assemble_post_text(draft.hook, draft.body, draft.cta)
+        if not approved_text:
+            raise ValueError(f"Draft {draft.draft_id} has no content to approve.")
+        draft.approved_text = approved_text
         draft.status = PostStatus.APPROVED_TEXT
         draft.updated_at = datetime.now(timezone.utc)
         await self.draft_repository.update(draft)
@@ -169,11 +192,19 @@ class ContentWorkflowService:
         draft = await self.draft_repository.get(request.draft_id)
         if draft.status != PostStatus.APPROVED_TEXT:
             raise ValueError(f"Draft {draft.draft_id} must be approved before adapting for a platform.")
-        if not draft.approved_text:
+        approved_source_text = (draft.approved_text or "").strip() or self._assemble_post_text(draft.hook, draft.body, draft.cta)
+        if not approved_source_text:
             raise ValueError(f"Draft {draft.draft_id} is missing approved text.")
-        
+        voice_route, route_note = self._get_route_context(draft)
+
         async def _adapt(platform: str):
-            result = await self.text_router.adapt_platform_draft(draft.approved_text, platform)
+            result = await self.text_router.adapt_platform_draft(
+                approved_source_text,
+                platform,
+                post_type=draft.post_type,
+                voice_route=voice_route,
+                route_note=route_note,
+            )
             return platform, result
         
         results = await asyncio.gather(*[_adapt(p) for p in request.target_platforms])

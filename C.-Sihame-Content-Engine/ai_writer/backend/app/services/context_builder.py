@@ -117,7 +117,13 @@ class DynamicContextBuilder:
             rendered.append("")
         return "\n".join(rendered)
 
-    def build_payload(self, user_raw_input: str, post_type: str, platform: str) -> ContextAssembly:
+    def build_payload(
+        self,
+        user_raw_input: str,
+        post_type: str,
+        platform: str,
+        rejection_feedback: str | None = None,
+    ) -> ContextAssembly:
         route = self._resolve_route(post_type)
         core_files = self.CORE_CONSTITUTION_FILES.copy()
 
@@ -143,6 +149,19 @@ class DynamicContextBuilder:
             VoiceRoute.RITUAL: "Use the ritual register. Respect the recurring 2023 ritual templates and keep the tone devotional, contained, and steady.",
         }
 
+        regeneration_section = ""
+        if rejection_feedback and rejection_feedback.strip():
+            regeneration_section = f"""
+=========================================
+REGENERATION FEEDBACK
+=========================================
+The previous draft was rejected. You must actively correct for this feedback and avoid repeating the same failure.
+
+REJECTION FEEDBACK:
+"{rejection_feedback.strip()}"
+=========================================
+"""
+
         prompt = f"""
 {core_section}
 
@@ -160,6 +179,7 @@ EXECUTION POLICY
 - Platform target: {platform}
 - Post type: {post_type}
 - Clinical and output boundaries always override style.
+- If regeneration feedback is present, treat it as an active correction constraint.
 - Return the response STRICTLY as a JSON object with exactly these keys:
   "angle", "hook", "body", "cta", "safety_flags"
 - Do not include markdown fences.
@@ -172,7 +192,8 @@ The Coach has provided the following raw input. Generate one PRD-aligned structu
 
 RAW INPUT:
 "{user_raw_input}"
-=========================================
+
+{regeneration_section}
 """.strip()
 
         injected_files = [filename for _, filename in self.CORE_CONSTITUTION_FILES + self.ROUTE_TO_FILES[route]]

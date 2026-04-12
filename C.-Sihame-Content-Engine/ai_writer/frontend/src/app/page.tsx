@@ -91,6 +91,30 @@ function MainWorkspace() {
     queryClient.invalidateQueries({ queryKey: ["history"] });
   };
 
+  const buildPostText = (content: {
+    approved_text?: string | null;
+    hook?: string | null;
+    body?: string | null;
+    cta?: string | null;
+  }) => {
+    const approved = content.approved_text?.trim();
+    if (approved) return approved;
+
+    return [content.hook, content.body, content.cta]
+      .map((s) => s?.trim())
+      .filter(Boolean)
+      .join("\n\n");
+  };
+
+  const parseApiError = async (response: Response, fallbackMessage: string) => {
+    try {
+      const errorData = await response.json();
+      return errorData.detail || fallbackMessage;
+    } catch {
+      return fallbackMessage;
+    }
+  };
+
   const loadDraft = async (id: string) => {
     setIsLoadingDraft(true);
     setError("");
@@ -107,6 +131,20 @@ function MainWorkspace() {
       const data = await res.json();
       setDraft(data);
       setDraftId(id);
+      setRawInput(data.raw_input || "");
+      setPostType(data.post_type || "reflection");
+      setEditInstruction("");
+      setRejectReason("");
+      setShowRejectInput(false);
+      setAdaptResults({});
+      setAdaptPlatforms([]);
+      setCopiedPlatform(null);
+      setMainCopySuccess(false);
+      setDesignTitle(data.design_title || "");
+      setDesignSupport(data.design_support || "");
+      setDesignSymbol(data.design_symbol || "");
+      setDesignConceptAr("");
+      setDesignImageUrl(data.design_image_url || "");
       
       const currentStatus = data.status || "";
       if (currentStatus === "approved_text" || currentStatus === "approved") {
@@ -123,12 +161,19 @@ function MainWorkspace() {
     }
   };
 
-  // 1. Generate new draft
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!rawInput.trim()) {
-      setError("الرجاء كتابة الفكرة أولاً");
-      return;
+  const generateDraft = async (options?: {
+    rawInput?: string;
+    postType?: string;
+    platform?: string;
+    rejectionFeedback?: string;
+  }) => {
+    const nextRawInput = options?.rawInput ?? rawInput;
+    const nextPostType = options?.postType ?? postType;
+    const nextPlatform = options?.platform ?? draft?.platform ?? "general";
+    const nextRejectionFeedback = options?.rejectionFeedback?.trim() || undefined;
+
+    if (!nextRawInput.trim()) {
+      throw new Error("الرجاء كتابة الفكرة أولاً");
     }
 
     setIsGenerating(true);
@@ -137,35 +182,48 @@ function MainWorkspace() {
     try {
       const apiUrl = getApiBaseUrl();
       if (!apiUrl) {
-        setError("API URL is not configured. Please check environment variables.");
-        setIsGenerating(false);
-        return;
+        throw new Error("API URL is not configured. Please check environment variables.");
       }
       const response = await fetch(`${apiUrl}/api/v1/content/draft`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          raw_input: rawInput,
-          post_type: postType,
+          raw_input: nextRawInput,
+          post_type: nextPostType,
+          platform: nextPlatform,
+          rejection_feedback: nextRejectionFeedback,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "حدث خطأ أثناء التوليد");
+        throw new Error(await parseApiError(response, "حدث خطأ أثناء التوليد"));
       }
 
       const data = await response.json();
+      setRawInput(nextRawInput);
+      setPostType(nextPostType);
       setDraft(data);
       setDraftId(data.draft_id);
       setAppState("review");
       setIsComposerExpanded(false);
       invalidateHistory();
+      return data;
     } catch (err) {
       console.error(err);
       setError((err as Error).message || "حدث خطأ غير متوقع.");
+      throw err;
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // 1. Generate new draft
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await generateDraft();
+    } catch {
+      // generateDraft already set UI error state
     }
   };
 
@@ -183,7 +241,7 @@ function MainWorkspace() {
           edit_instruction: editInstruction,
         }),
       });
-      if (!res.ok) throw new Error("فشل التعديل");
+      if (!res.ok) throw new Error(await parseApiError(res, "فشل التعديل"));
       const data = await res.json();
       setDraft({ ...draft, ...data });
       setEditInstruction("");
@@ -209,13 +267,13 @@ function MainWorkspace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft_id: draftId,
-          approved_text: draft.body,
+          approved_text: buildPostText(draft),
         }),
       });
-      if (!res.ok) throw new Error("فشل اعتماد النص");
+      if (!res.ok) throw new Error(await parseApiError(res, "فشل اعتماد النص"));
       
       const data = await res.json();
-      setDraft({ ...draft, status: data.status || "approved_text" });
+      setDraft({ ...draft, status: data.status || "approved_text", approved_text: data.approved_text });
       setAppState("approved");
       invalidateHistory();
     } catch (err) {
@@ -229,8 +287,8 @@ function MainWorkspace() {
    * 3b. Reject and Regenerate
    * The core of the feedback loop.
    * 1. Calls the /reject endpoint to mark the current draft as REJECTED and store the reason.
-   * 2. Immediately triggers a fresh handleGenerate() attempt using the original user input.
-   * This effectively 'recycles' the context but aims for a better result based on the negative signal.
+   * 2. Immediately triggers a fresh generation attempt using the stored draft context.
+   * 3. Passes the rejection reason back into generation as an active correction constraint.
    */
   const handleRejectAndRegenerate = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
@@ -247,17 +305,31 @@ function MainWorkspace() {
           reason: rejectReason.trim() || undefined,
         }),
       });
-      if (!res.ok) throw new Error("فشل رفض النص");
+      if (!res.ok) throw new Error(await parseApiError(res, "فشل رفض النص"));
 
-      // Reset UI reject state
+      const feedback = rejectReason.trim();
+
+      // Reset UI reject state before regeneration starts
       setRejectReason("");
       setShowRejectInput(false);
 
-      // Now generate a new draft explicitly using the existing rawInput and postType
-      await handleGenerate(e);
+      // Regenerate from the stored draft context, not from whatever local composer state happens to be left.
+      try {
+        await generateDraft({
+          rawInput: draft.raw_input,
+          postType: draft.post_type,
+          platform: draft.platform,
+          rejectionFeedback: feedback,
+        });
+      } catch (regenerationError) {
+        setDraft({ ...draft, status: "rejected" });
+        setAppState("review");
+        setError(`تم رفض المسودة لكن إعادة التوليد فشلت: ${(regenerationError as Error).message}`);
+      }
     } catch (err) {
       alert((err as Error).message);
-      setIsRejecting(false); // only resetting here because handleGenerate resets loading states
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -275,7 +347,7 @@ function MainWorkspace() {
           target_platforms: adaptPlatforms,
         }),
       });
-      if (!res.ok) throw new Error("فشل التكيف مع المنصة");
+      if (!res.ok) throw new Error(await parseApiError(res, "فشل التكيف مع المنصة"));
       const data = await res.json();
       setAdaptResults(data.results);
       setCopiedPlatform(null);
@@ -289,10 +361,7 @@ function MainWorkspace() {
 
   const handleCopyMainPost = () => {
     if (draft) {
-      const fullText = [draft.hook, draft.body, draft.cta]
-        .map((s: string) => s?.trim())
-        .filter(Boolean)
-        .join("\n\n");
+      const fullText = buildPostText(draft);
       navigator.clipboard.writeText(fullText);
       setMainCopySuccess(true);
       setTimeout(() => setMainCopySuccess(false), 2000);
@@ -311,6 +380,13 @@ function MainWorkspace() {
     setAppState("compose");
     setRawInput("");
     setAdaptResults({});
+    setAdaptPlatforms([]);
+    setCopiedPlatform(null);
+    setMainCopySuccess(false);
+    setEditInstruction("");
+    setRejectReason("");
+    setShowRejectInput(false);
+    setError("");
     setIsComposerExpanded(false);
     setDesignTitle('');
     setDesignSupport('');

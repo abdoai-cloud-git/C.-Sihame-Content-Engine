@@ -31,3 +31,13 @@ class DynamicContextBuilderTests(unittest.TestCase):
         self.assertEqual(assembled.routing_metadata.voice_route, VoiceRoute.RITUAL)
         self.assertIn("RITUAL_TEMPLATES_2023.md", assembled.routing_metadata.injected_files)
         self.assertIn("RITUAL_TEMPLATES_2023.md", assembled.routing_metadata.example_files)
+
+    def test_rejection_feedback_is_injected_for_regeneration(self) -> None:
+        assembled = self.builder.build_payload(
+            "Talk about inner fear.",
+            "Reflection",
+            "telegram",
+            rejection_feedback="Too generic and too fast.",
+        )
+        self.assertIn("REGENERATION FEEDBACK", assembled.prompt)
+        self.assertIn("Too generic and too fast.", assembled.prompt)
