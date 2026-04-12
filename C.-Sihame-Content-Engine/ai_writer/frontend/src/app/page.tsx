@@ -91,6 +91,30 @@ function MainWorkspace() {
     queryClient.invalidateQueries({ queryKey: ["history"] });
   };
 
+  const buildPostText = (content: {
+    approved_text?: string | null;
+    hook?: string | null;
+    body?: string | null;
+    cta?: string | null;
+  }) => {
+    const approved = content.approved_text?.trim();
+    if (approved) return approved;
+
+    return [content.hook, content.body, content.cta]
+      .map((s) => s?.trim())
+      .filter(Boolean)
+      .join("\n\n");
+  };
+
+  const parseApiError = async (response: Response, fallbackMessage: string) => {
+    try {
+      const errorData = await response.json();
+      return errorData.detail || fallbackMessage;
+    } catch {
+      return fallbackMessage;
+    }
+  };
+
   const loadDraft = async (id: string) => {
     setIsLoadingDraft(true);
     setError("");
@@ -109,6 +133,18 @@ function MainWorkspace() {
       setDraftId(id);
       setRawInput(data.raw_input || "");
       setPostType(data.post_type || "reflection");
+      setEditInstruction("");
+      setRejectReason("");
+      setShowRejectInput(false);
+      setAdaptResults({});
+      setAdaptPlatforms([]);
+      setCopiedPlatform(null);
+      setMainCopySuccess(false);
+      setDesignTitle(data.design_title || "");
+      setDesignSupport(data.design_support || "");
+      setDesignSymbol(data.design_symbol || "");
+      setDesignConceptAr("");
+      setDesignImageUrl(data.design_image_url || "");
       
       const currentStatus = data.status || "";
       if (currentStatus === "approved_text" || currentStatus === "approved") {
@@ -160,8 +196,7 @@ function MainWorkspace() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "حدث خطأ أثناء التوليد");
+        throw new Error(await parseApiError(response, "حدث خطأ أثناء التوليد"));
       }
 
       const data = await response.json();
@@ -206,7 +241,7 @@ function MainWorkspace() {
           edit_instruction: editInstruction,
         }),
       });
-      if (!res.ok) throw new Error("فشل التعديل");
+      if (!res.ok) throw new Error(await parseApiError(res, "فشل التعديل"));
       const data = await res.json();
       setDraft({ ...draft, ...data });
       setEditInstruction("");
@@ -232,13 +267,13 @@ function MainWorkspace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft_id: draftId,
-          approved_text: draft.body,
+          approved_text: buildPostText(draft),
         }),
       });
-      if (!res.ok) throw new Error("فشل اعتماد النص");
+      if (!res.ok) throw new Error(await parseApiError(res, "فشل اعتماد النص"));
       
       const data = await res.json();
-      setDraft({ ...draft, status: data.status || "approved_text" });
+      setDraft({ ...draft, status: data.status || "approved_text", approved_text: data.approved_text });
       setAppState("approved");
       invalidateHistory();
     } catch (err) {
@@ -270,7 +305,7 @@ function MainWorkspace() {
           reason: rejectReason.trim() || undefined,
         }),
       });
-      if (!res.ok) throw new Error("فشل رفض النص");
+      if (!res.ok) throw new Error(await parseApiError(res, "فشل رفض النص"));
 
       const feedback = rejectReason.trim();
 
@@ -279,12 +314,18 @@ function MainWorkspace() {
       setShowRejectInput(false);
 
       // Regenerate from the stored draft context, not from whatever local composer state happens to be left.
-      await generateDraft({
-        rawInput: draft.raw_input,
-        postType: draft.post_type,
-        platform: draft.platform,
-        rejectionFeedback: feedback,
-      });
+      try {
+        await generateDraft({
+          rawInput: draft.raw_input,
+          postType: draft.post_type,
+          platform: draft.platform,
+          rejectionFeedback: feedback,
+        });
+      } catch (regenerationError) {
+        setDraft({ ...draft, status: "rejected" });
+        setAppState("review");
+        setError(`تم رفض المسودة لكن إعادة التوليد فشلت: ${(regenerationError as Error).message}`);
+      }
     } catch (err) {
       alert((err as Error).message);
     } finally {
@@ -306,7 +347,7 @@ function MainWorkspace() {
           target_platforms: adaptPlatforms,
         }),
       });
-      if (!res.ok) throw new Error("فشل التكيف مع المنصة");
+      if (!res.ok) throw new Error(await parseApiError(res, "فشل التكيف مع المنصة"));
       const data = await res.json();
       setAdaptResults(data.results);
       setCopiedPlatform(null);
@@ -320,10 +361,7 @@ function MainWorkspace() {
 
   const handleCopyMainPost = () => {
     if (draft) {
-      const fullText = [draft.hook, draft.body, draft.cta]
-        .map((s: string) => s?.trim())
-        .filter(Boolean)
-        .join("\n\n");
+      const fullText = buildPostText(draft);
       navigator.clipboard.writeText(fullText);
       setMainCopySuccess(true);
       setTimeout(() => setMainCopySuccess(false), 2000);
@@ -342,6 +380,13 @@ function MainWorkspace() {
     setAppState("compose");
     setRawInput("");
     setAdaptResults({});
+    setAdaptPlatforms([]);
+    setCopiedPlatform(null);
+    setMainCopySuccess(false);
+    setEditInstruction("");
+    setRejectReason("");
+    setShowRejectInput(false);
+    setError("");
     setIsComposerExpanded(false);
     setDesignTitle('');
     setDesignSupport('');

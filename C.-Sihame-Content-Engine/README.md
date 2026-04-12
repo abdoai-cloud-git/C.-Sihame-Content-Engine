@@ -25,6 +25,10 @@ Located in the **Review** stage. Users can provide feedback on a generated draft
 - **Reject**: Transition draft to `REJECTED` status and store a `rejection_reason`.
 - **Regenerate**: Triggers a fresh generation attempt using the stored draft context (`raw_input`, `post_type`, `platform`) plus the rejection feedback as an active correction constraint.
 
+### 2. Approval & Platform Adaptation
+- **Approve**: The backend stores a canonical approved post. If the frontend does not provide a final override, the backend assembles the approved text from the structured draft (`hook + body + cta`).
+- **Adapt**: Platform adaptation runs on the canonical approved post and preserves route/methodology context instead of adapting a flattened body-only fragment.
+
 ## 🛠️ Local Development
 
 ### Backend

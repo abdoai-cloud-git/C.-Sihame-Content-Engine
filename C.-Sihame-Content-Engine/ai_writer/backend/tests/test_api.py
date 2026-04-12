@@ -11,6 +11,10 @@ from app.api.routes.generate import get_workflow_service
 
 
 class FakeTextRouter:
+    def __init__(self) -> None:
+        self.last_revise_kwargs = None
+        self.last_adapt_kwargs = None
+
     async def generate_primary_draft(self, prompt: str) -> DraftGenerationResult:
         return DraftGenerationResult(
             angle="somatic angle",
@@ -21,7 +25,8 @@ class FakeTextRouter:
             model_used=TextModel.GEMINI_3_1_PRO,
         )
 
-    async def revise_draft(self, current_draft, instruction: str) -> DraftGenerationResult:
+    async def revise_draft(self, current_draft, instruction: str, **kwargs) -> DraftGenerationResult:
+        self.last_revise_kwargs = kwargs
         return DraftGenerationResult(
             angle=current_draft["angle"],
             hook=current_draft["hook"],
@@ -31,13 +36,25 @@ class FakeTextRouter:
             model_used=TextModel.GEMINI_3_FLASH,
         )
 
+    async def adapt_platform_draft(self, approved_text: str, platform: str, **kwargs) -> DraftGenerationResult:
+        self.last_adapt_kwargs = {"approved_text": approved_text, "platform": platform, **kwargs}
+        return DraftGenerationResult(
+            angle="",
+            hook="",
+            body=f"adapted:{platform}:{approved_text}",
+            cta="",
+            safety_flags="",
+            model_used=TextModel.GEMINI_3_FLASH,
+        )
+
 
 class ApiWorkflowTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo = InMemoryDraftRepository()
+        self.router = FakeTextRouter()
         self.workflow = ContentWorkflowService(
             context_builder=DynamicContextBuilder(),
-            text_router=FakeTextRouter(),
+            text_router=self.router,
             draft_repository=self.repo,
         )
         app.dependency_overrides[get_workflow_service] = lambda: self.workflow
@@ -74,19 +91,31 @@ class ApiWorkflowTests(unittest.TestCase):
 
         approve_response = self.client.post(
             "/api/v1/content/approve-text",
-            json={"draft_id": draft_id, "approved_text": "final approved text"},
+            json={"draft_id": draft_id},
         )
         self.assertEqual(approve_response.status_code, 200)
         approved = approve_response.json()
         self.assertEqual(approved["status"], "approved_text")
-        self.assertEqual(approved["approved_text"], "final approved text")
+        self.assertEqual(approved["approved_text"], "soft hook\n\noriginal body | revised: Make it shorter\n\ngentle cta")
+
+        adapt_response = self.client.post(
+            "/api/v1/content/adapt",
+            json={"draft_id": draft_id, "target_platforms": ["instagram"]},
+        )
+        self.assertEqual(adapt_response.status_code, 200)
+        adapted = adapt_response.json()
+        self.assertIn("soft hook", adapted["results"]["instagram"])
+        self.assertEqual(self.router.last_adapt_kwargs["post_type"], "Reflection")
+        self.assertEqual(self.router.last_adapt_kwargs["voice_route"], "soul_2023")
 
         fetch_response = self.client.get(f"/api/v1/content/{draft_id}")
         self.assertEqual(fetch_response.status_code, 200)
         fetched = fetch_response.json()
-        self.assertEqual(fetched["approved_text"], "final approved text")
+        self.assertEqual(fetched["approved_text"], "soft hook\n\noriginal body | revised: Make it shorter\n\ngentle cta")
         self.assertEqual(len(fetched["revision_history"]), 1)
         self.assertEqual(fetched["routing_metadata"]["voice_route"], "soul_2023")
+        self.assertEqual(self.router.last_revise_kwargs["post_type"], "Reflection")
+        self.assertEqual(self.router.last_revise_kwargs["voice_route"], "soul_2023")
 
     def test_cannot_revise_after_approval(self) -> None:
         draft_id = self.client.post(

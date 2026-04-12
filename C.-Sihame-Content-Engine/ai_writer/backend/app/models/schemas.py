@@ -108,7 +108,10 @@ class ReviseDraftResponse(PostDraftResponse):
 
 class ApproveTextRequest(BaseModel):
     draft_id: str = Field(..., description="The draft id being approved")
-    approved_text: str = Field(..., min_length=1, description="The final text to be approved")
+    approved_text: Optional[str] = Field(
+        default=None,
+        description="Optional final text override. If omitted, the backend assembles the approved post from the current structured draft.",
+    )
 
 
 class ApproveTextResponse(BaseModel):
