@@ -46,7 +46,7 @@ jobs:
       - name: Deploy to Cloud Run (from source)
         run: |
           gcloud run deploy ${{ steps.vars.outputs.SERVICE }} \
-            --source ai_writer/ \
+            --source C.-Sihame-Content-Engine/ai_writer/ \
             --region ${{ env.REGION }} \
             --project ${{ env.PROJECT_ID }} \
             --platform managed \
