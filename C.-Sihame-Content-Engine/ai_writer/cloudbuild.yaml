@@ -38,6 +38,6 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 substitutions:
-  _SERVICE_NAME: ai-content-engine-backend
-  _REGION: us-central1
+  _SERVICE_NAME: sihame-backend-dev
+  _REGION: europe-west1
   _TIMEOUT: 900s
