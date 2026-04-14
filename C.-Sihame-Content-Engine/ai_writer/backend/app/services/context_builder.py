@@ -123,6 +123,7 @@ class DynamicContextBuilder:
         post_type: str,
         platform: str,
         rejection_feedback: str | None = None,
+        mood_context: str | None = None,
     ) -> ContextAssembly:
         route = self._resolve_route(post_type)
         core_files = self.CORE_CONSTITUTION_FILES.copy()
@@ -149,6 +150,23 @@ class DynamicContextBuilder:
             VoiceRoute.RITUAL: "Use the ritual register. Respect the recurring 2023 ritual templates and keep the tone devotional, contained, and steady.",
         }
 
+        # ── Mood / Internal-State layer ──────────────────────────────────────
+        # Inject the coach's internal emotional context so the AI can modulate
+        # the post's tone naturally — without ever naming the mood explicitly.
+        mood_section = ""
+        if mood_context and mood_context.strip():
+            mood_section = f"""\n=========================================
+INTERNAL STATE (الحالة الداخلية للكوتش)
+=========================================
+ما يلي يصف الحالة الداخلية للكوتش سهام اليوم أو ما دفعها لكتابة هذا المنشور:
+
+\"{mood_context.strip()}\"
+
+اسمح لهذه الحالة أن تنضح في نبرة النص بشكل غير مُعلَن.
+لا تذكر الحالة الداخلية صراحةً في النص المُولَّد.
+دعها تُلوِّن الإيقاع، واختيار الكلمات، وعمق الاستعارة فقط.
+========================================="""
+
         regeneration_section = ""
         if rejection_feedback and rejection_feedback.strip():
             regeneration_section = f"""
@@ -159,8 +177,7 @@ The previous draft was rejected. You must actively correct for this feedback and
 
 REJECTION FEEDBACK:
 "{rejection_feedback.strip()}"
-=========================================
-"""
+========================================="""
 
         prompt = f"""
 {core_section}
@@ -170,6 +187,7 @@ REJECTION FEEDBACK:
 {example_section}
 
 {feedback_section}
+{mood_section}
 
 =========================================
 EXECUTION POLICY
@@ -180,6 +198,7 @@ EXECUTION POLICY
 - Post type: {post_type}
 - Clinical and output boundaries always override style.
 - If regeneration feedback is present, treat it as an active correction constraint.
+- If an INTERNAL STATE section is present, let it colour the tone without surfacing it explicitly.
 - Return the response STRICTLY as a JSON object with exactly these keys:
   "angle", "hook", "body", "cta", "safety_flags"
 - Do not include markdown fences.

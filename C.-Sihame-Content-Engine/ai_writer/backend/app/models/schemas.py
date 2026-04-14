@@ -32,6 +32,15 @@ class GenerateDraftRequest(BaseModel):
         default=None,
         description="Optional rejection feedback to guide regeneration away from the previous failure.",
     )
+    mood_context: Optional[str] = Field(
+        default=None,
+        description=(
+            "Optional internal state of the coach at this moment — what she feels, "
+            "what moved her, or what drove this post today. "
+            "This is used to modulate the AI's tone without explicitly naming the mood in the output. "
+            "Example: 'أحسست بثقل هذا الصباح، لكن شيئاً في الجلسة أعاد إليّ الاتساع'"
+        ),
+    )
 
 
 class DraftContent(BaseModel):

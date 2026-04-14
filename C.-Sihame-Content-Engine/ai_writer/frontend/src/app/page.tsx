@@ -36,6 +36,7 @@ function MainWorkspace() {
 
   // Compose State
   const [rawInput, setRawInput] = useState("");
+  const [moodContext, setMoodContext] = useState("");
   const [postType, setPostType] = useState("reflection");
   
   // Draft State
@@ -132,6 +133,7 @@ function MainWorkspace() {
       setDraft(data);
       setDraftId(id);
       setRawInput(data.raw_input || "");
+      setMoodContext(data.mood_context || "");
       setPostType(data.post_type || "reflection");
       setEditInstruction("");
       setRejectReason("");
@@ -163,11 +165,13 @@ function MainWorkspace() {
 
   const generateDraft = async (options?: {
     rawInput?: string;
+    moodContext?: string;
     postType?: string;
     platform?: string;
     rejectionFeedback?: string;
   }) => {
     const nextRawInput = options?.rawInput ?? rawInput;
+    const nextMoodContext = options?.moodContext ?? moodContext;
     const nextPostType = options?.postType ?? postType;
     const nextPlatform = options?.platform ?? draft?.platform ?? "general";
     const nextRejectionFeedback = options?.rejectionFeedback?.trim() || undefined;
@@ -189,6 +193,7 @@ function MainWorkspace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           raw_input: nextRawInput,
+          mood_context: nextMoodContext.trim() || undefined,
           post_type: nextPostType,
           platform: nextPlatform,
           rejection_feedback: nextRejectionFeedback,
@@ -964,6 +969,15 @@ function MainWorkspace() {
                       placeholder="الفكرة الأساسية (بصمتك، صوتك مفرغ، أو نص خام)..."
                       disabled={isGenerating}
                       autoFocus
+                    />
+                    <input
+                      type="text"
+                      value={moodContext}
+                      onChange={(e) => setMoodContext(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-[#0D4F5C]/15 bg-white focus:ring-2 focus:ring-[#C4933F] focus:outline-none text-sm text-right text-gray-600"
+                      placeholder="كيف تشعرين اليوم؟ (الحالة الداخلية - اختياري)"
+                      disabled={isGenerating}
+                      dir="rtl"
                     />
                     <div className="flex gap-3 items-center">
                       <select

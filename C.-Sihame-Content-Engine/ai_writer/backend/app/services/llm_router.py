@@ -93,6 +93,32 @@ class TextModelRouter:
             model_name=settings.MODEL_EDITOR,
         )
 
+    # ── Voice-Check prompt — the lightweight quality gate ──────────────────
+    # This prompt is injected as a second pass after every revision.
+    # It enforces the Siham voice at the lexical level without touching content.
+    _VOICE_CHECK_PROMPT = """\
+You are a precision voice editor for Coach Sihame Atamnia.
+A draft has just been revised. Your ONLY job is to catch and silently fix two categories of errors:
+
+1. FORBIDDEN WORDS — replace any word from this list with a Sihame-appropriate alternative:
+   • حارب / تغلّب / اقتلع / كسر / تجاوز / تخلّص / اقطع
+   • fight / conquer / eliminate / break / overcome / get rid of
+   Preferred alternatives: حضور، احتوى، ذاب، توسّع، استقبل، اعترف، اسمح، أرخي قبضتك
+
+2. CRUSHED BREATHING — if the "body" field contains a paragraph with 3+ consecutive sentences
+   without a line break, insert line breaks between sentences to restore the somatic breathing rhythm.
+   Each feeling or image must stand alone on its own line.
+
+Scanner note: if NEITHER error is present, return the draft UNCHANGED.
+Do not restructure the content. Do not change any meaning. Do not add new ideas.
+
+Return STRICT JSON with exactly these keys: "angle", "hook", "body", "cta", "safety_flags".
+Do not include markdown fences.
+
+DRAFT TO CHECK:
+{draft_json}
+"""
+
     @staticmethod
     def _strip_code_fences(raw_text: str) -> str:
         cleaned = raw_text.strip()
@@ -115,6 +141,21 @@ class TextModelRouter:
             if start == -1 or end == -1 or end <= start:
                 raise ModelAdapterError("Model response did not contain a valid JSON object.")
             return json.loads(cleaned[start : end + 1])
+
+    async def _voice_check_draft(self, draft: DraftGenerationResult) -> DraftGenerationResult:
+        # We only pass the fields that need voice check
+        draft_dict = draft.model_dump(exclude={"model_used"})
+        prompt = self._VOICE_CHECK_PROMPT.format(draft_json=json.dumps(draft_dict, ensure_ascii=False))
+        try:
+            raw_text = await self.editor_adapter.complete_text(prompt)
+            payload = self._extract_json_object(raw_text)
+            return DraftGenerationResult(model_used=draft.model_used, **payload)
+        except Exception as e:
+            # If the background voice check fails for any reason (timeout, bad JSON),
+            # we just return the original draft rather than failing the whole request.
+            # This is a hidden quality gate, so it should be non-blocking.
+            print(f"[VOICE CHECK PASSED OVER] Failed to check voice: {e}")
+            return draft
 
     async def _complete_json(self, adapter: Any, prompt: str, model_used: TextModel) -> DraftGenerationResult:
         raw_text = await adapter.complete_text(prompt)
@@ -164,7 +205,13 @@ EDIT INSTRUCTION:
 CURRENT DRAFT:
 {json.dumps(current_draft, ensure_ascii=False)}
 """.strip()
-        return await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)
+        draft = await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)
+        # ── Voice-check pass ─────────────────────────────────────────
+        # After every revision, run a lightweight second pass that silently
+        # corrects forbidden words and crushed breathing rhythm without
+        # altering content or meaning.
+        draft = await self._voice_check_draft(draft)
+        return draft
 
     async def adapt_platform_draft(
         self,
