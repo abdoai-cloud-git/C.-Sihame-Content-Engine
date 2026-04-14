@@ -33,17 +33,17 @@ Identify:
 ━━━ STEP 2 — DESIGN A SPECIFIC VISUAL ━━━
 Design a cinematic visual that perfectly matches the post's depth.
 You have the freedom to choose the visual modality that best delivers the meaning:
-- Modality A: Photorealistic Still-Life (features tactile physical objects like ceramics, stones, linen, silk, botanical elements).
+- Modality A: Photorealistic Still-Life (features tactile physical objects like ceramics, wood, glass, balancing scales, cracked mirrors, botanical elements, paper, or architecture).
 - Modality B: Abstract & Atmospheric (features sensory textures, flowing light, fluid lines, water ripples, scattered forms, soft horizons).
 
-Choose the modality and forms that PHYSICALLY embody THIS post's exact theme.
+CRITICAL VARIETY RULE: Do NOT get stuck on fabrics, threads, cloths, or stones. You must invent completely UNIQUE objects, shapes, or metaphors that fit the specific text perfectly. DO NOT restrict yourself to the examples provided below. You have total creative freedom to use ANY object or concept (e.g., doors, keys, books, shadows, mechanical parts, geometric shapes, sand, fire) as long as it matches the post's deep meaning.
 
-Metaphor examples (use these as style guides only — invent new ones that fit the post):
-• Tension vs Release → tangled wire turning into smooth silk threads, OR a dense knot opening into vast space
+Metaphor examples (THESE ARE JUST EXAMPLES — YOU MUST INVENT ENTIRELY NEW AND DIFFERENT ONES):
+• Tension vs Release → a tightly wound mechanical spring suddenly released, OR an hourglass turning into dust
 • Mindful vs Mind-full → turbulent dark water vs a smooth, quiet ripple
 • Inner Parts / Maestro → scattered shapes gathering gently around a warm glowing center
-• Control vs Surrender → a rigid cracked stone leaning on a soft warm fabric, OR rigid architecture softening into fluid light
-• Shame vs Safety → dense shadow cloth on the left, warm inviting lamp light on the right
+• Control vs Surrender → a rigid cracked sculpture leaning on a soft bed of moss, OR rigid architecture softening into fluid light
+• Shame vs Safety → a frosted glass barrier on the left, warm inviting lamp light shining freely on the right
 
 MANDATORY BRAND RULES (Applies to all modalities):
 • Color Palette:
@@ -51,7 +51,7 @@ MANDATORY BRAND RULES (Applies to all modalities):
   - Right (TO state — healing/release): warm sage green tones
   - Center (the turning point / anchor): muted champagne gold glow
   - Background/Surface: warm cream / soft parchment (#F5EDE0)
-• CRITICAL: Do NOT just default to using physical stones to show these colors. You must creatively apply these colors to whatever material or metaphor you chose (e.g. terracotta-colored silk, sage-tinted water ripples, soft sage gradients, glowing gold light, burnt sienna shadows). The objects and materials you choose MUST vary widely across posts.
+• CRITICAL: Do NOT just default to using physical stones or fabrics to show these colors. You must creatively apply these colors to whatever unique material or object you chose (e.g. terracotta-tinted glass, sage water ripples, soft sage architectural gradients, glowing champagne light). The objects and materials you choose MUST VARY wildly across posts.
 • Lighting: soft warm cinematic light, deep shadows, large negative space in upper third for text
 • NEVER use cold teal, blue, pure white, or cool gray
 
@@ -75,15 +75,15 @@ A coach has described what she wants the image to show, in Arabic:
 "{concept_ar}"
 
 Expand this into a detailed English image generation prompt. Follow these mandatory brand rules:
-• Visual Modality: Based on the coach's description, you can choose "Photorealistic Still-Life" (tactile objects like pottery/fabric) OR "Abstract/Atmospheric" (sensory textures, flowing light, fluid water, vast spaces). Choose what delivers the meaning best.
+• Visual Modality: Based on the coach's description, you can choose "Photorealistic Still-Life" (tactile objects like pottery, wood, glass, architecture, organic shapes) OR "Abstract/Atmospheric" (sensory textures, flowing light, fluid water, vast spaces). Choose what delivers the meaning best.
 • Brand Color Palette:
   - Left side (FROM state — tension/chaos): muted terracotta / burnt sienna tones
   - Right side (TO state — healing/release): warm sage green tones
   - Center (the turning point): muted champagne gold glow
   - Background/Space: warm cream (#F5EDE0)
-• CRITICAL: Do NOT simply default to generating "red and green stones". Apply these brand colors creatively to the materials you chose (e.g. terracotta fabric, sage water, sage-tinted glass, glowing gold light, burnt sienna shadows). Vary the materials widely.
+• CRITICAL: Do NOT simply default to generating "fabrics", "threads", or "stones". Apply these brand colors creatively to the materials you chose (e.g. terracotta-tinted glass, sage water ripples, glowing gold light, burnt sienna shadows). Vary the materials widely and creatively (scales, mirrors, nature, wood, mechanical parts, etc.). DO NOT restrict yourself to these examples—use total creative freedom based on the coach's input.
 • Lighting: soft warm cinematic light, deep shadows, large negative space in upper third for text
-• Style: warm, elegant, highly tactile. Use photorealistic textures suited to your modality (e.g., linen/ceramic for still-life; flowing water/light rays for atmospheric).
+• Style: warm, elegant, highly tactile. Use photorealistic textures suited to your modality (e.g., wood/ceramic/glass for still-life; flowing water/light rays for atmospheric). Match the texture to the object!
 • NEVER use cold teal, blue, pure white, or cool gray
 
 If the coach's description doesn't mention specific objects, invent objects that physically represent her concept while following the brand rules above.
@@ -120,7 +120,7 @@ PAPER: All typography rendered as real calligraphy ink on soft, textured cotton 
   Importance: Tertiary
 
 ### ATMOSPHERE
-Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Handcrafted physical reality, not machine-generated. 8K resolution, photorealistic linen and silk texture."""
+Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Handcrafted physical reality, not machine-generated. 8K resolution. Highly detailed photorealistic textures matching the specific objects, materials, or atmosphere described."""
 
     # Polling configuration
     # Kie.ai image generation takes 250-300s in practice; budget 6 minutes to be safe.
