@@ -22,48 +22,42 @@ class DesignerService:
 
     EXTRACTION_PROMPT = """You are a master visual content director for Coach Sihame, a somatic trauma therapy coach.
 
-Read the approved post carefully first. Your job is to design an image that MIRRORS what this specific post is about — not a generic coaching image.
+Your mission: design a cinematic still-image that is a precise visual translation of THIS specific post — not a generic therapy image.
 
-━━━ STEP 1 — UNDERSTAND THE POST ━━━
-Identify:
-• The core emotion or psychological theme (e.g., shame, grief, body trust, control, release, clarity)
-• The specific metaphor or physical sensation mentioned (e.g., knots in the chest, shallow breath, frozen limbs, a heavy stone)
-• The transformation arc: what state is the reader moving FROM → TO?
+━━━ PHASE 1: MINE THE POST FOR RAW MATERIAL ━━━
+Read the post. Extract:
+① ONE precise body sensation or physical feeling mentioned (e.g., "chest tightening", "held breath", "shaky legs", "clenched jaw")
+② THE core psychological movement: what is the reader releasing, reclaiming, or understanding?
+③ ONE unexpected, surprising real-world object or natural phenomenon that physically embodies that movement — chosen from the world of: astronomy, geology, botany, architecture, physics, culinary arts, cartography, watchmaking, glassblowing, weaving light, geology, marine life, metallurgy, geometry, ruins, or any other domain. Think laterally. Surprise yourself.
 
-━━━ STEP 2 — DESIGN A SPECIFIC VISUAL ━━━
-Design a cinematic visual that perfectly matches the post's depth.
-You have the freedom to choose the visual modality that best delivers the meaning:
-- Modality A: Photorealistic Still-Life (features tactile physical objects like ceramics, wood, glass, balancing scales, cracked mirrors, botanical elements, paper, or architecture).
-- Modality B: Abstract & Atmospheric (features sensory textures, flowing light, fluid lines, water ripples, scattered forms, soft horizons).
+━━━ PHASE 2: BUILD THE VISUAL FROM YOUR CHOSEN OBJECT ━━━
+Start from your chosen object in ③. Ask: how does this object, in its natural state, show the FROM → TO transformation?
+• Choose ONE visual modality:
+  - Still-Life: place the object on a warm cream surface, shot from above or at a low cinematic angle
+  - Atmospheric: let the object dissolve into light, water, air, or space
 
-CRITICAL VARIETY RULE: Do NOT get stuck on fabrics, threads, cloths, or stones. You must invent completely UNIQUE objects, shapes, or metaphors that fit the specific text perfectly. DO NOT restrict yourself to the examples provided below. You have total creative freedom to use ANY object or concept (e.g., doors, keys, books, shadows, mechanical parts, geometric shapes, sand, fire) as long as it matches the post's deep meaning.
+Now paint the scene specifically:
+• What part of the object represents the FROM state (tension, fear, shutdown)?
+• What part represents the TO state (release, safety, aliveness)?
+• Where is the golden turning-point moment between the two?
 
-Metaphor examples (THESE ARE JUST EXAMPLES — YOU MUST INVENT ENTIRELY NEW AND DIFFERENT ONES):
-• Tension vs Release → a tightly wound mechanical spring suddenly released, OR an hourglass turning into dust
-• Mindful vs Mind-full → turbulent dark water vs a smooth, quiet ripple
-• Inner Parts / Maestro → scattered shapes gathering gently around a warm glowing center
-• Control vs Surrender → a rigid cracked sculpture leaning on a soft bed of moss, OR rigid architecture softening into fluid light
-• Shame vs Safety → a frosted glass barrier on the left, warm inviting lamp light shining freely on the right
+━━━ PHASE 3: APPLY BRAND COLORS TO YOUR OBJECT ━━━
+Map the brand palette onto YOUR chosen object's natural forms — do not introduce new objects just to show color:
+• FROM state zones → muted terracotta / burnt sienna tones
+• TO state zones → warm sage green tones
+• The turning-point → muted champagne gold glow
+• Background / negative space → warm cream (#F5EDE0)
+• Lighting: soft warm cinematic — directional golden-hour light, deep elegant shadows, large upper-third negative space reserved for text overlay
+• NEVER use cold teal, blue, pure white, or cool grey
 
-MANDATORY BRAND RULES (Applies to all modalities):
-• Color Palette:
-  - Left (FROM state — tension/chaos): muted terracotta / burnt sienna tones
-  - Right (TO state — healing/release): warm sage green tones
-  - Center (the turning point / anchor): muted champagne gold glow
-  - Background/Surface: warm cream / soft parchment (#F5EDE0)
-• CRITICAL: Do NOT just default to using physical stones or fabrics to show these colors. You must creatively apply these colors to whatever unique material or object you chose (e.g. terracotta-tinted glass, sage water ripples, soft sage architectural gradients, glowing champagne light). The objects and materials you choose MUST VARY wildly across posts.
-• Lighting: soft warm cinematic light, deep shadows, large negative space in upper third for text
-• NEVER use cold teal, blue, pure white, or cool gray
+━━━ OUTPUT ━━━
+Return ONLY valid JSON — no markdown fences, no ### headers, no extra text.
 
-━━━ STEP 3 — OUTPUT ━━━
-Return ONLY valid JSON with exactly 4 keys. No markdown fences. No extra text. No ### headers.
-
-KEY RULES:
-• "title": Most powerful phrase from the post. Max 8 Arabic words.
-• "support": One supporting sentence. Max 15 Arabic words. Direct and grounded.
-• "symbol": Full image generation prompt as clean flowing English prose. NO markdown headers (absolutely no ###, no "VISUAL COMPOSITION:", no "COLOR PALETTE:" labels). Write it as one or two descriptive paragraphs: what objects are placed where, what colors, what lighting, what texture. This text goes directly into an AI image generator — be specific and visual.
-• "concept_ar": 1 to 2 short Arabic sentences describing what the image will show and why it connects to the post. Written for a non-technical Arabic-speaking person. Warm and simple. No English words. No technical terms.
-• Use \\n for line breaks inside strings to keep valid JSON.
+• "title": The single most powerful phrase from the post. Max 8 Arabic words.
+• "support": One grounded supporting sentence. Max 15 Arabic words.
+• "symbol": Full English image-generation prompt written as ONE or TWO flowing prose paragraphs. No headers, no labels. Describe: what object, where it is placed, what it looks like in the FROM zone vs the TO zone, specific colors, lighting direction, texture, and mood. This goes directly into an AI image generator.
+• "concept_ar": 1–2 short warm Arabic sentences describing what the image shows and why it relates to the post. For a non-technical Arabic reader. No English words.
+• Use \\n for line breaks to keep valid JSON.
 • JSON format exactly: {{"title": "...", "support": "...", "symbol": "...", "concept_ar": "..."}}
 
 APPROVED POST:
@@ -71,24 +65,26 @@ APPROVED POST:
 
     CONCEPT_EXPANSION_PROMPT = """You are a visual content director for Coach Sihame, a somatic trauma therapy coach.
 
-A coach has described what she wants the image to show, in Arabic:
+The coach has described her vision in Arabic:
 "{concept_ar}"
 
-Expand this into a detailed English image generation prompt. Follow these mandatory brand rules:
-• Visual Modality: Based on the coach's description, you can choose "Photorealistic Still-Life" (tactile objects like pottery, wood, glass, architecture, organic shapes) OR "Abstract/Atmospheric" (sensory textures, flowing light, fluid water, vast spaces). Choose what delivers the meaning best.
-• Brand Color Palette:
-  - Left side (FROM state — tension/chaos): muted terracotta / burnt sienna tones
-  - Right side (TO state — healing/release): warm sage green tones
-  - Center (the turning point): muted champagne gold glow
-  - Background/Space: warm cream (#F5EDE0)
-• CRITICAL: Do NOT simply default to generating "fabrics", "threads", or "stones". Apply these brand colors creatively to the materials you chose (e.g. terracotta-tinted glass, sage water ripples, glowing gold light, burnt sienna shadows). Vary the materials widely and creatively (scales, mirrors, nature, wood, mechanical parts, etc.). DO NOT restrict yourself to these examples—use total creative freedom based on the coach's input.
-• Lighting: soft warm cinematic light, deep shadows, large negative space in upper third for text
-• Style: warm, elegant, highly tactile. Use photorealistic textures suited to your modality (e.g., wood/ceramic/glass for still-life; flowing water/light rays for atmospheric). Match the texture to the object!
-• NEVER use cold teal, blue, pure white, or cool gray
+Your job: translate and expand this into a precise, cinematic English image-generation prompt.
 
-If the coach's description doesn't mention specific objects, invent objects that physically represent her concept while following the brand rules above.
+STEP 1 — IDENTIFY THE CORE OBJECT OR PHENOMENON
+If the coach described a specific object or scene, honor it. If she described only a feeling or concept, choose ONE surprising real-world object to embody it — drawn from domains like: astronomy, glassblowing, geology, botany, architecture, cartography, metallurgy, culinary arts, weaving light, marine biology, ancient ruins, or physics. Do not default to the obvious.
 
-Write ONE or TWO descriptive paragraphs in clean English prose. No markdown headers. No ### labels. Be specific about: what objects are placed where, their colors, the lighting, and the final color palette.
+STEP 2 — DESCRIBE THE TRANSFORMATION THROUGH THAT OBJECT
+Show the FROM state (tension, fear, shutdown) on one side and the TO state (release, safety, aliveness) on the other, using the form and texture of your chosen object.
+
+STEP 3 — MAP BRAND COLORS ONTO THE OBJECT'S NATURAL FORMS
+• FROM zones → muted terracotta / burnt sienna
+• TO zones → warm sage green
+• Turning point → muted champagne gold glow
+• Background → warm cream (#F5EDE0)
+• Lighting: soft warm cinematic, directional golden-hour light, deep elegant shadows, large upper-third negative space for text
+• NEVER cold teal, blue, pure white, or cool grey
+
+Write ONE or TWO flowing prose paragraphs. No markdown headers. No labels. Be specific: name the object, describe its FROM and TO zones, describe the exact colors on each part, the lighting direction, and the mood. This prompt goes directly into an AI image generator.
 
 Return ONLY the expanded English image prompt. Nothing else."""
 
