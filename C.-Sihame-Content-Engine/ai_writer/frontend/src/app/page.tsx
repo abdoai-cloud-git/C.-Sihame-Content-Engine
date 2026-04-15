@@ -448,8 +448,14 @@ function MainWorkspace() {
     if (!draftId || !designTitle.trim() || !designSupport.trim()) return;
     setDesignLoading(true);
     setDesignImageUrl('');
+
+    // Helper: wait ms milliseconds
+    const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
     try {
       const apiUrl = getApiBaseUrl();
+
+      // ── Step 1: Submit the job — returns immediately with a job_id ──
       const res = await fetch(`${apiUrl}/api/v1/content/design/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -463,16 +469,37 @@ function MainWorkspace() {
       });
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.detail || 'فشل توليد الصورة');
+        throw new Error(errData.detail || 'فشل بدء توليد الصورة');
       }
-      const data = await res.json();
-      setDesignImageUrl(data.design_image_url);
+      const { job_id } = await res.json();
+
+      // ── Step 2: Poll every 15 seconds (max 60 × 15s = 15 minutes) ──
+      for (let i = 0; i < 60; i++) {
+        await delay(15_000);
+
+        const statusRes = await fetch(`${apiUrl}/api/v1/content/design/status/${job_id}`);
+        if (!statusRes.ok) throw new Error('فشل التحقق من حالة توليد الصورة');
+
+        const statusData = await statusRes.json();
+
+        if (statusData.status === 'done') {
+          setDesignImageUrl(statusData.image_url);
+          return;
+        }
+        if (statusData.status === 'failed') {
+          throw new Error(statusData.error || 'فشل توليد الصورة');
+        }
+        // status === 'pending' → keep waiting
+      }
+
+      throw new Error('انتهى وقت الانتظار — يرجى المحاولة مجدداً');
     } catch (err) {
       alert((err as Error).message);
     } finally {
       setDesignLoading(false);
     }
   };
+
 
   return (
     <>
@@ -881,7 +908,7 @@ function MainWorkspace() {
                       {designLoading ? (
                         <>
                           <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spinner" />
-                          جاري توليد الصورة... (قد يستغرق دقيقة)
+                          جاري توليد الصورة... (3 – 8 دقائق)
                         </>
                       ) : '🎨 توليد الصورة'}
                     </button>

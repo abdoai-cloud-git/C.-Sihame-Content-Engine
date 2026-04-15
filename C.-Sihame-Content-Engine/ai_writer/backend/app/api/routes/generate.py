@@ -1,4 +1,9 @@
+import asyncio
+import logging
+import uuid
+from datetime import datetime, timezone
 from functools import lru_cache
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -10,7 +15,8 @@ from app.models.schemas import (
     DesignExtractRequest,
     DesignExtractResponse,
     DesignGenerateRequest,
-    DesignGenerateResponse,
+    DesignJobResponse,
+    DesignJobStatusResponse,
     DraftRecordResponse,
     GenerateDraftRequest,
     HistoryItemResponse,
@@ -29,6 +35,60 @@ from app.services.llm_router import ModelAdapterError, TextModelRouter
 from app.services.workflow_service import ContentWorkflowService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# In-memory job store for async image generation
+# job_id -> {"status": "pending"|"done"|"failed", "image_url": str|None, "error": str|None}
+# This is process-local; sufficient for single-instance Cloud Run deployments.
+# ---------------------------------------------------------------------------
+_image_jobs: Dict[str, Dict[str, Any]] = {}
+
+
+async def _run_image_generation_job(
+    job_id: str,
+    designer: "DesignerService",
+    draft_repo: "DraftRepository",
+    draft_id: str,
+    design_title: str,
+    design_support: str,
+    design_symbol: str,
+    concept_ar: str,
+) -> None:
+    """Background coroutine: runs Kie.ai polling and writes the result to _image_jobs."""
+    try:
+        # Expand Arabic concept → English symbol if coach provided one
+        symbol = (
+            await designer.expand_arabic_concept(concept_ar)
+            if concept_ar
+            else design_symbol
+        )
+
+        prompt = designer.build_image_prompt(
+            title=design_title,
+            support=design_support,
+            symbol=symbol,
+        )
+
+        image_url = await designer.generate_image(prompt)
+
+        # Persist to Supabase
+        draft = await draft_repo.get(draft_id)
+        draft.design_title = design_title
+        draft.design_support = design_support
+        draft.design_symbol = symbol
+        draft.design_prompt = prompt
+        draft.design_image_url = image_url
+        draft.updated_at = datetime.now(timezone.utc)
+        await draft_repo.update(draft)
+
+        _image_jobs[job_id] = {"status": "done", "image_url": image_url, "error": None}
+        logger.info("Image job %s done — url=%s", job_id, image_url)
+
+    except Exception as exc:  # noqa: BLE001
+        _image_jobs[job_id] = {"status": "failed", "image_url": None, "error": str(exc)}
+        logger.error("Image job %s failed: %s", job_id, exc)
+
 
 
 def get_context_builder():
@@ -210,15 +270,19 @@ async def extract_design_text(
 
 
 
-@router.post("/design/generate", response_model=DesignGenerateResponse)
+@router.post("/design/generate", response_model=DesignJobResponse)
 async def generate_design_image(
     request: DesignGenerateRequest,
     draft_repo: DraftRepository = Depends(get_draft_repository),
     designer: DesignerService = Depends(get_designer_service),
 ):
     """
-    Generate a branded image from coach-approved text blocks via Kie.ai Nano Banana 2.
-    The image URL is stored in Supabase (Kie hosts media for 14 days).
+    Kick off a background image generation job and return a job_id immediately.
+
+    Kie.ai generation can take 400–750 seconds; holding an HTTP connection that
+    long triggers browser "failed to fetch" errors.  This endpoint returns in
+    < 1 second.  The frontend should poll GET /design/status/{job_id} every 15 s
+    until status transitions to "done" or "failed".
     """
     try:
         draft = await draft_repo.get(request.draft_id)
@@ -228,43 +292,41 @@ async def generate_design_image(
     if draft.status != PostStatus.APPROVED_TEXT:
         raise HTTPException(status_code=409, detail="Draft must be approved before generating design image.")
 
-    # Determine the visual symbol to use for image generation.
-    # If the coach provided/edited an Arabic concept, expand it into a full English prompt.
-    # Otherwise fall back to the stored technical symbol.
-    concept_ar = request.design_concept_ar.strip()
-    if concept_ar:
-        try:
-            symbol = await designer.expand_arabic_concept(concept_ar)
-        except DesignerServiceError as exc:
-            raise HTTPException(status_code=502, detail=f"Concept expansion failed: {exc}") from exc
-    else:
-        symbol = request.design_symbol
+    job_id = str(uuid.uuid4())
+    _image_jobs[job_id] = {"status": "pending", "image_url": None, "error": None}
 
-    # Build the full image prompt from brand rules
-    prompt = designer.build_image_prompt(
-        title=request.design_title,
-        support=request.design_support,
-        symbol=symbol,
+    asyncio.create_task(
+        _run_image_generation_job(
+            job_id=job_id,
+            designer=designer,
+            draft_repo=draft_repo,
+            draft_id=request.draft_id,
+            design_title=request.design_title,
+            design_support=request.design_support,
+            design_symbol=request.design_symbol,
+            concept_ar=request.design_concept_ar.strip(),
+        )
     )
 
-    try:
-        image_url = await designer.generate_image(prompt)
-    except DesignerServiceError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    logger.info("Image job %s queued for draft %s", job_id, request.draft_id)
+    return DesignJobResponse(job_id=job_id, status="pending")
 
-    # Persist design data
-    from datetime import datetime, timezone
-    draft.design_title = request.design_title
-    draft.design_support = request.design_support
-    draft.design_symbol = symbol  # always persist the final expanded symbol
-    draft.design_prompt = prompt
-    draft.design_image_url = image_url
-    draft.updated_at = datetime.now(timezone.utc)
-    await draft_repo.update(draft)
 
-    return DesignGenerateResponse(
-        draft_id=draft.draft_id,
-        design_image_url=image_url,
+@router.get("/design/status/{job_id}", response_model=DesignJobStatusResponse)
+async def get_design_job_status(job_id: str):
+    """
+    Poll this endpoint every 15 seconds after calling POST /design/generate.
+    Returns status=pending while Kie.ai is running, status=done with image_url
+    on success, or status=failed with error on failure.
+    """
+    job = _image_jobs.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found.")
+    return DesignJobStatusResponse(
+        job_id=job_id,
+        status=job["status"],
+        image_url=job.get("image_url"),
+        error=job.get("error"),
     )
 
 

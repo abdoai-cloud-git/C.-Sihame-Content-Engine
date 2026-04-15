@@ -202,3 +202,15 @@ class DesignGenerateRequest(BaseModel):
 class DesignGenerateResponse(BaseModel):
     draft_id: str
     design_image_url: str = Field(..., description="URL of the generated image (Kie.ai hosted, 14-day TTL)")
+
+
+class DesignJobResponse(BaseModel):
+    job_id: str = Field(..., description="Unique ID for the background generation job")
+    status: str = Field(default="pending", description="Job status: pending | done | failed")
+
+
+class DesignJobStatusResponse(BaseModel):
+    job_id: str
+    status: str = Field(description="Job status: pending | done | failed")
+    image_url: Optional[str] = Field(default=None, description="Image URL — set when status is 'done'")
+    error: Optional[str] = Field(default=None, description="Error message — set when status is 'failed'")
