@@ -72,6 +72,7 @@ function MainWorkspace() {
   const [designImageUrl, setDesignImageUrl] = useState('');
   const [designLoading, setDesignLoading] = useState(false);
   const [extractLoading, setExtractLoading] = useState(false);
+  const [conceptRegenerateLoading, setConceptRegenerateLoading] = useState(false);
 
   // Load draft from URL if any
   useEffect(() => {
@@ -233,7 +234,7 @@ function MainWorkspace() {
   };
 
   // 2. Revise existing draft
-  const handleRevise = async () => {
+  const handleRevise  const handleGenerateDesignImage = async () => {
     if (!editInstruction.trim() || !draftId) return;
     setIsRevising(true);
     try {
@@ -262,7 +263,7 @@ function MainWorkspace() {
    * 3. Approve draft
    * Transitions the app to the 'approved' state and updates the backend record.
    */
-  const handleApprove = async () => {
+  const handleApprove  const handleGenerateDesignImage = async () => {
     if (!draftId || !draft) return;
     setIsApproving(true);
     try {
@@ -339,7 +340,7 @@ function MainWorkspace() {
   };
 
   // 4. Adapt for platform
-  const handleAdapt = async () => {
+  const handleAdapt  const handleGenerateDesignImage = async () => {
     if (!draftId || adaptPlatforms.length === 0) return;
     setIsAdapting(true);
     try {
@@ -418,7 +419,7 @@ function MainWorkspace() {
     : "bg-green-100 text-green-800";
 
   // ─── Design Handlers ───
-  const handleExtractDesignText = async () => {
+  const handleExtractDesignText  const handleGenerateDesignImage = async () => {
     if (!draftId) return;
     setExtractLoading(true);
     try {
@@ -441,6 +442,33 @@ function MainWorkspace() {
       alert((err as Error).message);
     } finally {
       setExtractLoading(false);
+    }
+  };
+
+  /** Re-generate only the visual concept (symbol + Arabic description).
+   *  The coach's edited title and support text are intentionally preserved. */
+  const handleRegenerateVisualConcept  const handleGenerateDesignImage = async () => {
+    if (!draftId) return;
+    setConceptRegenerateLoading(true);
+    try {
+      const apiUrl = getApiBaseUrl();
+      const res = await fetch(`${apiUrl}/api/v1/content/design/extract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || 'فشل استكشاف المفهوم البصري');
+      }
+      const data = await res.json();
+      // Only update the visual concept fields — leave title & support untouched
+      setDesignSymbol(data.design_symbol || '');
+      setDesignConceptAr(data.design_concept_ar || '');
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setConceptRegenerateLoading(false);
     }
   };
 
@@ -887,17 +915,31 @@ function MainWorkspace() {
                     </div>
                     {/* Visual Concept — editable Arabic field for the coach */}
                     <div>
-                      <label className="block text-xs font-bold text-[#C67B5C] mb-1.5">الفكرة البصرية 🖼️ <span className="text-gray-400 font-normal">(يمكنك تعديلها بكلماتك الخاصة)</span></label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-[#C67B5C]">الفكرة البصرية 🖼️ <span className="text-gray-400 font-normal">(يمكنك تعديلها)</span></label>
+                        <button
+                          onClick={handleRegenerateVisualConcept}
+                          disabled={conceptRegenerateLoading || designLoading}
+                          className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-[#C67B5C] bg-[#C67B5C]/10 hover:bg-[#C67B5C]/20 border border-[#C67B5C]/20 rounded-lg transition-all disabled:opacity-40"
+                          title="أعد توليد المفهوم البصري بدون تغيير النص"
+                        >
+                          {conceptRegenerateLoading ? (
+                            <span className="inline-block w-3 h-3 border-2 border-[#C67B5C]/30 border-t-[#C67B5C] rounded-full animate-spinner" />
+                          ) : '✦'}
+                          مفهوم جديد
+                        </button>
+                      </div>
                       <textarea
                         value={designConceptAr}
                         onChange={(e) => setDesignConceptAr(e.target.value)}
                         className="w-full p-3 rounded-xl border border-[#D4AF37]/30 bg-[#FDF8F0] focus:ring-2 focus:ring-[#D4AF37] focus:outline-none text-sm text-right resize-none h-24 leading-relaxed text-[#3d2b1a]"
-                        placeholder="صفي ما تريدين أن تغؚ الصورة... مثلاً: أريد صورة تُظهِر يدين واحدة شديدة وأخرى مرتاحة"
-                        disabled={designLoading}
+                        placeholder="صفي ما تريدين أن تغيّر الصورة... مثلاً: أريد صورة تُظهِر يدين واحدة شديدة وأخرى مرتاحة"
+                        disabled={designLoading || conceptRegenerateLoading}
                         dir="rtl"
                       />
                       <p className="text-[10px] text-gray-400 mt-1 text-right" dir="rtl">✨ سيتولى النظام تحويل فكرتك تلقائياً إلى تعليمات تقنية للمولد</p>
                     </div>
+
 
                     {/* Generate Image Button */}
                     <button
