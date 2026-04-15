@@ -293,6 +293,8 @@ async def regenerate_visual_concept(
         concept = await designer.regenerate_concept(
             title=request.design_title,
             support=request.design_support,
+            previous_symbol=request.previous_symbol,
+            previous_concept_ar=request.previous_concept_ar,
         )
     except DesignerServiceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

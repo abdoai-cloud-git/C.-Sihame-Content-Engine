@@ -204,6 +204,8 @@ class DesignRegenerateConceptRequest(BaseModel):
     draft_id: str = Field(..., description="The approved draft id")
     design_title: str = Field(..., description="Current (possibly coach-edited) headline")
     design_support: str = Field(..., description="Current (possibly coach-edited) support sentence — the juice")
+    previous_symbol: str = Field(default="", description="Previous English image prompt — used to enforce a different symbol choice")
+    previous_concept_ar: str = Field(default="", description="Previous Arabic concept — used together with previous_symbol to avoid repetition")
 
 
 

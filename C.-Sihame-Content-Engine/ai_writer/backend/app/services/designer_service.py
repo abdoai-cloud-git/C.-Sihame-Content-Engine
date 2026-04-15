@@ -294,7 +294,9 @@ TITLE (headline — the single most powerful phrase):
 SUPPORT (the grounding sentence — the emotional core):
 "{support}"
 
-These two sentences are the concentrated juice of the post. Your job is to invent a FRESH visual concept rooted completely in these words — not in the full original post.
+These two sentences are the concentrated juice of the post. Your job is to invent a FRESH visual concept rooted completely in these words.
+
+{exclusion_block}
 
 ━━━ WHAT TO DO ━━━
 
@@ -319,7 +321,24 @@ These two sentences are the concentrated juice of the post. Your job is to inven
 Return ONLY valid JSON — no markdown, no headers, no extra text.
 • "symbol": Full English image-generation prompt. ONE or TWO flowing prose paragraphs. Describe the object, its zones, exact colors, lighting, texture, mood. No labels.
 • "concept_ar": 1–2 short warm Arabic sentences describing what the image shows and why it connects to the post — for a non-technical Arabic reader. No English words.
-• JSON format exactly: {{"symbol": "...", "concept_ar": "..."}}"""
+• JSON format exactly: {{"symbol": "...", "concept_ar": ""}}"""
+
+    EXCLUSION_BLOCK_TEMPLATE = """━━━ ⚠️ YOU ALREADY TRIED THIS — DO NOT REPEAT IT ━━━
+You previously generated this concept:
+
+PREVIOUS SYMBOL (English prompt): {previous_symbol}
+PREVIOUS ARABIC DESCRIPTION: {previous_concept_ar}
+
+You MUST choose a COMPLETELY DIFFERENT visual symbol:
+• Pick a DIFFERENT object (not the same noun or near-synonym)
+• Pick a DIFFERENT symbolic category from the list below
+• The new image must feel visually distinct — a different shape, material, and mood
+If the previous used water → this time use something solid (clay, stone, wood, seed).
+If the previous used containment (bowl, vessel) → this time use expansion (horizon, passage, light).
+If the previous used thread → this time use something botanical or architectural.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"""
 
     async def expand_arabic_concept(self, concept_ar: str) -> str:
         """Expand the coach's natural Arabic visual description into a full technical English image prompt.
@@ -345,21 +364,40 @@ Return ONLY valid JSON — no markdown, no headers, no extra text.
         except ModelAdapterError as e:
             raise DesignerServiceError(f"Concept expansion failed: {e}") from e
 
-    async def regenerate_concept(self, title: str, support: str) -> Dict[str, str]:
+    async def regenerate_concept(
+        self,
+        title: str,
+        support: str,
+        previous_symbol: str = "",
+        previous_concept_ar: str = "",
+    ) -> Dict[str, str]:
         """Generate a fresh visual concept using ONLY the short distilled title + support.
 
-        Unlike extract_text_blocks() which reads the entire post, this method zooms
-        in on the already-concentrated essence so the new concept stays grounded in
-        the exact words the coach chose (and didn't over-ride).
+        Injects an anti-repetition block when previous concept is provided, forcing
+        the LLM to choose a wholly different symbolic category each time.
 
         Args:
-            title:   The short headline string (max ~8 Arabic words).
-            support: The single grounding sentence (max ~15 Arabic words).
+            title:              The short headline string (max ~8 Arabic words).
+            support:            The single grounding sentence (max ~15 Arabic words).
+            previous_symbol:    The English image prompt from the last generation (to avoid).
+            previous_concept_ar: The Arabic description from the last generation (to avoid).
 
         Returns:
             dict with keys 'symbol' (English image prompt) and 'concept_ar' (Arabic summary).
         """
-        prompt = self.REGENERATE_CONCEPT_PROMPT.format(title=title, support=support)
+        if previous_symbol and previous_concept_ar:
+            exclusion_block = self.EXCLUSION_BLOCK_TEMPLATE.format(
+                previous_symbol=previous_symbol[:400],  # truncate if very long
+                previous_concept_ar=previous_concept_ar,
+            )
+        else:
+            exclusion_block = ""
+
+        prompt = self.REGENERATE_CONCEPT_PROMPT.format(
+            title=title,
+            support=support,
+            exclusion_block=exclusion_block,
+        )
         try:
             raw_text = await self.llm_adapter.complete_text(prompt)
             logger.debug("[regenerate_concept] raw LLM response: %s", raw_text[:500])

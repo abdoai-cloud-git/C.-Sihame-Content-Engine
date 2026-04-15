@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -460,6 +460,8 @@ function MainWorkspace() {
           draft_id: draftId,
           design_title: designTitle,
           design_support: designSupport,
+          previous_symbol: designSymbol,       // tell LLM what to avoid
+          previous_concept_ar: designConceptAr, // tell LLM what to avoid
         }),
       });
       if (!res.ok) {
