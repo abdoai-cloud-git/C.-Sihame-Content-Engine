@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -234,7 +234,7 @@ function MainWorkspace() {
   };
 
   // 2. Revise existing draft
-  const handleRevise  const handleGenerateDesignImage = async () => {
+  const handleRevise = async () => {
     if (!editInstruction.trim() || !draftId) return;
     setIsRevising(true);
     try {
@@ -263,7 +263,7 @@ function MainWorkspace() {
    * 3. Approve draft
    * Transitions the app to the 'approved' state and updates the backend record.
    */
-  const handleApprove  const handleGenerateDesignImage = async () => {
+  const handleApprove = async () => {
     if (!draftId || !draft) return;
     setIsApproving(true);
     try {
@@ -340,7 +340,7 @@ function MainWorkspace() {
   };
 
   // 4. Adapt for platform
-  const handleAdapt  const handleGenerateDesignImage = async () => {
+  const handleAdapt = async () => {
     if (!draftId || adaptPlatforms.length === 0) return;
     setIsAdapting(true);
     try {
@@ -419,7 +419,7 @@ function MainWorkspace() {
     : "bg-green-100 text-green-800";
 
   // ─── Design Handlers ───
-  const handleExtractDesignText  const handleGenerateDesignImage = async () => {
+  const handleExtractDesignText = async () => {
     if (!draftId) return;
     setExtractLoading(true);
     try {
