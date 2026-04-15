@@ -446,16 +446,21 @@ function MainWorkspace() {
   };
 
   /** Re-generate only the visual concept (symbol + Arabic description).
+   *  Uses the NEW dedicated endpoint that reads ONLY the short title + support --
    *  The coach's edited title and support text are intentionally preserved. */
-  const handleRegenerateVisualConcept  const handleGenerateDesignImage = async () => {
-    if (!draftId) return;
+  const handleRegenerateVisualConcept = async () => {
+    if (!draftId || !designTitle.trim() || !designSupport.trim()) return;
     setConceptRegenerateLoading(true);
     try {
       const apiUrl = getApiBaseUrl();
-      const res = await fetch(`${apiUrl}/api/v1/content/design/extract`, {
+      const res = await fetch(`${apiUrl}/api/v1/content/design/regenerate-concept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId }),
+        body: JSON.stringify({
+          draft_id: draftId,
+          design_title: designTitle,
+          design_support: designSupport,
+        }),
       });
       if (!res.ok) {
         const errData = await res.json();

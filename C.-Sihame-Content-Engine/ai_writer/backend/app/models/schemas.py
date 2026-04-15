@@ -199,6 +199,14 @@ class DesignGenerateRequest(BaseModel):
     design_concept_ar: str = Field(default="", description="Coach's Arabic visual concept — if provided, overrides design_symbol via LLM expansion")
 
 
+class DesignRegenerateConceptRequest(BaseModel):
+    """Request a fresh visual concept derived from the short distilled texts only (not the full post)."""
+    draft_id: str = Field(..., description="The approved draft id")
+    design_title: str = Field(..., description="Current (possibly coach-edited) headline")
+    design_support: str = Field(..., description="Current (possibly coach-edited) support sentence — the juice")
+
+
+
 class DesignGenerateResponse(BaseModel):
     draft_id: str
     design_image_url: str = Field(..., description="URL of the generated image (Kie.ai hosted, 14-day TTL)")

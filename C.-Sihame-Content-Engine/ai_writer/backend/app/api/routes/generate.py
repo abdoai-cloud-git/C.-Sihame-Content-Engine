@@ -17,6 +17,7 @@ from app.models.schemas import (
     DesignGenerateRequest,
     DesignJobResponse,
     DesignJobStatusResponse,
+    DesignRegenerateConceptRequest,
     DraftRecordResponse,
     GenerateDraftRequest,
     HistoryItemResponse,
@@ -268,6 +269,47 @@ async def extract_design_text(
         design_concept_ar=text_blocks.get("concept_ar", ""),
     )
 
+
+
+@router.post("/design/regenerate-concept", response_model=DesignExtractResponse)
+async def regenerate_visual_concept(
+    request: DesignRegenerateConceptRequest,
+    draft_repo: DraftRepository = Depends(get_draft_repository),
+    designer: DesignerService = Depends(get_designer_service),
+):
+    """
+    Re-generate ONLY the visual concept (symbol + concept_ar) from the short
+    distilled title + support texts — without re-reading the full approved post.
+
+    This lets the coach keep her edited title/support while getting a completely
+    fresh symbolic idea for the image.
+    """
+    try:
+        draft = await draft_repo.get(request.draft_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Draft {request.draft_id} not found.") from exc
+
+    try:
+        concept = await designer.regenerate_concept(
+            title=request.design_title,
+            support=request.design_support,
+        )
+    except DesignerServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    # Persist the fresh symbol to the draft (concept_ar is UI-only, not stored separately)
+    from datetime import datetime, timezone
+    draft.design_symbol = concept.get("symbol", "")
+    draft.updated_at = datetime.now(timezone.utc)
+    await draft_repo.update(draft)
+
+    return DesignExtractResponse(
+        draft_id=draft.draft_id,
+        design_title=request.design_title,    # keep whatever the coach had
+        design_support=request.design_support, # keep whatever the coach had
+        design_symbol=concept.get("symbol", ""),
+        design_concept_ar=concept.get("concept_ar", ""),
+    )
 
 
 @router.post("/design/generate", response_model=DesignJobResponse)

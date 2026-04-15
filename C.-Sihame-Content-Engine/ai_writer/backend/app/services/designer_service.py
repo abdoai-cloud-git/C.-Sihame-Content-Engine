@@ -284,6 +284,43 @@ Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Han
         """Construct the full image generation prompt from brand rules."""
         return self.IMAGE_PROMPT_TEMPLATE.format(title=title, support=support, symbol=symbol)
 
+    REGENERATE_CONCEPT_PROMPT = """You are the visual mind of Coach Sihame, a somatic trauma therapy coach.
+
+The coach's post has already been distilled into two short, precise texts:
+
+TITLE (headline — the single most powerful phrase):
+"{title}"
+
+SUPPORT (the grounding sentence — the emotional core):
+"{support}"
+
+These two sentences are the concentrated juice of the post. Your job is to invent a FRESH visual concept rooted completely in these words — not in the full original post.
+
+━━━ WHAT TO DO ━━━
+
+1. Feel the emotional weight inside TITLE and SUPPORT. What body sensation, inner state, or life moment do they point to?
+2. Choose ONE object or natural form that physically embodies that feeling. Draw only from Coach Sihame's symbolic world — objects that feel warm, contained, ancient, handcrafted, or quietly alive:
+   • Constriction / held breath → sealed clay vessel | compressed seed pod | knotted raw thread | dry clenched root
+   • Release / expansion → seed pod opening | still water receiving a single drop | steady lantern flame | knotted thread resolving into one clean line
+   • Safety / being held → deep ceramic bowl | open architectural arch | clay alcove lit softly from within | nested worn basket weave
+   • Stillness / presence → perfectly still water surface | single smooth horizon | champagne light through a threshold | edge of dawn on cream
+   • Inner multiplicity → small forms gathering around a warm center | concentric rings converging to stillness
+   • Spiritual groundedness → lantern in handblown glass | gold light refracted through aged crystal | dawn touching still water
+   • Transformation → half-open botanical form | thread releasing into a clean line | narrow passage opening into calm water
+3. Apply the brand palette to the object's natural zones:
+   • Tension / constriction → muted terracotta (#C4784A) / burnt sienna
+   • Healing / expansion → warm sage green (#8A9E82) — warm, never cool or teal
+   • Single turning-point glow → muted champagne gold (#C8A96B)
+   • Background → warm cream (#F5EDE0)
+   • Lighting: soft warm cinematic, directional golden-hour, large upper-third negative space for Arabic text
+   • NEVER: cold teal, blue, pure white, cool grey
+
+━━━ OUTPUT ━━━
+Return ONLY valid JSON — no markdown, no headers, no extra text.
+• "symbol": Full English image-generation prompt. ONE or TWO flowing prose paragraphs. Describe the object, its zones, exact colors, lighting, texture, mood. No labels.
+• "concept_ar": 1–2 short warm Arabic sentences describing what the image shows and why it connects to the post — for a non-technical Arabic reader. No English words.
+• JSON format exactly: {{"symbol": "...", "concept_ar": "..."}}"""
+
     async def expand_arabic_concept(self, concept_ar: str) -> str:
         """Expand the coach's natural Arabic visual description into a full technical English image prompt.
 
@@ -307,6 +344,40 @@ Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Han
             return expanded
         except ModelAdapterError as e:
             raise DesignerServiceError(f"Concept expansion failed: {e}") from e
+
+    async def regenerate_concept(self, title: str, support: str) -> Dict[str, str]:
+        """Generate a fresh visual concept using ONLY the short distilled title + support.
+
+        Unlike extract_text_blocks() which reads the entire post, this method zooms
+        in on the already-concentrated essence so the new concept stays grounded in
+        the exact words the coach chose (and didn't over-ride).
+
+        Args:
+            title:   The short headline string (max ~8 Arabic words).
+            support: The single grounding sentence (max ~15 Arabic words).
+
+        Returns:
+            dict with keys 'symbol' (English image prompt) and 'concept_ar' (Arabic summary).
+        """
+        prompt = self.REGENERATE_CONCEPT_PROMPT.format(title=title, support=support)
+        try:
+            raw_text = await self.llm_adapter.complete_text(prompt)
+            logger.debug("[regenerate_concept] raw LLM response: %s", raw_text[:500])
+            result = self._extract_json(raw_text)
+            symbol = result.get("symbol", "").strip()
+            concept_ar = result.get("concept_ar", "").strip()
+            if not symbol:
+                logger.warning("[regenerate_concept] symbol field empty. Keys: %s", list(result.keys()))
+            if not concept_ar:
+                logger.warning("[regenerate_concept] concept_ar field empty. Keys: %s", list(result.keys()))
+            logger.debug(
+                "[regenerate_concept] done — symbol_len=%d, concept_ar=%r",
+                len(symbol), concept_ar[:80] if concept_ar else "",
+            )
+            return {"symbol": symbol, "concept_ar": concept_ar}
+        except ModelAdapterError as e:
+            raise DesignerServiceError(f"Concept regeneration failed: {e}") from e
+
 
     async def generate_image(self, prompt: str) -> str:
         """Call Kie.ai Nano Banana 2 API and poll for result.
