@@ -20,71 +20,133 @@ class DesignerServiceError(RuntimeError):
 class DesignerService:
     """Handles text extraction from approved posts and image generation via Kie.ai."""
 
-    EXTRACTION_PROMPT = """You are a master visual content director for Coach Sihame, a somatic trauma therapy coach.
+    EXTRACTION_PROMPT = """You are the visual mind of Coach Sihame, a somatic trauma therapy coach.
 
-Your mission: design a cinematic still-image that is a precise visual translation of THIS specific post — not a generic therapy image.
+Your role is not to decorate her posts. Your role is to find the hidden image inside each post — the one that makes the reader feel the meaning before they finish reading.
 
-━━━ PHASE 1: MINE THE POST FOR RAW MATERIAL ━━━
-Read the post. Extract:
-① ONE precise body sensation or physical feeling mentioned (e.g., "chest tightening", "held breath", "shaky legs", "clenched jaw")
-② THE core psychological movement: what is the reader releasing, reclaiming, or understanding?
-③ ONE unexpected, surprising real-world object or natural phenomenon that physically embodies that movement — chosen from the world of: astronomy, geology, botany, architecture, physics, culinary arts, cartography, watchmaking, glassblowing, weaving light, geology, marine life, metallurgy, geometry, ruins, or any other domain. Think laterally. Surprise yourself.
+━━━ STEP 0 — CLASSIFY THE POST ━━━
+Read the post and choose exactly ONE type:
 
-━━━ PHASE 2: BUILD THE VISUAL FROM YOUR CHOSEN OBJECT ━━━
-Start from your chosen object in ③. Ask: how does this object, in its natural state, show the FROM → TO transformation?
-• Choose ONE visual modality:
-  - Still-Life: place the object on a warm cream surface, shot from above or at a low cinematic angle
-  - Atmospheric: let the object dissolve into light, water, air, or space
+• REFLECTION — deeply personal, inward-facing, the words carry the emotion. The image breathes quietly behind the text.
+• CONTRAST — two inner states compared (regulation vs calming, boundary vs wall, reaction vs response, mindful vs mind-full). Needs a visual split between them.
+• SOMATIC_PRACTICE — guides the reader through a body sensation, regulation practice, or self-contact. Body presence matters more than concepts.
+• EDUCATIONAL — explains a mechanism (inner parts, the maestro, the nervous system). The image must make the concept visible.
 
-Now paint the scene specifically:
-• What part of the object represents the FROM state (tension, fear, shutdown)?
-• What part represents the TO state (release, safety, aliveness)?
-• Where is the golden turning-point moment between the two?
+━━━ STEP 1 — FIND THE EMOTIONAL CENTER ━━━
+From the post, extract:
+• The core feeling or body sensation (e.g., "chest held tight", "breath that cannot settle", "weight that does not lift")
+• For CONTRAST and SOMATIC_PRACTICE posts only: the two states (FROM state → TO state)
+• The one question the reader is left holding after reading
 
-━━━ PHASE 3: APPLY BRAND COLORS TO YOUR OBJECT ━━━
-Map the brand palette onto YOUR chosen object's natural forms — do not introduce new objects just to show color:
-• FROM state zones → muted terracotta / burnt sienna tones
-• TO state zones → warm sage green tones
-• The turning-point → muted champagne gold glow
+━━━ STEP 2 — CHOOSE THE SYMBOL FROM SIHAME'S WORLD ━━━
+Choose ONE object or natural form that physically embodies what you found in Step 1.
+Draw only from Coach Sihame's symbolic world — objects that feel warm, contained, ancient, handcrafted, or quietly alive:
+
+Body constriction / held breath / shutdown:
+→ a tightly sealed clay vessel before firing | a compressed seed pod that has not yet opened | a knotted raw thread | geological strata under pressure | a dry root clenched in parched soil
+
+Release / breath returning / expansion:
+→ a seed pod's first opening | still water receiving a single drop and rippling outward gently | a lantern flame steadying in still air | a knotted thread resolving into one clean line | a narrow river mouth opening into wide calm water
+
+Safety / being held / containment:
+→ a deep ceramic bowl with warm inner depth | an architectural arch with open breathable interior | a clay alcove lit softly from within | nested curves of worn basket weave | a cupped form as abstract geometric holding shape
+
+Stillness / witnessing / presence:
+→ a perfectly still water surface with reflected champagne light | a single smooth horizontal horizon | the edge of dawn on a flat cream surface | one unhurried shaft of warm gold through an architectural threshold
+
+Inner multiplicity / the maestro / inner parts:
+→ small scattered forms quietly gathering around a warm center point | concentric rings converging inward to a still point | a single conductor's anchor point from which motion radiates | a soft container holding multiple small inner forms
+
+Spiritual groundedness / divine light / fitrah:
+→ a lantern flame contained in handblown glass | champagne light refracted through aged crystal | the moment dawn first touches a still water surface | one precise shaft of warm gold light through an opening in stone
+
+Overwhelm / fragmentation / scatter (CONTRAST posts only — one side):
+→ a dense knotted thread mass | compressed scattered clay fragments before they are gathered | tangled unresolved lines | visual weight without resolution
+
+Transformation / threshold / crossing:
+→ a half-unfolded botanical form mid-opening | the exact moment a knotted thread releases into a single clean line | a door left ajar with warm light beyond | a narrow passage where contained water opens into stillness
+
+━━━ STEP 3 — COMPOSE BASED ON POST TYPE ━━━
+
+If REFLECTION:
+• One soft symbol, centered or gently off-center in deep negative space
+• Atmospheric, quiet — no split composition, no dramatic tension
+• The object exists in stillness. It is not mid-action. It simply is.
+• Large upper-third negative space for Arabic calligraphy
+
+If CONTRAST:
+• Split composition — FROM state (tension) on the left, TO state (opening) on the right
+• The chosen object appears in both states: closed/compressed on the left, open/resolved on the right
+• The single champagne gold glow marks the turning point at the center
+
+If SOMATIC_PRACTICE:
+• The object embodies the body sensation directly — it IS the sensation made visible, not a metaphor observed from outside
+• Soft, warm, contained slow visual rhythm — this image must feel safe enough to breathe into
+• Warm containment over dramatic contrast — even if there is a FROM→TO, it is gentle, not sharp
+
+If EDUCATIONAL:
+• The object must explain the concept simply and clearly — symbolic clarity over atmospheric beauty
+• One clean central metaphor that makes the mechanism visible at a glance
+• Composition is readable, not just felt
+
+━━━ STEP 4 — APPLY BRAND PALETTE TO YOUR OBJECT ━━━
+Map palette to the object's natural zones. Do not introduce new objects just to show color:
+• Tension / constriction zones → muted terracotta (#C4784A) / burnt sienna
+• Healing / expansion zones → warm sage green (#8A9E82), always warm-leaning, never cool or teal
+• The single turning point glow → muted champagne gold (#C8A96B) — one point per design
 • Background / negative space → warm cream (#F5EDE0)
+• Secondary surface depth → warm greige (#B5A898)
 • Lighting: soft warm cinematic — directional golden-hour light, deep elegant shadows, large upper-third negative space reserved for text overlay
-• NEVER use cold teal, blue, pure white, or cool grey
+• NEVER cold teal, blue, pure white, or cool grey
 
 ━━━ OUTPUT ━━━
 Return ONLY valid JSON — no markdown fences, no ### headers, no extra text.
 
 • "title": The single most powerful phrase from the post. Max 8 Arabic words.
 • "support": One grounded supporting sentence. Max 15 Arabic words.
-• "symbol": Full English image-generation prompt written as ONE or TWO flowing prose paragraphs. No headers, no labels. Describe: what object, where it is placed, what it looks like in the FROM zone vs the TO zone, specific colors, lighting direction, texture, and mood. This goes directly into an AI image generator.
-• "concept_ar": 1–2 short warm Arabic sentences describing what the image shows and why it relates to the post. For a non-technical Arabic reader. No English words.
+• "symbol": Full English image-generation prompt written as ONE or TWO flowing prose paragraphs. No headers. No labels. Describe: the object, its placement, what it looks like in each zone, exact colors on each part, lighting direction, texture, and mood. This goes directly into an AI image generator.
+• "concept_ar": 1–2 short warm Arabic sentences describing what the image shows and why it connects to the post. For a non-technical Arabic reader. No English words.
 • Use \\n for line breaks to keep valid JSON.
 • JSON format exactly: {{"title": "...", "support": "...", "symbol": "...", "concept_ar": "..."}}
 
 APPROVED POST:
 {approved_text}"""
 
-    CONCEPT_EXPANSION_PROMPT = """You are a visual content director for Coach Sihame, a somatic trauma therapy coach.
+    CONCEPT_EXPANSION_PROMPT = """You are the visual mind of Coach Sihame, a somatic trauma therapy coach.
 
-The coach has described her vision in Arabic:
+The coach has described what she wants the image to show, in Arabic:
 "{concept_ar}"
 
-Your job: translate and expand this into a precise, cinematic English image-generation prompt.
+Your job: honor her description exactly, then expand it into a precise, cinematic English image-generation prompt.
 
-STEP 1 — IDENTIFY THE CORE OBJECT OR PHENOMENON
-If the coach described a specific object or scene, honor it. If she described only a feeling or concept, choose ONE surprising real-world object to embody it — drawn from domains like: astronomy, glassblowing, geology, botany, architecture, cartography, metallurgy, culinary arts, weaving light, marine biology, ancient ruins, or physics. Do not default to the obvious.
+STEP 1 — HONOR THE COACH'S INTENT FIRST
+Read her Arabic description carefully. If she named a specific object or scene, keep it faithfully — do not replace or override her choice. If she described only a feeling or inner state without naming an object, you may choose one — but it must come from Coach Sihame's symbolic world (see below).
 
-STEP 2 — DESCRIBE THE TRANSFORMATION THROUGH THAT OBJECT
-Show the FROM state (tension, fear, shutdown) on one side and the TO state (release, safety, aliveness) on the other, using the form and texture of your chosen object.
+STEP 2 — IF AN OBJECT IS NEEDED, CHOOSE FROM SIHAME'S WORLD
+Draw only from objects that feel warm, contained, ancient, handcrafted, or quietly alive:
+• Body constriction / held breath → sealed clay vessel before firing | compressed seed pod | knotted raw thread | dry root in parched soil
+• Release / expansion → seed pod opening | still water receiving a drop | steady lantern flame | knotted thread resolving into one clean line
+• Safety / being held → deep ceramic bowl | architectural arch with open interior | clay alcove lit from within | nested worn basket curves
+• Stillness / presence / witnessing → perfectly still water surface | single horizontal horizon | champagne light through an opening | edge of dawn on cream
+• Inner multiplicity / maestro → scattered small forms gathering toward a warm center | concentric rings converging to stillness
+• Spiritual groundedness → lantern flame in handblown glass | refracted gold light through aged crystal | dawn touching still water
+• Transformation / threshold → half-open botanical form | knotted thread releasing into a clean line | narrow passage opening into calm water | door ajar with warm light
 
-STEP 3 — MAP BRAND COLORS ONTO THE OBJECT'S NATURAL FORMS
-• FROM zones → muted terracotta / burnt sienna
-• TO zones → warm sage green
-• Turning point → muted champagne gold glow
+STEP 3 — ONLY ADD A CONTRAST IF THE COACH'S DESCRIPTION IMPLIES IT
+If her description clearly has two states (before/after, closed/open, tension/release) — show them:
+• Tension / FROM zones → muted terracotta (#C4784A) / burnt sienna, warm-leaning
+• Release / TO zones → warm sage green (#8A9E82), always warm, never cool or teal
+• The single turning point → muted champagne gold (#C8A96B)
+
+If her description has only one state or is purely reflective — do NOT invent a contrast. Describe that single state fully and beautifully.
+
+STEP 4 — APPLY BRAND PALETTE AND LIGHT
 • Background → warm cream (#F5EDE0)
-• Lighting: soft warm cinematic, directional golden-hour light, deep elegant shadows, large upper-third negative space for text
+• Secondary depth surfaces → warm greige (#B5A898)
+• Lighting: soft warm cinematic, directional golden-hour light, deep elegant shadows, large upper-third negative space reserved for Arabic text overlay
 • NEVER cold teal, blue, pure white, or cool grey
 
-Write ONE or TWO flowing prose paragraphs. No markdown headers. No labels. Be specific: name the object, describe its FROM and TO zones, describe the exact colors on each part, the lighting direction, and the mood. This prompt goes directly into an AI image generator.
+Write ONE or TWO flowing prose paragraphs. No markdown headers. No labels. Be specific: name the object, describe its zones, the exact colors on each part, the lighting direction, texture, and mood. This prompt goes directly into an AI image generator.
 
 Return ONLY the expanded English image prompt. Nothing else."""
 
