@@ -40,8 +40,9 @@ logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # In-memory job store for async image generation
-# job_id -> {"status": "pending"|"done"|"failed", "image_url": str|None, "error": str|None}
-# This is process-local; sufficient for single-instance Cloud Run deployments.
+# job_id -> {"status": "pending"|"done"|"failed", "image_url": str|None, "error": str|None, "draft_id": str}
+# This is process-local. If the container restarts (e.g., after a deployment),
+# the dict is wiped. The status endpoint falls back to Supabase for recovery.
 # ---------------------------------------------------------------------------
 _image_jobs: Dict[str, Dict[str, Any]] = {}
 
@@ -83,11 +84,11 @@ async def _run_image_generation_job(
         draft.updated_at = datetime.now(timezone.utc)
         await draft_repo.update(draft)
 
-        _image_jobs[job_id] = {"status": "done", "image_url": image_url, "error": None}
+        _image_jobs[job_id] = {"status": "done", "image_url": image_url, "error": None, "draft_id": draft_id}
         logger.info("Image job %s done — url=%s", job_id, image_url)
 
     except Exception as exc:  # noqa: BLE001
-        _image_jobs[job_id] = {"status": "failed", "image_url": None, "error": str(exc)}
+        _image_jobs[job_id] = {"status": "failed", "image_url": None, "error": str(exc), "draft_id": draft_id}
         logger.error("Image job %s failed: %s", job_id, exc)
 
 
@@ -337,7 +338,7 @@ async def generate_design_image(
         raise HTTPException(status_code=409, detail="Draft must be approved before generating design image.")
 
     job_id = str(uuid.uuid4())
-    _image_jobs[job_id] = {"status": "pending", "image_url": None, "error": None}
+    _image_jobs[job_id] = {"status": "pending", "image_url": None, "error": None, "draft_id": request.draft_id}
 
     asyncio.create_task(
         _run_image_generation_job(
@@ -353,25 +354,68 @@ async def generate_design_image(
     )
 
     logger.info("Image job %s queued for draft %s", job_id, request.draft_id)
-    return DesignJobResponse(job_id=job_id, status="pending")
+    return DesignJobResponse(job_id=job_id, status="pending", draft_id=request.draft_id)
 
 
 @router.get("/design/status/{job_id}", response_model=DesignJobStatusResponse)
-async def get_design_job_status(job_id: str):
+async def get_design_job_status(
+    job_id: str,
+    draft_id: str | None = None,
+    draft_repo: DraftRepository = Depends(get_draft_repository),
+):
     """
     Poll this endpoint every 15 seconds after calling POST /design/generate.
     Returns status=pending while Kie.ai is running, status=done with image_url
     on success, or status=failed with error on failure.
+
+    If the in-memory job store was wiped (e.g., container restart after deployment),
+    this endpoint falls back to checking the draft's design_image_url in Supabase.
+    Pass draft_id as a query param to enable this fallback.
     """
     job = _image_jobs.get(job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found.")
-    return DesignJobStatusResponse(
-        job_id=job_id,
-        status=job["status"],
-        image_url=job.get("image_url"),
-        error=job.get("error"),
-    )
+    if job is not None:
+        return DesignJobStatusResponse(
+            job_id=job_id,
+            status=job["status"],
+            image_url=job.get("image_url"),
+            error=job.get("error"),
+        )
+
+    # ── Fallback: job evicted from memory (container restart) ──────────────
+    # If draft_id was provided (via query param or stored in job before eviction),
+    # check Supabase directly to recover the image URL.
+    fallback_draft_id = draft_id
+    if fallback_draft_id:
+        try:
+            draft = await draft_repo.get(fallback_draft_id)
+            if draft.design_image_url:
+                logger.info(
+                    "Job %s not in memory — recovered image_url from draft %s",
+                    job_id, fallback_draft_id,
+                )
+                return DesignJobStatusResponse(
+                    job_id=job_id,
+                    status="done",
+                    image_url=draft.design_image_url,
+                    error=None,
+                )
+            else:
+                # Draft exists but no image yet — treat as pending (job is still running
+                # on another instance, or it failed silently before writing to Supabase)
+                logger.warning(
+                    "Job %s not in memory, draft %s has no image — returning pending",
+                    job_id, fallback_draft_id,
+                )
+                return DesignJobStatusResponse(
+                    job_id=job_id,
+                    status="pending",
+                    image_url=None,
+                    error=None,
+                )
+        except KeyError:
+            pass
+
+    raise HTTPException(status_code=404, detail=f"Job {job_id} not found.")
 
 
 

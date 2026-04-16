@@ -217,6 +217,7 @@ class DesignGenerateResponse(BaseModel):
 class DesignJobResponse(BaseModel):
     job_id: str = Field(..., description="Unique ID for the background generation job")
     status: str = Field(default="pending", description="Job status: pending | done | failed")
+    draft_id: str = Field(..., description="Draft ID — pass as query param when polling status for Supabase fallback")
 
 
 class DesignJobStatusResponse(BaseModel):
