@@ -506,13 +506,19 @@ function MainWorkspace() {
         const errData = await res.json();
         throw new Error(errData.detail || 'فشل بدء توليد الصورة');
       }
-      const { job_id } = await res.json();
+      const { job_id, draft_id: jobDraftId } = await res.json();
 
       // ── Step 2: Poll every 15 seconds (max 60 × 15s = 15 minutes) ──
       for (let i = 0; i < 60; i++) {
         await delay(15_000);
 
-        const statusRes = await fetch(`${apiUrl}/api/v1/content/design/status/${job_id}`);
+        // Pass draft_id so the backend can recover from a container restart
+        // by falling back to the Supabase-persisted design_image_url.
+        const statusUrl = jobDraftId
+          ? `${apiUrl}/api/v1/content/design/status/${job_id}?draft_id=${jobDraftId}`
+          : `${apiUrl}/api/v1/content/design/status/${job_id}`;
+
+        const statusRes = await fetch(statusUrl);
         if (!statusRes.ok) throw new Error('فشل التحقق من حالة توليد الصورة');
 
         const statusData = await statusRes.json();
