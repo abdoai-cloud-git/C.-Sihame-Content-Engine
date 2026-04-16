@@ -77,6 +77,11 @@ class TextModelRouter:
         editor_adapter: Optional[GeminiChatAdapter] = None,
     ) -> None:
         api_key = settings.KIE_API_KEY
+        if not api_key:
+            raise RuntimeError(
+                "KIE_API_KEY is not set. All AI calls will fail with 401. "
+                "Set the KIE_API_KEY environment variable in Cloud Run and redeploy."
+            )
         self.primary_adapter = primary_adapter or GeminiChatAdapter(
             api_key=api_key,
             base_url=settings.KIE_GEMINI_PRO_BASE_URL,
