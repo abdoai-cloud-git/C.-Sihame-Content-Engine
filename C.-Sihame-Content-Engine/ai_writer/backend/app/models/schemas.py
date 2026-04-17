@@ -199,13 +199,27 @@ class DesignGenerateRequest(BaseModel):
     design_concept_ar: str = Field(default="", description="Coach's Arabic visual concept — if provided, overrides design_symbol via LLM expansion")
 
 
+class ConceptHistoryEntry(BaseModel):
+    """One previous concept generation, used for archetype-level exclusion tracking."""
+    symbol: str = Field(..., description="English image prompt from a previous generation")
+    concept_ar: str = Field(default="", description="Arabic concept summary from the same generation")
+    archetype: Optional[str] = Field(default=None, description="Auto-detected archetype — will be computed server-side if omitted")
+
+
 class DesignRegenerateConceptRequest(BaseModel):
     """Request a fresh visual concept derived from the short distilled texts only (not the full post)."""
     draft_id: str = Field(..., description="The approved draft id")
     design_title: str = Field(..., description="Current (possibly coach-edited) headline")
     design_support: str = Field(..., description="Current (possibly coach-edited) support sentence — the juice")
-    previous_symbol: str = Field(default="", description="Previous English image prompt — used to enforce a different symbol choice")
-    previous_concept_ar: str = Field(default="", description="Previous Arabic concept — used together with previous_symbol to avoid repetition")
+    # ── Preferred: full history list for archetype-level exclusion ──────────
+    history: Optional[List[ConceptHistoryEntry]] = Field(
+        default=None,
+        description="Ordered list of previous concept generations (oldest first, max 3). "
+                    "When provided, exclusion operates at the archetype level across all entries."
+    )
+    # ── Legacy single-entry fields — still accepted for backward compatibility ──
+    previous_symbol: str = Field(default="", description="[Legacy] Previous English image prompt to avoid")
+    previous_concept_ar: str = Field(default="", description="[Legacy] Previous Arabic concept to avoid")
 
 
 

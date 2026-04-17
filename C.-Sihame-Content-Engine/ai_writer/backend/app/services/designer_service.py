@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 import httpx
 
@@ -31,6 +31,8 @@ Read the post and choose exactly ONE type:
 • CONTRAST — two inner states compared (regulation vs calming, boundary vs wall, reaction vs response, mindful vs mind-full). Needs a visual split between them.
 • SOMATIC_PRACTICE — guides the reader through a body sensation, regulation practice, or self-contact. Body presence matters more than concepts.
 • EDUCATIONAL — explains a mechanism (inner parts, the maestro, the nervous system). The image must make the concept visible.
+• PROMOTIONAL — announces an offer, program, retreat, or masterclass. The image must feel invitational, elegant, confident — never pushy.
+• STORY — an intimate personal anecdote, behind-the-scenes moment, or conversational message to the audience. Warm, human, close.
 
 ━━━ STEP 1 — FIND THE EMOTIONAL CENTER ━━━
 From the post, extract:
@@ -40,31 +42,61 @@ From the post, extract:
 
 ━━━ STEP 2 — CHOOSE THE SYMBOL FROM SIHAME'S WORLD ━━━
 Choose ONE object or natural form that physically embodies what you found in Step 1.
-Draw only from Coach Sihame's symbolic world — objects that feel warm, contained, ancient, handcrafted, or quietly alive:
+Draw from Coach Sihame's 2025–2026 symbolic world — objects that feel warm, contained, ancient, handcrafted, or quietly alive.
+
+⚠️ PRIORITY ORDER: Always try the 2025–2026 symbols first. Only fall back to earlier ones if nothing fits.
+
+── 2025–2026 SYMBOLS (Use First) ──
+
+The maestro / inner conductor / orchestration:
+→ an open conductor's hand held still at the center of gathering sound | the precise moment a baton lowers into waiting silence | a single anchor point from which motion radiates outward | a score laid open on a still table, no hand yet touching it | the hollow center of a circular form from which all arcs begin
+
+The symphony / inner harmony / multiple inner parts:
+→ several small vessels of different sizes arranged quietly around a shared center | a grouping of smooth stones settling into their own formation | scattered seed pods drawn together toward a warm hollow | concentric light rings converging inward to one still point | a collection of small ceramic forms each distinct yet arranged as one
+
+Qitaf / harvest / the quiet fruit of a long journey:
+→ a ripened branch bowing gently under the weight of its own fruit | a single grain suspended over an open palm just before landing | a threshold crossed with something held gently | a basket resting on a warm stone with what has been gathered | a single dried botanical form hanging in still air, everything already done
+
+Sukoon / deep stillness / not silence-as-absence but presence-as-fullness:
+→ a flat water surface with no movement but enormous depth implied beneath | a stone that has sat in one place long enough to become part of the earth | the held breath of a room just before something begins | a single horizontal line where water meets sky in early morning | a smooth palm-sized river stone resting on cream fabric
+
+Return / homecoming / not change but arrival:
+→ a door standing slightly open with warm interior light | a threshold worn smooth by returning feet | a path of stone leading toward a lit archway | a familiar curve in a landscape that signals arrival | a key resting still beside an open lock
+
+Sarian / subtle flowing / movement invisible until felt:
+→ a very slow river visible only by the lean of grass at its edge | a thin thread of pale smoke rising in completely still air | the edge of sand where shallow water retreats without drama | ripples on deep still water — not from above but from within | a barely perceptible gradient from one earth tone to the next
+
+── CLASSIC SIHAME SYMBOLS (Fallback — still valid) ──
 
 Body constriction / held breath / shutdown:
-→ a tightly sealed clay vessel before firing | a compressed seed pod that has not yet opened | a knotted raw thread | geological strata under pressure | a dry root clenched in parched soil
+→ a tightly sealed clay vessel before firing | a compressed seed pod that has not yet opened | a knotted raw thread | geological strata under pressure | a dry root clenched in parched soil | compressed mineral layers in cross-section | a tightly folded new leaf that has not yet unfurled | a sealed beeswax form
 
 Release / breath returning / expansion:
-→ a seed pod's first opening | still water receiving a single drop and rippling outward gently | a lantern flame steadying in still air | a knotted thread resolving into one clean line | a narrow river mouth opening into wide calm water
+→ a seed pod's first opening | still water receiving a single drop and rippling outward gently | a knotted thread resolving into one clean line | a narrow river mouth opening into wide calm water | a tightly wound botanical spiral beginning to open | a flat stone allowing a single breath of water across its surface | a petal separating from a bud at its own pace | morning fog lifting from a warm valley floor
 
 Safety / being held / containment:
-→ a deep ceramic bowl with warm inner depth | an architectural arch with open breathable interior | a clay alcove lit softly from within | nested curves of worn basket weave | a cupped form as abstract geometric holding shape
+→ a deep ceramic bowl with warm inner depth | an architectural arch with open breathable interior | a clay alcove lit softly from within | nested curves of worn basket weave | a cupped form as abstract geometric holding shape | a hollow in warm stone holding pooled light | a nest-form woven from dried grass with one warm egg | a thick-walled clay cup with steam | a stone doorway open to interior warmth | a low curved alcove in aged plaster
 
 Stillness / witnessing / presence:
-→ a perfectly still water surface with reflected champagne light | a single smooth horizontal horizon | the edge of dawn on a flat cream surface | one unhurried shaft of warm gold through an architectural threshold
+→ a perfectly still water surface with reflected champagne light | a single smooth horizontal horizon | the edge of dawn on a flat cream surface | one unhurried shaft of warm gold through an architectural threshold | a smooth river stone in open palm | the moment winter light enters an empty room | a single feather settled on still water
 
 Inner multiplicity / the maestro / inner parts:
-→ small scattered forms quietly gathering around a warm center point | concentric rings converging inward to a still point | a single conductor's anchor point from which motion radiates | a soft container holding multiple small inner forms
+→ small scattered forms quietly gathering around a warm center point | concentric rings converging inward to a still point | a single conductor's anchor point from which motion radiates | a soft container holding multiple small inner forms | different-sized droplets meeting at a shared center | a cluster of seed forms around one larger core | a gathering of smooth pebbles around a single warm stone
 
 Spiritual groundedness / divine light / fitrah:
-→ a lantern flame contained in handblown glass | champagne light refracted through aged crystal | the moment dawn first touches a still water surface | one precise shaft of warm gold light through an opening in stone
+→ champagne light refracted through aged crystal | the moment dawn first touches a still water surface | one precise shaft of warm gold light through an opening in stone | morning light arriving on closed eyelids | a warm ember in an open hand | the precise angle at which light folds over a curved earthen wall
 
 Overwhelm / fragmentation / scatter (CONTRAST posts only — one side):
-→ a dense knotted thread mass | compressed scattered clay fragments before they are gathered | tangled unresolved lines | visual weight without resolution
+→ a dense knotted thread mass | compressed scattered clay fragments before they are gathered | tangled unresolved lines | visual weight without resolution | multiple seed pods scattered before gathering | torn layers of dried earth | a knot of raw fibers before combing
 
 Transformation / threshold / crossing:
-→ a half-unfolded botanical form mid-opening | the exact moment a knotted thread releases into a single clean line | a door left ajar with warm light beyond | a narrow passage where contained water opens into stillness
+→ a half-unfolded botanical form mid-opening | the exact moment a knotted thread releases into a single clean line | a door left ajar with warm light beyond | a narrow passage where contained water opens into stillness | a seed mid-germination splitting at the seam | a folded form beginning to unfurl | a heel mark in soft earth at a threshold
+
+Promotional anchor / invitation without pressure:
+→ a smooth rounded stone resting on soft linen | a single sealed letter on warm paper | an open book on a still table with one candle beyond | a small vessel with its lid set beside it — ready but unhurried | a path of flat stepping stones leading toward open light
+
+Story / intimacy / behind the scenes:
+→ a warm cup on an imperfect wooden surface | a notebook open to a half-written page | a window with morning light and a simple interior | a worn chair in soft directional light | a threshold between inside warmth and outside quiet
 
 ━━━ STEP 3 — COMPOSE BASED ON POST TYPE ━━━
 
@@ -88,6 +120,18 @@ If EDUCATIONAL:
 • The object must explain the concept simply and clearly — symbolic clarity over atmospheric beauty
 • One clean central metaphor that makes the mechanism visible at a glance
 • Composition is readable, not just felt
+
+If PROMOTIONAL:
+• One clean, beautiful anchor object centered with generous breathing space above and below
+• No split composition — this is an invitation, not a contrast
+• Warm cream background, high legibility space reserved for CTA text
+• Confident, still, premium — never urgent or cluttered
+
+If STORY:
+• Close, warm, intimate — the object feels like it belongs in a real moment
+• Slightly more cropped than a Reflection; more spontaneous but still curated
+• Avoid high-concept symbolism — keep it human and physical
+• Warm directional light, texture, grounded in a real surface
 
 ━━━ STEP 4 — APPLY BRAND PALETTE TO YOUR OBJECT ━━━
 Map palette to the object's natural zones. Do not introduce new objects just to show color:
@@ -122,15 +166,22 @@ Your job: honor her description exactly, then expand it into a precise, cinemati
 STEP 1 — HONOR THE COACH'S INTENT FIRST
 Read her Arabic description carefully. If she named a specific object or scene, keep it faithfully — do not replace or override her choice. If she described only a feeling or inner state without naming an object, you may choose one — but it must come from Coach Sihame's symbolic world (see below).
 
-STEP 2 — IF AN OBJECT IS NEEDED, CHOOSE FROM SIHAME'S WORLD
-Draw only from objects that feel warm, contained, ancient, handcrafted, or quietly alive:
-• Body constriction / held breath → sealed clay vessel before firing | compressed seed pod | knotted raw thread | dry root in parched soil
-• Release / expansion → seed pod opening | still water receiving a drop | steady lantern flame | knotted thread resolving into one clean line
+STEP 2 — IF AN OBJECT IS NEEDED, CHOOSE FROM SIHAME'S 2025–2026 WORLD
+Try these first — they reflect her current voice:
+• The maestro / conductor → an open hand held still at the center of gathering sound | a conductor's anchor point from which motion radiates | a score lying open on a still table
+• The symphony → several small vessels arranged around a shared center | sound rings converging to one still point | a cluster of distinct forms arranged as one
+• Qitaf / harvest → a branch bowing gently under its own fruit | an open palm receiving a single grain | a basket resting on a warm stone
+• Sukoon / stillness → flat water with depth implied beneath | a stone that has become part of the earth | the held breath of a room
+• Return / arrival → a door ajar with warm interior light | a threshold worn smooth | a path of stone toward a lit archway
+• Sarian / flowing → a very slow river visible by the lean of grass | thin smoke rising in still air | water retreating from smooth sand
+
+If none of these fit, fall back to classic Sihame symbols:
+• Body constriction → sealed clay vessel | compressed seed pod | knotted raw thread | dry clenched root
+• Release / expansion → seed pod opening | still water receiving a drop | knotted thread resolving into one clean line
 • Safety / being held → deep ceramic bowl | architectural arch with open interior | clay alcove lit from within | nested worn basket curves
-• Stillness / presence / witnessing → perfectly still water surface | single horizontal horizon | champagne light through an opening | edge of dawn on cream
-• Inner multiplicity / maestro → scattered small forms gathering toward a warm center | concentric rings converging to stillness
-• Spiritual groundedness → lantern flame in handblown glass | refracted gold light through aged crystal | dawn touching still water
-• Transformation / threshold → half-open botanical form | knotted thread releasing into a clean line | narrow passage opening into calm water | door ajar with warm light
+• Stillness / presence → perfectly still water surface | single horizontal horizon | champagne light through a threshold
+• Inner multiplicity → scattered small forms gathering toward a warm center | concentric rings converging to stillness
+• Transformation → half-open botanical form | thread releasing into a clean line | narrow passage opening into calm water
 
 STEP 3 — ONLY ADD A CONTRAST IF THE COACH'S DESCRIPTION IMPLIES IT
 If her description clearly has two states (before/after, closed/open, tension/release) — show them:
@@ -185,6 +236,72 @@ Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Han
     POLL_INITIAL_DELAY: float = 10.0   # wait a bit longer before first check
     POLL_INTERVAL: float = 6.0         # check every 6 seconds
     POLL_MAX_ATTEMPTS: int = 60        # 60 × 6s = 360s (~6 minutes)
+
+    # ── Archetype taxonomy — used for exclusion tracking across generations ──
+    # Maps known objects/keywords to their symbolic archetype category name.
+    # When building exclusion blocks, we exclude at the ARCHETYPE level, not
+    # just the object level, to prevent near-synonym repetition.
+    ARCHETYPE_KEYWORDS: Dict[str, str] = {
+        # Maestro / conductor
+        "conductor": "MAESTRO", "maestro": "MAESTRO", "baton": "MAESTRO", "score": "MAESTRO",
+        "anchor point": "MAESTRO", "orchestr": "MAESTRO",
+        # Symphony / harmony
+        "symphony": "SYMPHONY", "vessels arranged": "SYMPHONY", "concentric ring": "SYMPHONY",
+        "cluster": "SYMPHONY", "gathering": "SYMPHONY",
+        # Qitaf / harvest
+        "qitaf": "QITAF", "harvest": "QITAF", "fruit": "QITAF", "branch bowing": "QITAF",
+        "basket": "QITAF", "grain": "QITAF", "ripened": "QITAF",
+        # Sukoon / stillness
+        "sukoon": "STILLNESS", "flat water": "STILLNESS", "still water": "STILLNESS",
+        "horizon": "STILLNESS", "river stone": "STILLNESS", "smooth stone": "STILLNESS",
+        # Return / arrival / threshold
+        "door": "THRESHOLD", "doorway": "THRESHOLD", "arch": "THRESHOLD",
+        "threshold": "THRESHOLD", "passage": "THRESHOLD", "path of stone": "THRESHOLD",
+        "corridor": "THRESHOLD",
+        # Sarian / flowing
+        "sarian": "FLOWING", "smoke rising": "FLOWING", "slow river": "FLOWING",
+        "water retreating": "FLOWING", "sand": "FLOWING", "gradient": "FLOWING",
+        # Containment / bowl / vessel
+        "bowl": "CONTAINMENT", "vessel": "CONTAINMENT", "clay": "CONTAINMENT",
+        "ceramic": "CONTAINMENT", "alcove": "CONTAINMENT", "basket weave": "CONTAINMENT",
+        "cupped": "CONTAINMENT", "cup": "CONTAINMENT",
+        # Botanical / seed / pod
+        "seed pod": "BOTANICAL", "botanical": "BOTANICAL", "leaf": "BOTANICAL",
+        "petal": "BOTANICAL", "bud": "BOTANICAL", "seed": "BOTANICAL",
+        "flower": "BOTANICAL", "root": "BOTANICAL", "branch": "BOTANICAL",
+        "germination": "BOTANICAL",
+        # Thread / line / knot
+        "thread": "THREAD", "knot": "THREAD", "fiber": "THREAD", "line": "THREAD",
+        # Water / drop / ripple
+        "water": "WATER", "drop": "WATER", "ripple": "WATER", "river mouth": "WATER",
+        "pool": "WATER", "reflecting": "WATER",
+        # Light / glow / lantern
+        "light": "LIGHT", "lantern": "LIGHT", "flame": "LIGHT", "glow": "LIGHT",
+        "shaft of": "LIGHT", "dawn": "LIGHT", "ember": "LIGHT", "crystal": "LIGHT",
+        # Geological / stone / rock
+        "geological": "GEOLOGICAL", "strata": "GEOLOGICAL", "mineral": "GEOLOGICAL",
+        "stone": "GEOLOGICAL", "rock": "GEOLOGICAL", "pebble": "GEOLOGICAL",
+        # Story / intimate objects
+        "cup": "STORY_OBJECT", "notebook": "STORY_OBJECT", "window": "STORY_OBJECT",
+        "chair": "STORY_OBJECT", "table": "STORY_OBJECT",
+    }
+
+    # Archetype opposition map — when an archetype is excluded, suggest its opposite
+    ARCHETYPE_OPPOSITES: Dict[str, str] = {
+        "CONTAINMENT": "THRESHOLD or FLOWING",
+        "WATER": "GEOLOGICAL or THREAD",
+        "BOTANICAL": "ARCHITECTURAL or GEOLOGICAL",
+        "THREAD": "BOTANICAL or WATER",
+        "LIGHT": "GEOLOGICAL or CONTAINMENT",
+        "GEOLOGICAL": "WATER or BOTANICAL",
+        "THRESHOLD": "CONTAINMENT or STILLNESS",
+        "STILLNESS": "FLOWING or BOTANICAL",
+        "FLOWING": "STILLNESS or CONTAINMENT",
+        "MAESTRO": "QITAF or BOTANICAL",
+        "SYMPHONY": "STILLNESS or THRESHOLD",
+        "QITAF": "MAESTRO or CONTAINMENT",
+        "STORY_OBJECT": "MAESTRO or BOTANICAL",
+    }
 
     def __init__(self, llm_adapter: GeminiChatAdapter | None = None) -> None:
         self.llm_adapter = llm_adapter or GeminiChatAdapter(
@@ -246,6 +363,22 @@ Warm, comforting editorial elegance. Quiet integration. Poetic and artistic. Han
                 raise DesignerServiceError("LLM response did not contain valid JSON for text extraction.")
             return json.loads(cleaned[start : end + 1])
 
+    def detect_archetype(self, symbol_text: str) -> str:
+        """Detect the dominant symbolic archetype from an English image prompt.
+
+        Scans for known archetype keywords and returns the archetype name.
+        Falls back to 'UNKNOWN' if nothing matches.
+        """
+        lower = symbol_text.lower()
+        archetype_counts: Dict[str, int] = {}
+        for keyword, archetype in self.ARCHETYPE_KEYWORDS.items():
+            if keyword.lower() in lower:
+                archetype_counts[archetype] = archetype_counts.get(archetype, 0) + 1
+
+        if not archetype_counts:
+            return "UNKNOWN"
+        return max(archetype_counts, key=lambda k: archetype_counts[k])
+
     async def extract_text_blocks(self, approved_text: str) -> Dict[str, str]:
         """Use LLM to extract headline, body, visual concept, and Arabic summary from approved text.
 
@@ -301,14 +434,26 @@ These two sentences are the concentrated juice of the post. Your job is to inven
 ━━━ WHAT TO DO ━━━
 
 1. Feel the emotional weight inside TITLE and SUPPORT. What body sensation, inner state, or life moment do they point to?
-2. Choose ONE object or natural form that physically embodies that feeling. Draw only from Coach Sihame's symbolic world — objects that feel warm, contained, ancient, handcrafted, or quietly alive:
-   • Constriction / held breath → sealed clay vessel | compressed seed pod | knotted raw thread | dry clenched root
-   • Release / expansion → seed pod opening | still water receiving a single drop | steady lantern flame | knotted thread resolving into one clean line
-   • Safety / being held → deep ceramic bowl | open architectural arch | clay alcove lit softly from within | nested worn basket weave
-   • Stillness / presence → perfectly still water surface | single smooth horizon | champagne light through a threshold | edge of dawn on cream
-   • Inner multiplicity → small forms gathering around a warm center | concentric rings converging to stillness
-   • Spiritual groundedness → lantern in handblown glass | gold light refracted through aged crystal | dawn touching still water
-   • Transformation → half-open botanical form | thread releasing into a clean line | narrow passage opening into calm water
+
+2. Choose ONE object or natural form from Coach Sihame's 2025–2026 symbolic world.
+
+   ── 2025–2026 SYMBOLS (Try these first) ──
+   • The maestro / conductor → open hand held still at center of gathering sound | anchor point from which motion radiates | a score lying open on a still table | a baton held at rest
+   • The symphony / harmony → several small vessels arranged around a shared center | sound rings converging to one still point | different-sized forms arranged as one whole | a cluster of distinct seed forms near one larger core
+   • Qitaf / harvest → a branch bowing gently under its own fruit | open palm receiving a single grain | a basket resting on warm stone | a dried botanical form with everything already complete
+   • Sukoon / stillness → flat water with enormous depth implied beneath | a stone that has become part of the earth | the held breath of a room before something begins | a smooth river stone on cream linen
+   • Return / arrival → a door slightly ajar with warm interior light | a threshold worn smooth by returning feet | a path of stepping stones toward an open lit archway
+   • Sarian / flowing → a slow river visible only by the lean of grass at its edge | thin smoke rising in still air | water retreating from smooth sand | a barely visible gradient from one warm earth tone to the next
+
+   ── CLASSIC SYMBOLS (Fallback if 2025–2026 don't fit) ──
+   • Constriction / held breath → sealed clay vessel | compressed seed pod | knotted raw thread | dry clenched root | compressed mineral layers | sealed beeswax form
+   • Release / expansion → seed pod first opening | still water receiving a drop | knotted thread resolving to one clean line | a petal separating from a bud at its own pace
+   • Safety / being held → deep ceramic bowl | open architectural arch | clay alcove lit from within | nested worn basket weave | a hollow in warm stone holding pooled light
+   • Stillness / presence → perfectly still water | single smooth horizon | champagne light through a threshold | a smooth river stone in open palm
+   • Inner multiplicity → small forms gathering around a warm center | concentric rings converging to stillness | different-sized droplets meeting at a shared center
+   • Spiritual groundedness → champagne light refracted through aged crystal | dawn touching still water | warm ember in open hand | the angle at which light folds over a curved earthen wall
+   • Transformation → half-open botanical form | thread releasing into a clean line | narrow passage opening into calm water | a seed mid-germination
+
 3. Apply the brand palette to the object's natural zones:
    • Tension / constriction → muted terracotta (#C4784A) / burnt sienna
    • Healing / expansion → warm sage green (#8A9E82) — warm, never cool or teal
@@ -323,20 +468,20 @@ Return ONLY valid JSON — no markdown, no headers, no extra text.
 • "concept_ar": 1–2 short warm Arabic sentences describing what the image shows and why it connects to the post — for a non-technical Arabic reader. No English words.
 • JSON format exactly: {{"symbol": "...", "concept_ar": ""}}"""
 
-    EXCLUSION_BLOCK_TEMPLATE = """━━━ ⚠️ YOU ALREADY TRIED THIS — DO NOT REPEAT IT ━━━
-You previously generated this concept:
+    EXCLUSION_BLOCK_TEMPLATE = """━━━ ⚠️ WHAT YOU ALREADY TRIED — DO NOT REPEAT ━━━
 
-PREVIOUS SYMBOL (English prompt): {previous_symbol}
-PREVIOUS ARABIC DESCRIPTION: {previous_concept_ar}
+You already generated these concepts. You MUST choose something visually and symbolically distinct from ALL of them:
 
-You MUST choose a COMPLETELY DIFFERENT visual symbol:
-• Pick a DIFFERENT object (not the same noun or near-synonym)
-• Pick a DIFFERENT symbolic category from the list below
-• The new image must feel visually distinct — a different shape, material, and mood
-If the previous used water → this time use something solid (clay, stone, wood, seed).
-If the previous used containment (bowl, vessel) → this time use expansion (horizon, passage, light).
-If the previous used thread → this time use something botanical or architectural.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{history_items}
+
+ARCHETYPE-LEVEL RULES (most important):
+{archetype_rules}
+
+ADDITIONAL CONSTRAINTS:
+• Pick a DIFFERENT physical object — not a near-synonym or variant of anything above
+• Pick a DIFFERENT archetype category entirely
+• The new image must feel visually completely distinct — different shape, material, texture, and mood
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
 
@@ -346,6 +491,11 @@ If the previous used thread → this time use something botanical or architectur
         The coach writes what she *feels* the image should show (in Arabic).
         This method translates + expands that into the detailed English prompt
         that the image generator needs, while enforcing all brand visual rules.
+
+        This is also the COACH OVERRIDE PATH: if the coach writes or edits
+        concept_ar directly (rather than accepting the auto-generated one),
+        call this method to build the image prompt from her intent — bypassing
+        the full extract_text_blocks() cycle entirely.
 
         Args:
             concept_ar: Natural Arabic description from the coach, e.g.
@@ -368,30 +518,72 @@ If the previous used thread → this time use something botanical or architectur
         self,
         title: str,
         support: str,
+        history: Optional[List[Dict[str, str]]] = None,
+        # Legacy parameters kept for backward compatibility — prefer `history`
         previous_symbol: str = "",
         previous_concept_ar: str = "",
     ) -> Dict[str, str]:
         """Generate a fresh visual concept using ONLY the short distilled title + support.
 
-        Injects an anti-repetition block when previous concept is provided, forcing
-        the LLM to choose a wholly different symbolic category each time.
+        Injects an archetype-level anti-repetition block when previous concepts are
+        provided, forcing the LLM to choose a wholly different symbolic category
+        each time. Tracks up to the last 3 generations to avoid near-synonym drift.
 
         Args:
             title:              The short headline string (max ~8 Arabic words).
             support:            The single grounding sentence (max ~15 Arabic words).
-            previous_symbol:    The English image prompt from the last generation (to avoid).
-            previous_concept_ar: The Arabic description from the last generation (to avoid).
+            history:            List of previous generation dicts, each with keys:
+                                  'symbol' (English prompt), 'concept_ar' (Arabic summary),
+                                  and optionally 'archetype' (auto-detected if missing).
+                                  Most recent last. Max 3 entries used.
+            previous_symbol:    Legacy — single previous English image prompt (to avoid).
+            previous_concept_ar: Legacy — single previous Arabic description (to avoid).
 
         Returns:
-            dict with keys 'symbol' (English image prompt) and 'concept_ar' (Arabic summary).
+            dict with keys 'symbol' (English image prompt), 'concept_ar' (Arabic summary),
+            and 'archetype' (detected archetype of the new symbol for future exclusion).
         """
-        if previous_symbol and previous_concept_ar:
+        # ── Normalise to history list ────────────────────────────────────────
+        if history is None:
+            history = []
+
+        # Back-compat: promote legacy single-item params into history
+        if not history and previous_symbol and previous_concept_ar:
+            history = [{"symbol": previous_symbol, "concept_ar": previous_concept_ar}]
+
+        # Cap at last 3 entries
+        history = history[-3:]
+
+        exclusion_block = ""
+        if history:
+            history_items_text = ""
+            excluded_archetypes: list[str] = []
+
+            for i, entry in enumerate(history, 1):
+                sym = entry.get("symbol", "")
+                car = entry.get("concept_ar", "")
+                arch = entry.get("archetype") or self.detect_archetype(sym)
+                if arch and arch != "UNKNOWN" and arch not in excluded_archetypes:
+                    excluded_archetypes.append(arch)
+                history_items_text += (
+                    f"[Attempt {i}]\n"
+                    f"  Symbol: {sym[:300]}{'...' if len(sym) > 300 else ''}\n"
+                    f"  Arabic description: {car}\n"
+                    f"  Detected archetype: {arch}\n\n"
+                )
+
+            archetype_rules_lines = []
+            for arch in excluded_archetypes:
+                opposite = self.ARCHETYPE_OPPOSITES.get(arch, "a completely different category")
+                archetype_rules_lines.append(
+                    f"• EXCLUDED archetype: {arch} — switch to {opposite} instead"
+                )
+            archetype_rules = "\n".join(archetype_rules_lines) if archetype_rules_lines else "• Choose any archetype not represented above."
+
             exclusion_block = self.EXCLUSION_BLOCK_TEMPLATE.format(
-                previous_symbol=previous_symbol[:400],  # truncate if very long
-                previous_concept_ar=previous_concept_ar,
+                history_items=history_items_text.strip(),
+                archetype_rules=archetype_rules,
             )
-        else:
-            exclusion_block = ""
 
         prompt = self.REGENERATE_CONCEPT_PROMPT.format(
             title=title,
@@ -408,11 +600,13 @@ If the previous used thread → this time use something botanical or architectur
                 logger.warning("[regenerate_concept] symbol field empty. Keys: %s", list(result.keys()))
             if not concept_ar:
                 logger.warning("[regenerate_concept] concept_ar field empty. Keys: %s", list(result.keys()))
+
+            detected_archetype = self.detect_archetype(symbol)
             logger.debug(
-                "[regenerate_concept] done — symbol_len=%d, concept_ar=%r",
-                len(symbol), concept_ar[:80] if concept_ar else "",
+                "[regenerate_concept] done — symbol_len=%d, archetype=%s, concept_ar=%r",
+                len(symbol), detected_archetype, concept_ar[:80] if concept_ar else "",
             )
-            return {"symbol": symbol, "concept_ar": concept_ar}
+            return {"symbol": symbol, "concept_ar": concept_ar, "archetype": detected_archetype}
         except ModelAdapterError as e:
             raise DesignerServiceError(f"Concept regeneration failed: {e}") from e
 
