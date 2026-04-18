@@ -12,6 +12,7 @@ from app.models.schemas import (
     AdaptPlatformResponse,
     ApproveTextRequest,
     ApproveTextResponse,
+    ConceptHistoryEntry,
     DesignExtractRequest,
     DesignExtractResponse,
     DesignGenerateRequest,
@@ -290,10 +291,19 @@ async def regenerate_visual_concept(
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"Draft {request.draft_id} not found.") from exc
 
+    # ── Build history list for archetype-level exclusion ────────────────────
+    # Prefer the new `history` list if provided; fall back to legacy single-entry params.
+    history: list | None = None
+    if request.history:
+        history = [h.model_dump() for h in request.history]
+    # Legacy params are forwarded directly into regenerate_concept as kwargs when
+    # history is None — the service handles the back-compat promotion internally.
+
     try:
         concept = await designer.regenerate_concept(
             title=request.design_title,
             support=request.design_support,
+            history=history,
             previous_symbol=request.previous_symbol,
             previous_concept_ar=request.previous_concept_ar,
         )
