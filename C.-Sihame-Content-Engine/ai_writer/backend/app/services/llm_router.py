@@ -218,6 +218,32 @@ CURRENT DRAFT:
         draft = await self._voice_check_draft(draft)
         return draft
 
+    # Platform-specific structural rules.
+    # These are additive instructions on top of shared voice + methodology constraints.
+    _PLATFORM_RULES: dict[str, str] = {
+        "telegram": """\
+Format: reflective, spacious, text-led. Allow longer paragraphs where the content calls for it.
+Preserve somatic breathing rhythm: short lines, natural pauses between images.
+No hashtags unless the original included them.
+Tone: deep, intimate, methodologically precise — like a voice note to a trusted circle.""",
+        "instagram": """\
+Format: strong opening hook (first line must stop the scroll).
+Tighter pacing: shorter sentences, more white space between stanzas.
+End with 3–5 Arabic hashtags if the content allows it.
+CTA: concise, one line, no preachy calls to action.
+Tone: grounded but slightly warmer — visual-caption rhythm, still unmistakably Sihame.""",
+        "facebook": """\
+Format: slightly more explanatory, community-friendly. Balanced between reflection and clarity.
+Longer paragraphs are acceptable when the idea requires development.
+No forced hashtag stuffing; one or two thematic tags at most.
+Tone: measured professional warmth — not inspirational-generic, not lecture-like.""",
+        "tiktok": """\
+Format: shortest version. Maximum 3–4 short paragraphs. Aim for under 150 words.
+Opening line must be punchy and immediately concrete.
+Remove academic or theoretical framing unless the concept itself is the hook.
+Tone: direct, clear, still unmistakably Sihame — not trendy, not slang.""",
+    }
+
     async def adapt_platform_draft(
         self,
         approved_text: str,
@@ -227,7 +253,11 @@ CURRENT DRAFT:
         voice_route: str,
         route_note: str,
     ) -> DraftGenerationResult:
-        prompt = f"""
+        platform_rules = self._PLATFORM_RULES.get(
+            platform.lower(),
+            "Adjust spacing and paragraph length for the target platform while preserving all meaning."
+        )
+        prompt = f"""\
 You are the PRD-aligned worker/editor for Coach Sihame.
 Your task is to adapt this approved post for the {platform} platform without changing its core meaning, route, or methodology integrity.
 
@@ -238,7 +268,9 @@ ACTIVE CONTEXT
 - Preserve the Coach's calm, grounded voice and methodological precision.
 - Keep the content structure intact unless platform formatting requires compression or spacing changes.
 - Do not rewrite this into generic promotional or generic soft-healing language.
-- Adjust only what is necessary for {platform}: spacing, paragraph length, visual scannability, hashtags, and platform-native formatting.
+
+PLATFORM-SPECIFIC RULES FOR {platform.upper()}:
+{platform_rules}
 
 Return EXACTLY the adapted text inside the "body" field of the JSON. For "angle", "hook", "cta", and "safety_flags", provide empty strings.
 Return STRICT JSON with exactly these keys: "angle", "hook", "body", "cta", "safety_flags".
@@ -246,5 +278,5 @@ Do not include markdown fences.
 
 APPROVED POST:
 {approved_text}
-""".strip()
+"""
         return await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)
