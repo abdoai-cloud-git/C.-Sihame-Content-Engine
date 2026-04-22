@@ -196,6 +196,7 @@ function MainWorkspace() {
   // ── Core generation logic: pure async, no internal job state ──
   const _doGenerate = async (
     setPhase: (p: string) => void,
+    signal: AbortSignal,
     opts?: { rawInput?: string; moodContext?: string; postType?: string; platform?: string; rejectionFeedback?: string; }
   ) => {
     const nextRawInput     = opts?.rawInput     ?? rawInput;
@@ -211,6 +212,7 @@ function MainWorkspace() {
     setPhase('جاري صياغة المنشور...');
     const response = await fetch(`${apiUrl}/api/v1/content/draft`, {
       method: 'POST',
+      signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         raw_input: nextRawInput,
@@ -237,17 +239,18 @@ function MainWorkspace() {
   // 1. Generate new draft
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    await generateJob.run(({ setPhase }) => _doGenerate(setPhase), 'جاري صياغة المنشور...');
+    await generateJob.run(({ setPhase, signal }) => _doGenerate(setPhase, signal), 'جاري صياغة المنشور...');
   };
 
   // 2. Revise existing draft
   const handleRevise = async () => {
     if (!editInstruction.trim() || !draftId) return;
-    await reviseJob.run(async ({ setPhase }) => {
+    await reviseJob.run(async ({ setPhase, signal }) => {
       setPhase('جاري التعديل...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/revise`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draft_id: draftId, edit_instruction: editInstruction }),
       });
@@ -263,11 +266,12 @@ function MainWorkspace() {
   /** 3. Approve draft */
   const handleApprove = async () => {
     if (!draftId || !draft) return;
-    await approveJob.run(async ({ setPhase }) => {
+    await approveJob.run(async ({ setPhase, signal }) => {
       setPhase('جاري الاعتماد...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/approve-text`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draft_id: draftId, approved_text: buildPostText(draft) }),
       });
@@ -287,43 +291,42 @@ function MainWorkspace() {
   const handleRejectAndRegenerate = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!draftId || !draft) return;
-    setIsRejecting(true);
-    try {
+    // Phase 1: reject call — runs inside generateJob so error surfaces in banner
+    const capturedReason = rejectReason;
+    const capturedDraft  = draft;
+    await generateJob.run(async ({ setPhase, signal }) => {
+      setIsRejecting(true);
+      setPhase('جاري رفض المسودة...');
       const apiUrl = getApiBaseUrl();
-      const res = await fetch(`${apiUrl}/api/v1/content/reject`, {
+      const rejectRes = await fetch(`${apiUrl}/api/v1/content/reject`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft_id: draftId, reason: rejectReason.trim() || undefined }),
+        body: JSON.stringify({ draft_id: draftId, reason: capturedReason.trim() || undefined }),
       });
-      if (!res.ok) throw new Error(await parseApiError(res, 'فشل رفض النص'));
+      if (!rejectRes.ok) throw new Error(await parseApiError(rejectRes, 'فشل رفض النص'));
       setRejectReason('');
       setShowRejectInput(false);
-    } catch (err) {
-      alert((err as Error).message);
       setIsRejecting(false);
-      return;
-    }
-    setIsRejecting(false);
-    // Regenerate via generateJob so the global banner shows progress
-    await generateJob.run(
-      ({ setPhase }) => _doGenerate(setPhase, {
-        rawInput: draft.raw_input,
-        postType: draft.post_type,
-        platform: draft.platform,
-        rejectionFeedback: rejectReason,
-      }),
-      'جاري صياغة مسودة جديدة...'
-    );
+      // Phase 2: regenerate
+      await _doGenerate(setPhase, signal, {
+        rawInput: capturedDraft.raw_input,
+        postType: capturedDraft.post_type,
+        platform: capturedDraft.platform,
+        rejectionFeedback: capturedReason,
+      });
+    }, 'جاري رفض المسودة...');
   };
 
   // 4. Adapt for platform
   const handleAdapt = async () => {
     if (!draftId || adaptPlatforms.length === 0) return;
-    await adaptJob.run(async ({ setPhase }) => {
+    await adaptJob.run(async ({ setPhase, signal }) => {
       setPhase('جاري تكييف المنشور...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/adapt`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draft_id: draftId, target_platforms: adaptPlatforms }),
       });
@@ -394,11 +397,12 @@ function MainWorkspace() {
   // ── Design Handlers ──────────────────────────────────────────────
   const handleExtractDesignText = async () => {
     if (!draftId) return;
-    await extractJob.run(async ({ setPhase }) => {
+    await extractJob.run(async ({ setPhase, signal }) => {
       setPhase('جاري استخراج عناصر التصميم...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/design/extract`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draft_id: draftId }),
       });
@@ -414,11 +418,12 @@ function MainWorkspace() {
   /** Re-generate only the visual concept (symbol + Arabic description). */
   const handleRegenerateVisualConcept = async () => {
     if (!draftId || !designTitle.trim() || !designSupport.trim()) return;
-    await conceptJob.run(async ({ setPhase }) => {
+    await conceptJob.run(async ({ setPhase, signal }) => {
       setPhase('جاري استكشاف مفهوم بصري جديد...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/design/regenerate-concept`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           draft_id: draftId,
@@ -440,13 +445,14 @@ function MainWorkspace() {
     setDesignImageUrl('');
     const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
-    await imageJob.run(async ({ setPhase }) => {
+    await imageJob.run(async ({ setPhase, signal }) => {
       const apiUrl = getApiBaseUrl();
 
       // Step 1: submit job
       setPhase('جاري تجهيز الفكرة البصرية...');
       const res = await fetch(`${apiUrl}/api/v1/content/design/generate`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           draft_id: draftId,
@@ -469,7 +475,7 @@ function MainWorkspace() {
         const statusUrl = jobDraftId
           ? `${apiUrl}/api/v1/content/design/status/${job_id}?draft_id=${jobDraftId}`
           : `${apiUrl}/api/v1/content/design/status/${job_id}`;
-        const statusRes = await fetch(statusUrl);
+        const statusRes = await fetch(statusUrl, { signal });
         if (!statusRes.ok) throw new Error('فشل التحقق من حالة توليد الصورة');
         const statusData = await statusRes.json();
 
