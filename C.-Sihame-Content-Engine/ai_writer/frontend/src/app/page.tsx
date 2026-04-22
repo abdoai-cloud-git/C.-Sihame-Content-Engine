@@ -296,7 +296,6 @@ function MainWorkspace() {
         body: JSON.stringify({ draft_id: draftId, reason: rejectReason.trim() || undefined }),
       });
       if (!res.ok) throw new Error(await parseApiError(res, 'فشل رفض النص'));
-      const feedback = rejectReason.trim();
       setRejectReason('');
       setShowRejectInput(false);
     } catch (err) {
