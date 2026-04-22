@@ -524,7 +524,7 @@ function MainWorkspace() {
             className={`mx-4 mb-4 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 animate-fade-in-down ${
               activeJob.isError
                 ? 'bg-red-50 text-red-700 border border-red-200'
-                : 'bg-[#0D4F5C]/8 text-[#0D4F5C] border border-[#0D4F5C]/15'
+                : 'bg-[#0D4F5C]/10 text-[#0D4F5C] border border-[#0D4F5C]/20'
             }`}
           >
             {activeJob.isPending && (
