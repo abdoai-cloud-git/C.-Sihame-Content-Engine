@@ -13,7 +13,7 @@ class PostStatus(str, Enum):
 
 class TextModel(str, Enum):
     CLAUDE_SONNET_4_6 = "claude-sonnet-4-6"   # primary writer + editor
-    GPT_5_2 = "gpt-5.2"                        # secondary writer (fallback)
+    GPT_5_5 = "gpt-5-5"                        # secondary writer (fallback, /codex/v1/responses)
     GEMINI_3_1_PRO = "gemini-3.1-pro"          # tertiary writer (last resort)
     GEMINI_3_FLASH = "gemini-3-flash"           # kept for legacy compat only
 

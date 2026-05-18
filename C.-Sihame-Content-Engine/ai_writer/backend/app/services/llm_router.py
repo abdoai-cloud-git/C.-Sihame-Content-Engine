@@ -54,20 +54,25 @@ class ClaudeMessagesAdapter:
         for block in payload.get("content", []):
             text = block.get("text")
             if text:
-                parts.append(text)
-        return "\n".join(parts).strip()
+                parts.append(text.strip())  # strip leading/trailing whitespace per block
+        return "\n".join(parts).strip()  # and strip the joined result
 
     async def complete_text(self, prompt: str, role: str = "secondary") -> str:
         collector.llm_call_start(self.model_name, role, len(prompt))
         t0 = time.monotonic()
         headers = {
+            # kie.ai Claude proxy accepts both Bearer and X-Api-Key;
+            # spec recommends X-Api-Key + anthropic-version
+            "X-Api-Key": self.api_key,
             "Authorization": f"Bearer {self.api_key}",
+            "anthropic-version": "2023-06-01",
             "Content-Type": "application/json",
         }
         body = {
             "model": self.model_name,
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
+            "max_tokens": 4096,
         }
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
@@ -84,23 +89,74 @@ class ClaudeMessagesAdapter:
             collector.llm_call_failed(self.model_name, role, str(exc))
             raise
 
+class GPT55Adapter:
+    """Adapter for gpt-5-5 via kie.ai /codex/v1/responses endpoint.
+
+    Uses a completely different request/response format from OpenAI chat completions:
+    - Request:  input=[{role, content:[{type:input_text, text:...}]}]
+    - Response: output=[{type:message, content:[{type:output_text, text:...}]}]
+    """
+
+    ENDPOINT = "https://api.kie.ai/codex/v1/responses"
+    MODEL = "gpt-5-5"
+
+    def __init__(self, api_key: str) -> None:
+        self.api_key = api_key
+
+    @staticmethod
+    def extract_text_from_response(payload: Dict[str, Any]) -> str:
+        for item in payload.get("output", []):
+            if item.get("type") == "message":
+                for block in item.get("content", []):
+                    if block.get("type") == "output_text":
+                        return block.get("text", "").strip()
+        return ""
+
+    async def complete_text(self, prompt: str, role: str = "secondary") -> str:
+        collector.llm_call_start(self.MODEL, role, len(prompt))
+        t0 = time.monotonic()
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "model": self.MODEL,
+            "stream": False,
+            "input": [{"role": "user", "content": [{"type": "input_text", "text": prompt}]}],
+            "reasoning": {"effort": "low"},  # keep latency reasonable
+        }
+        try:
+            # gpt-5-5 can take up to 90s on complex prompts
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(self.ENDPOINT, headers=headers, json=body)
+                response.raise_for_status()
+                payload = response.json()
+            text = self.extract_text_from_response(payload)
+            if not text:
+                raise ModelAdapterError(f"{self.MODEL} returned no output_text blocks.")
+            elapsed = int((time.monotonic() - t0) * 1000)
+            collector.llm_call_done(self.MODEL, role, elapsed, len(text))
+            return text
+        except Exception as exc:
+            collector.llm_call_failed(self.MODEL, role, str(exc))
+            raise
 
 class TextModelRouter:
     """Routes generation requests through a 3-tier fallback chain:
 
     GENERATION (full drafts):
       1. Claude Sonnet 4.6 — primary writer
-      2. GPT-5.2           — secondary writer (fallback if Claude fails)
+      2. GPT-5.5 (gpt-5-5) — secondary writer (fallback if Claude fails)
       3. Gemini 3.1 Pro    — tertiary writer (last resort)
 
     EDITING (voice-check, revise, platform adapt):
-      Claude Sonnet 4.6 — same model, better brand-voice fidelity than Flash
+      Claude Sonnet 4.6 — same model, better brand-voice fidelity
     """
 
     def __init__(
         self,
         primary_adapter: Optional[ClaudeMessagesAdapter] = None,
-        secondary_adapter: Optional[GeminiChatAdapter] = None,
+        secondary_adapter: Optional[GPT55Adapter] = None,
         tertiary_adapter: Optional[GeminiChatAdapter] = None,
         editor_adapter: Optional[ClaudeMessagesAdapter] = None,
     ) -> None:
@@ -116,12 +172,8 @@ class TextModelRouter:
             endpoint=settings.KIE_CLAUDE_MESSAGES_URL,
             model_name=settings.MODEL_PRIMARY,
         )
-        # ── Writer tier 2: GPT-5.2 ───────────────────────────────────────────
-        self.secondary_adapter = secondary_adapter or GeminiChatAdapter(
-            api_key=api_key,
-            base_url=settings.KIE_GPT_BASE_URL,
-            model_name=settings.MODEL_SECONDARY,
-        )
+        # ── Writer tier 2: GPT-5.5 via /codex/v1/responses ───────────────────
+        self.secondary_adapter = secondary_adapter or GPT55Adapter(api_key=api_key)
         # ── Writer tier 3: Gemini 3.1 Pro (last resort) ──────────────────────
         self.tertiary_adapter = tertiary_adapter or GeminiChatAdapter(
             api_key=api_key,
@@ -176,13 +228,17 @@ DRAFT TO CHECK:
     def _extract_json_object(cls, raw_text: str) -> Dict[str, Any]:
         cleaned = cls._strip_code_fences(raw_text)
         try:
-            return json.loads(cleaned)
+            data = json.loads(cleaned)
         except json.JSONDecodeError:
             start = cleaned.find("{")
             end = cleaned.rfind("}")
             if start == -1 or end == -1 or end <= start:
                 raise ModelAdapterError("Model response did not contain a valid JSON object.")
-            return json.loads(cleaned[start : end + 1])
+            data = json.loads(cleaned[start : end + 1])
+        # Normalise safety_flags: Claude sometimes returns a list instead of str
+        if isinstance(data.get("safety_flags"), list):
+            data["safety_flags"] = " | ".join(str(s) for s in data["safety_flags"])
+        return data
 
     async def _voice_check_draft(self, draft: DraftGenerationResult) -> DraftGenerationResult:
         # We only pass the fields that need voice check
@@ -218,7 +274,7 @@ DRAFT TO CHECK:
 
         # ── Tier 2: GPT-5.2 ────────────────────────────────────────────────
         try:
-            return await self._complete_json(self.secondary_adapter, prompt, TextModel.GPT_5_2)
+            return await self._complete_json(self.secondary_adapter, prompt, TextModel.GPT_5_5)
         except Exception as secondary_error:
             collector.llm_fallback(
                 failed_model=settings.MODEL_SECONDARY,
