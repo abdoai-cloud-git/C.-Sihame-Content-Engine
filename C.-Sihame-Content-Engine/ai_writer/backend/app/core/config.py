@@ -27,11 +27,11 @@ class Settings(BaseSettings):
 
     # PRD-aligned text model roles
     # Primary → Secondary → Tertiary: full generation fallback chain
-    # Editor: Claude — used for voice-check, revise, platform adapt
-    MODEL_PRIMARY: str = "claude-sonnet-4-6"
-    MODEL_SECONDARY: str = "gpt-5-5"          # via /codex/v1/responses
-    MODEL_TERTIARY: str = "gemini-3.1-pro"
-    MODEL_EDITOR: str = "claude-sonnet-4-6"
+    # Editor: Flash — voice-check, revise, platform adapt (fast + reliable)
+    MODEL_PRIMARY: str = "gpt-5-5"        # via /codex/v1/responses
+    MODEL_SECONDARY: str = "gpt-5-4"      # via /codex/v1/responses (~46s)
+    MODEL_TERTIARY: str = "gemini-3-flash" # fast reliable last resort
+    MODEL_EDITOR: str = "gemini-3-flash"   # editing tasks (voice-check, revise, adapt)
 
     # Persistence
     STORAGE_BACKEND: str = os.getenv("STORAGE_BACKEND", "memory")
@@ -94,15 +94,6 @@ class Settings(BaseSettings):
     @property
     def KIE_GEMINI_FLASH_BASE_URL(self) -> str:
         return f"{self.KIE_BASE_URL}/gemini-3-flash/v1"
-
-    @property
-    def KIE_GPT_BASE_URL(self) -> str:
-        """OpenAI-compatible endpoint for GPT models via kie.ai."""
-        return f"{self.KIE_BASE_URL}/openai/v1"
-
-    @property
-    def KIE_CLAUDE_MESSAGES_URL(self) -> str:
-        return f"{self.KIE_BASE_URL}/claude/v1/messages"
 
     class Config:
         case_sensitive = True

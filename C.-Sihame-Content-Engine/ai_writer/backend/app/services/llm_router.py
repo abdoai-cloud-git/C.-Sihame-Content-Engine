@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import time
@@ -21,7 +21,7 @@ class GeminiChatAdapter:
         self.model_name = model_name
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
-    async def complete_text(self, prompt: str, role: str = "primary") -> str:
+    async def complete_text(self, prompt: str, role: str = "editor") -> str:
         collector.llm_call_start(self.model_name, role, len(prompt))
         t0 = time.monotonic()
         try:
@@ -42,66 +42,16 @@ class GeminiChatAdapter:
             raise
 
 
-class ClaudeMessagesAdapter:
-    def __init__(self, api_key: str, endpoint: str, model_name: str) -> None:
-        self.api_key = api_key
-        self.endpoint = endpoint
-        self.model_name = model_name
-
-    @staticmethod
-    def extract_text_from_response(payload: Dict[str, Any]) -> str:
-        parts = []
-        for block in payload.get("content", []):
-            text = block.get("text")
-            if text:
-                parts.append(text.strip())  # strip leading/trailing whitespace per block
-        return "\n".join(parts).strip()  # and strip the joined result
-
-    async def complete_text(self, prompt: str, role: str = "secondary") -> str:
-        collector.llm_call_start(self.model_name, role, len(prompt))
-        t0 = time.monotonic()
-        headers = {
-            # kie.ai Claude proxy accepts both Bearer and X-Api-Key;
-            # spec recommends X-Api-Key + anthropic-version
-            "X-Api-Key": self.api_key,
-            "Authorization": f"Bearer {self.api_key}",
-            "anthropic-version": "2023-06-01",
-            "Content-Type": "application/json",
-        }
-        body = {
-            "model": self.model_name,
-            "messages": [{"role": "user", "content": prompt}],
-            "stream": False,
-            "max_tokens": 4096,
-        }
-        try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(self.endpoint, headers=headers, json=body)
-                response.raise_for_status()
-                payload = response.json()
-            text = self.extract_text_from_response(payload)
-            if not text:
-                raise ModelAdapterError(f"{self.model_name} returned no text blocks.")
-            elapsed = int((time.monotonic() - t0) * 1000)
-            collector.llm_call_done(self.model_name, role, elapsed, len(text))
-            return text
-        except Exception as exc:
-            collector.llm_call_failed(self.model_name, role, str(exc))
-            raise
-
 class GPT55Adapter:
-    """Adapter for gpt-5-5 via kie.ai /codex/v1/responses endpoint.
-
-    Uses a completely different request/response format from OpenAI chat completions:
-    - Request:  input=[{role, content:[{type:input_text, text:...}]}]
-    - Response: output=[{type:message, content:[{type:output_text, text:...}]}]
+    """Adapter for GPT-5.x models via kie.ai /codex/v1/responses.
+    Supports gpt-5-5 (~4s) and gpt-5-4 (~46s).
     """
 
     ENDPOINT = "https://api.kie.ai/codex/v1/responses"
-    MODEL = "gpt-5-5"
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, model_name: str = "gpt-5-5") -> None:
         self.api_key = api_key
+        self.model_name = model_name
 
     @staticmethod
     def extract_text_from_response(payload: Dict[str, Any]) -> str:
@@ -112,98 +62,75 @@ class GPT55Adapter:
                         return block.get("text", "").strip()
         return ""
 
-    async def complete_text(self, prompt: str, role: str = "secondary") -> str:
-        collector.llm_call_start(self.MODEL, role, len(prompt))
+    async def complete_text(self, prompt: str, role: str = "primary") -> str:
+        collector.llm_call_start(self.model_name, role, len(prompt))
         t0 = time.monotonic()
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
         body = {
-            "model": self.MODEL,
+            "model": self.model_name,
             "stream": False,
             "input": [{"role": "user", "content": [{"type": "input_text", "text": prompt}]}],
-            "reasoning": {"effort": "low"},  # keep latency reasonable
+            "reasoning": {"effort": "low"},
         }
         try:
-            # gpt-5-5 can take up to 90s on complex prompts
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(self.ENDPOINT, headers=headers, json=body)
                 response.raise_for_status()
                 payload = response.json()
             text = self.extract_text_from_response(payload)
             if not text:
-                raise ModelAdapterError(f"{self.MODEL} returned no output_text blocks.")
+                raise ModelAdapterError(f"{self.model_name} returned no output_text blocks.")
             elapsed = int((time.monotonic() - t0) * 1000)
-            collector.llm_call_done(self.MODEL, role, elapsed, len(text))
+            collector.llm_call_done(self.model_name, role, elapsed, len(text))
             return text
         except Exception as exc:
-            collector.llm_call_failed(self.MODEL, role, str(exc))
+            collector.llm_call_failed(self.model_name, role, str(exc))
             raise
 
-class TextModelRouter:
-    """Routes generation requests through a 3-tier fallback chain:
 
-    GENERATION (full drafts):
-      1. Claude Sonnet 4.6 — primary writer
-      2. GPT-5.5 (gpt-5-5) — secondary writer (fallback if Claude fails)
-      3. Gemini 3.1 Pro    — tertiary writer (last resort)
+class TextModelRouter:
+    """3-tier fallback chain.
+
+    GENERATION (via /codex/v1/responses):
+      1. GPT-5.5 (gpt-5-5)  -- primary   (~4s)
+      2. GPT-5.4 (gpt-5-4)  -- secondary (~46s)
+      3. Gemini Flash        -- tertiary last resort
 
     EDITING (voice-check, revise, platform adapt):
-      Claude Sonnet 4.6 — same model, better brand-voice fidelity
+      Gemini Flash -- fast and reliable
     """
 
     def __init__(
         self,
-        primary_adapter: Optional[ClaudeMessagesAdapter] = None,
-        secondary_adapter: Optional[GPT55Adapter] = None,
-        tertiary_adapter: Optional[GeminiChatAdapter] = None,
-        editor_adapter: Optional[ClaudeMessagesAdapter] = None,
+        primary_adapter=None,
+        secondary_adapter=None,
+        tertiary_adapter=None,
+        editor_adapter=None,
     ) -> None:
         api_key = settings.KIE_API_KEY
         if not api_key:
-            raise RuntimeError(
-                "KIE_API_KEY is not set. All AI calls will fail with 401. "
-                "Set the KIE_API_KEY environment variable in Cloud Run and redeploy."
-            )
-        # ── Writer tier 1: Claude Sonnet 4.6 ─────────────────────────────────
-        self.primary_adapter = primary_adapter or ClaudeMessagesAdapter(
-            api_key=api_key,
-            endpoint=settings.KIE_CLAUDE_MESSAGES_URL,
-            model_name=settings.MODEL_PRIMARY,
-        )
-        # ── Writer tier 2: GPT-5.5 via /codex/v1/responses ───────────────────
-        self.secondary_adapter = secondary_adapter or GPT55Adapter(api_key=api_key)
-        # ── Writer tier 3: Gemini 3.1 Pro (last resort) ──────────────────────
-        self.tertiary_adapter = tertiary_adapter or GeminiChatAdapter(
-            api_key=api_key,
-            base_url=settings.KIE_GEMINI_PRO_BASE_URL,
-            model_name=settings.MODEL_TERTIARY,
-        )
-        # ── Editor: Claude — voice-check / revise / platform adapt ──────────
-        self.editor_adapter = editor_adapter or ClaudeMessagesAdapter(
-            api_key=api_key,
-            endpoint=settings.KIE_CLAUDE_MESSAGES_URL,
-            model_name=settings.MODEL_EDITOR,
-        )
+            raise RuntimeError("KIE_API_KEY is not set.")
+        self.primary_adapter = primary_adapter or GPT55Adapter(api_key=api_key, model_name=settings.MODEL_PRIMARY)
+        self.secondary_adapter = secondary_adapter or GPT55Adapter(api_key=api_key, model_name=settings.MODEL_SECONDARY)
+        self.tertiary_adapter = tertiary_adapter or GeminiChatAdapter(api_key=api_key, base_url=settings.KIE_GEMINI_FLASH_BASE_URL, model_name=settings.MODEL_TERTIARY)
+        self.editor_adapter = editor_adapter or GeminiChatAdapter(api_key=api_key, base_url=settings.KIE_GEMINI_FLASH_BASE_URL, model_name=settings.MODEL_EDITOR)
 
-    # ── Voice-Check prompt — the lightweight quality gate ──────────────────
-    # This prompt is injected as a second pass after every revision.
-    # It enforces the Siham voice at the lexical level without touching content.
     _VOICE_CHECK_PROMPT = """\
 You are a precision voice editor for Coach Sihame Atamnia.
 A draft has just been revised. Your ONLY job is to catch and silently fix two categories of errors:
 
-1. FORBIDDEN WORDS — replace any word from this list with a Sihame-appropriate alternative:
-   • حارب / تغلّب / اقتلع / كسر / تجاوز / تخلّص / اقطع
-   • fight / conquer / eliminate / break / overcome / get rid of
-   Preferred alternatives: حضور، احتوى، ذاب، توسّع، استقبل، اعترف، اسمح، أرخي قبضتك
+1. FORBIDDEN WORDS -- replace any word from this list with a Sihame-appropriate alternative:
+   * harb / taghalab / iqtala / kasar / tajawaz / takhallas / iqta
+   * fight / conquer / eliminate / break / overcome / get rid of
+   Preferred alternatives: hudur, ihtawa, dhab, tawassa, istaqbal, i-tarafa, isma7, arkhi qabdatak
 
-2. CRUSHED BREATHING — if the "body" field contains a paragraph with 3+ consecutive sentences
+2. CRUSHED BREATHING -- if the body field contains a paragraph with 3+ consecutive sentences
    without a line break, insert line breaks between sentences to restore the somatic breathing rhythm.
-   Each feeling or image must stand alone on its own line.
 
-Scanner note: if NEITHER error is present, return the draft UNCHANGED.
+If NEITHER error is present, return the draft UNCHANGED.
 Do not restructure the content. Do not change any meaning. Do not add new ideas.
 
 Return STRICT JSON with exactly these keys: "angle", "hook", "body", "cta", "safety_flags".
@@ -235,13 +162,11 @@ DRAFT TO CHECK:
             if start == -1 or end == -1 or end <= start:
                 raise ModelAdapterError("Model response did not contain a valid JSON object.")
             data = json.loads(cleaned[start : end + 1])
-        # Normalise safety_flags: Claude sometimes returns a list instead of str
         if isinstance(data.get("safety_flags"), list):
             data["safety_flags"] = " | ".join(str(s) for s in data["safety_flags"])
         return data
 
     async def _voice_check_draft(self, draft: DraftGenerationResult) -> DraftGenerationResult:
-        # We only pass the fields that need voice check
         draft_dict = draft.model_dump(exclude={"model_used"})
         prompt = self._VOICE_CHECK_PROMPT.format(draft_json=json.dumps(draft_dict, ensure_ascii=False))
         try:
@@ -249,150 +174,67 @@ DRAFT TO CHECK:
             payload = self._extract_json_object(raw_text)
             return DraftGenerationResult(model_used=draft.model_used, **payload)
         except Exception as e:
-            # If the background voice check fails for any reason (timeout, bad JSON),
-            # we just return the original draft rather than failing the whole request.
-            # This is a hidden quality gate, so it should be non-blocking.
-            print(f"[VOICE CHECK PASSED OVER] Failed to check voice: {e}")
+            print(f"[VOICE CHECK PASSED OVER] {e}")
             return draft
 
-    async def _complete_json(self, adapter: Any, prompt: str, model_used: TextModel) -> DraftGenerationResult:
+    async def _complete_json(self, adapter, prompt: str, model_used: TextModel) -> DraftGenerationResult:
         raw_text = await adapter.complete_text(prompt)
         payload = self._extract_json_object(raw_text)
         return DraftGenerationResult(model_used=model_used, **payload)
 
     async def generate_primary_draft(self, prompt: str) -> DraftGenerationResult:
-        """3-tier fallback: Claude Sonnet 4.6 → GPT-5.2 → Gemini 3.1 Pro."""
-        # ── Tier 1: Claude Sonnet 4.6 ─────────────────────────────────────────
+        """3-tier fallback: GPT-5.5 -> GPT-5.4 -> Gemini Flash."""
         try:
-            return await self._complete_json(self.primary_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
-        except Exception as primary_error:
-            collector.llm_fallback(
-                failed_model=settings.MODEL_PRIMARY,
-                fallback_model=settings.MODEL_SECONDARY,
-                reason=str(primary_error),
-            )
+            return await self._complete_json(self.primary_adapter, prompt, TextModel.GPT_5_5)
+        except Exception as e:
+            collector.llm_fallback(failed_model=settings.MODEL_PRIMARY, fallback_model=settings.MODEL_SECONDARY, reason=str(e))
 
-        # ── Tier 2: GPT-5.2 ────────────────────────────────────────────────
         try:
-            return await self._complete_json(self.secondary_adapter, prompt, TextModel.GPT_5_5)
-        except Exception as secondary_error:
-            collector.llm_fallback(
-                failed_model=settings.MODEL_SECONDARY,
-                fallback_model=settings.MODEL_TERTIARY,
-                reason=str(secondary_error),
-            )
+            return await self._complete_json(self.secondary_adapter, prompt, TextModel.GPT_5_4)
+        except Exception as e:
+            collector.llm_fallback(failed_model=settings.MODEL_SECONDARY, fallback_model=settings.MODEL_TERTIARY, reason=str(e))
 
-        # ── Tier 3: Gemini 3.1 Pro (last resort) ─────────────────────────────
         try:
-            return await self._complete_json(self.tertiary_adapter, prompt, TextModel.GEMINI_3_1_PRO)
-        except Exception as tertiary_error:
+            return await self._complete_json(self.tertiary_adapter, prompt, TextModel.GEMINI_3_FLASH)
+        except Exception as e:
             raise ModelAdapterError(
-                f"All three writers failed. "
-                f"Claude: {settings.MODEL_PRIMARY}, "
-                f"GPT: {settings.MODEL_SECONDARY}, "
-                f"Gemini: {settings.MODEL_TERTIARY}. "
-                f"Last error: {tertiary_error}"
-            ) from tertiary_error
+                f"All writers failed. GPT-5.5={settings.MODEL_PRIMARY}, GPT-5.4={settings.MODEL_SECONDARY}, Flash={settings.MODEL_TERTIARY}. Last: {e}"
+            ) from e
 
-    async def revise_draft(
-        self,
-        current_draft: Dict[str, str],
-        instruction: str,
-        *,
-        post_type: str,
-        platform: str,
-        voice_route: str,
-        route_note: str,
-    ) -> DraftGenerationResult:
-        prompt = f"""
-You are the PRD-aligned worker/editor for Coach Sihame.
-Revise the structured draft below according to the instruction while preserving the same schema and the same brand/methodology discipline.
+    async def revise_draft(self, current_draft: Dict[str, str], instruction: str, *, post_type: str, platform: str, voice_route: str, route_note: str) -> DraftGenerationResult:
+        prompt = f"""You are the PRD-aligned editor for Coach Sihame.
+Revise the draft below per the instruction. Preserve schema and brand discipline.
 
-ACTIVE CONTEXT
-- Post type: {post_type}
-- Platform: {platform}
-- Voice route: {voice_route}
-- Route note: {route_note}
-- Preserve somatic precision, clinical safety, and the intended Coach Sihame register.
-- Do not flatten the text into generic wellness language.
-- Keep the distinction between temporary soothing and deeper regulation intact when relevant.
+CONTEXT: post_type={post_type}, platform={platform}, voice_route={voice_route}
+{route_note}
 
-Return STRICT JSON with exactly these keys: "angle", "hook", "body", "cta", "safety_flags".
-Do not include markdown fences.
+Return STRICT JSON: "angle", "hook", "body", "cta", "safety_flags". No markdown fences.
 
-EDIT INSTRUCTION:
-{instruction}
+INSTRUCTION: {instruction}
 
 CURRENT DRAFT:
-{json.dumps(current_draft, ensure_ascii=False)}
-""".strip()
-        draft = await self._complete_json(self.editor_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
-        # ── Voice-check pass ─────────────────────────────────────────
-        # After every revision, run a lightweight second pass that silently
-        # corrects forbidden words and crushed breathing rhythm without
-        # altering content or meaning.
+{json.dumps(current_draft, ensure_ascii=False)}""".strip()
+        draft = await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)
         draft = await self._voice_check_draft(draft)
         return draft
 
-    # Platform-specific structural rules.
-    # These are additive instructions on top of shared voice + methodology constraints.
     _PLATFORM_RULES: dict[str, str] = {
-        "telegram": """\
-Format: reflective, spacious, text-led. Allow longer paragraphs where the content calls for it.
-Preserve somatic breathing rhythm: short lines, natural pauses between images.
-No hashtags unless the original included them.
-Tone: deep, intimate, methodologically precise — like a voice note to a trusted circle.""",
-        "instagram": """\
-Format: strong opening hook (first line must stop the scroll).
-Tighter pacing: shorter sentences, more white space between stanzas.
-End with 3–5 Arabic hashtags if the content allows it.
-CTA: concise, one line, no preachy calls to action.
-Tone: grounded but slightly warmer — visual-caption rhythm, still unmistakably Sihame.""",
-        "facebook": """\
-Format: slightly more explanatory, community-friendly. Balanced between reflection and clarity.
-Longer paragraphs are acceptable when the idea requires development.
-No forced hashtag stuffing; one or two thematic tags at most.
-Tone: measured professional warmth — not inspirational-generic, not lecture-like.""",
-        "tiktok": """\
-Format: shortest version. Maximum 3–4 short paragraphs. Aim for under 150 words.
-Opening line must be punchy and immediately concrete.
-Remove academic or theoretical framing unless the concept itself is the hook.
-Tone: direct, clear, still unmistakably Sihame — not trendy, not slang.""",
+        "telegram": "Reflective, spacious, text-led. No hashtags unless original had them. Somatic breathing rhythm.",
+        "instagram": "Strong hook. Tight pacing. 3-5 Arabic hashtags. Concise CTA.",
+        "facebook": "Slightly explanatory. Longer paragraphs OK. 1-2 thematic tags max.",
+        "tiktok": "Max 150 words. Punchy opening. No academic framing. Direct and clear.",
     }
 
-    async def adapt_platform_draft(
-        self,
-        approved_text: str,
-        platform: str,
-        *,
-        post_type: str,
-        voice_route: str,
-        route_note: str,
-    ) -> DraftGenerationResult:
-        platform_rules = self._PLATFORM_RULES.get(
-            platform.lower(),
-            "Adjust spacing and paragraph length for the target platform while preserving all meaning."
-        )
-        prompt = f"""\
-You are the PRD-aligned worker/editor for Coach Sihame.
-Your task is to adapt this approved post for the {platform} platform without changing its core meaning, route, or methodology integrity.
+    async def adapt_platform_draft(self, approved_text: str, platform: str, *, post_type: str, voice_route: str, route_note: str) -> DraftGenerationResult:
+        platform_rules = self._PLATFORM_RULES.get(platform.lower(), "Adjust for target platform.")
+        prompt = f"""You are the PRD-aligned editor for Coach Sihame.
+Adapt this approved post for {platform} without changing its meaning.
 
-ACTIVE CONTEXT
-- Original post type: {post_type}
-- Voice route: {voice_route}
-- Route note: {route_note}
-- Preserve the Coach's calm, grounded voice and methodological precision.
-- Keep the content structure intact unless platform formatting requires compression or spacing changes.
-- Do not rewrite this into generic promotional or generic soft-healing language.
+CONTEXT: post_type={post_type}, voice_route={voice_route}
+PLATFORM RULES ({platform.upper()}): {platform_rules}
 
-PLATFORM-SPECIFIC RULES FOR {platform.upper()}:
-{platform_rules}
-
-Return EXACTLY the adapted text inside the "body" field of the JSON. For "angle", "hook", "cta", and "safety_flags", provide empty strings.
-Return STRICT JSON with exactly these keys: "angle", "hook", "body", "cta", "safety_flags".
-Do not include markdown fences.
+Return STRICT JSON: "angle"="", "hook"="", "body"=adapted text, "cta"="", "safety_flags"="". No markdown fences.
 
 APPROVED POST:
-{approved_text}
-"""
-        return await self._complete_json(self.editor_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
+{approved_text}"""
+        return await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)
