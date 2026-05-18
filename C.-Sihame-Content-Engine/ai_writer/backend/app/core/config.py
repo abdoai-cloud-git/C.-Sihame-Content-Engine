@@ -27,11 +27,11 @@ class Settings(BaseSettings):
 
     # PRD-aligned text model roles
     # Primary → Secondary → Tertiary: full generation fallback chain
-    # Editor: Flash only — reserved for voice-check, revise, platform adapt
-    MODEL_PRIMARY: str = "gemini-3.1-pro"
-    MODEL_SECONDARY: str = "claude-sonnet-4-6"
-    MODEL_TERTIARY: str = "gpt-4.5"
-    MODEL_EDITOR: str = "gemini-3-flash"
+    # Editor: Claude — used for voice-check, revise, platform adapt
+    MODEL_PRIMARY: str = "claude-sonnet-4-6"
+    MODEL_SECONDARY: str = "gpt-5.2"
+    MODEL_TERTIARY: str = "gemini-3.1-pro"
+    MODEL_EDITOR: str = "claude-sonnet-4-6"
 
     # Persistence
     STORAGE_BACKEND: str = os.getenv("STORAGE_BACKEND", "memory")
@@ -97,7 +97,7 @@ class Settings(BaseSettings):
 
     @property
     def KIE_GPT_BASE_URL(self) -> str:
-        """OpenAI-compatible endpoint for GPT-4.5 via kie.ai."""
+        """OpenAI-compatible endpoint for GPT models via kie.ai."""
         return f"{self.KIE_BASE_URL}/openai/v1"
 
     @property

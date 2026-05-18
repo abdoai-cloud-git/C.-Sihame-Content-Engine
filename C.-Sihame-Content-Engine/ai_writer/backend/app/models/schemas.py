@@ -12,10 +12,10 @@ class PostStatus(str, Enum):
     REJECTED = "rejected"
 
 class TextModel(str, Enum):
-    GEMINI_3_1_PRO = "gemini-3.1-pro"
-    CLAUDE_SONNET_4_6 = "claude-sonnet-4-6"
-    GPT_4_5 = "gpt-4.5"
-    GEMINI_3_FLASH = "gemini-3-flash"  # editor / rephrasing / small jobs only
+    CLAUDE_SONNET_4_6 = "claude-sonnet-4-6"   # primary writer + editor
+    GPT_5_2 = "gpt-5.2"                        # secondary writer (fallback)
+    GEMINI_3_1_PRO = "gemini-3.1-pro"          # tertiary writer (last resort)
+    GEMINI_3_FLASH = "gemini-3-flash"           # kept for legacy compat only
 
 
 class VoiceRoute(str, Enum):

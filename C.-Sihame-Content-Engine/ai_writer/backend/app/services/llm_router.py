@@ -89,20 +89,20 @@ class TextModelRouter:
     """Routes generation requests through a 3-tier fallback chain:
 
     GENERATION (full drafts):
-      1. Gemini 3.1 Pro  — primary writer
-      2. Claude Sonnet 4.6 — secondary writer (fallback if Gemini fails)
-      3. GPT-4.5          — tertiary writer (last resort)
+      1. Claude Sonnet 4.6 — primary writer
+      2. GPT-5.2           — secondary writer (fallback if Claude fails)
+      3. Gemini 3.1 Pro    — tertiary writer (last resort)
 
-    EDITING (small jobs — voice-check, revise, platform adapt):
-      Gemini Flash — fast, cheap, good enough for structural fixes
+    EDITING (voice-check, revise, platform adapt):
+      Claude Sonnet 4.6 — same model, better brand-voice fidelity than Flash
     """
 
     def __init__(
         self,
-        primary_adapter: Optional[GeminiChatAdapter] = None,
-        secondary_adapter: Optional[ClaudeMessagesAdapter] = None,
+        primary_adapter: Optional[ClaudeMessagesAdapter] = None,
+        secondary_adapter: Optional[GeminiChatAdapter] = None,
         tertiary_adapter: Optional[GeminiChatAdapter] = None,
-        editor_adapter: Optional[GeminiChatAdapter] = None,
+        editor_adapter: Optional[ClaudeMessagesAdapter] = None,
     ) -> None:
         api_key = settings.KIE_API_KEY
         if not api_key:
@@ -110,28 +110,28 @@ class TextModelRouter:
                 "KIE_API_KEY is not set. All AI calls will fail with 401. "
                 "Set the KIE_API_KEY environment variable in Cloud Run and redeploy."
             )
-        # ── Writer tier 1: Gemini 3.1 Pro ────────────────────────────────────
-        self.primary_adapter = primary_adapter or GeminiChatAdapter(
-            api_key=api_key,
-            base_url=settings.KIE_GEMINI_PRO_BASE_URL,
-            model_name=settings.MODEL_PRIMARY,
-        )
-        # ── Writer tier 2: Claude Sonnet 4.6 ─────────────────────────────────
-        self.secondary_adapter = secondary_adapter or ClaudeMessagesAdapter(
+        # ── Writer tier 1: Claude Sonnet 4.6 ─────────────────────────────────
+        self.primary_adapter = primary_adapter or ClaudeMessagesAdapter(
             api_key=api_key,
             endpoint=settings.KIE_CLAUDE_MESSAGES_URL,
-            model_name=settings.MODEL_SECONDARY,
+            model_name=settings.MODEL_PRIMARY,
         )
-        # ── Writer tier 3: GPT-4.5 (last resort) ─────────────────────────────
-        self.tertiary_adapter = tertiary_adapter or GeminiChatAdapter(
+        # ── Writer tier 2: GPT-5.2 ───────────────────────────────────────────
+        self.secondary_adapter = secondary_adapter or GeminiChatAdapter(
             api_key=api_key,
             base_url=settings.KIE_GPT_BASE_URL,
+            model_name=settings.MODEL_SECONDARY,
+        )
+        # ── Writer tier 3: Gemini 3.1 Pro (last resort) ──────────────────────
+        self.tertiary_adapter = tertiary_adapter or GeminiChatAdapter(
+            api_key=api_key,
+            base_url=settings.KIE_GEMINI_PRO_BASE_URL,
             model_name=settings.MODEL_TERTIARY,
         )
-        # ── Editor: Flash — ONLY for voice-check, revise, platform adapt ─────
-        self.editor_adapter = editor_adapter or GeminiChatAdapter(
+        # ── Editor: Claude — voice-check / revise / platform adapt ──────────
+        self.editor_adapter = editor_adapter or ClaudeMessagesAdapter(
             api_key=api_key,
-            base_url=settings.KIE_GEMINI_FLASH_BASE_URL,
+            endpoint=settings.KIE_CLAUDE_MESSAGES_URL,
             model_name=settings.MODEL_EDITOR,
         )
 
@@ -205,10 +205,10 @@ DRAFT TO CHECK:
         return DraftGenerationResult(model_used=model_used, **payload)
 
     async def generate_primary_draft(self, prompt: str) -> DraftGenerationResult:
-        """3-tier fallback: Gemini 3.1 → Claude Sonnet 4.6 → GPT-4.5."""
-        # ── Tier 1: Gemini 3.1 Pro ────────────────────────────────────────────
+        """3-tier fallback: Claude Sonnet 4.6 → GPT-5.2 → Gemini 3.1 Pro."""
+        # ── Tier 1: Claude Sonnet 4.6 ─────────────────────────────────────────
         try:
-            return await self._complete_json(self.primary_adapter, prompt, TextModel.GEMINI_3_1_PRO)
+            return await self._complete_json(self.primary_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
         except Exception as primary_error:
             collector.llm_fallback(
                 failed_model=settings.MODEL_PRIMARY,
@@ -216,9 +216,9 @@ DRAFT TO CHECK:
                 reason=str(primary_error),
             )
 
-        # ── Tier 2: Claude Sonnet 4.6 ─────────────────────────────────────────
+        # ── Tier 2: GPT-5.2 ────────────────────────────────────────────────
         try:
-            return await self._complete_json(self.secondary_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
+            return await self._complete_json(self.secondary_adapter, prompt, TextModel.GPT_5_2)
         except Exception as secondary_error:
             collector.llm_fallback(
                 failed_model=settings.MODEL_SECONDARY,
@@ -226,15 +226,15 @@ DRAFT TO CHECK:
                 reason=str(secondary_error),
             )
 
-        # ── Tier 3: GPT-4.5 (last resort) ────────────────────────────────────
+        # ── Tier 3: Gemini 3.1 Pro (last resort) ─────────────────────────────
         try:
-            return await self._complete_json(self.tertiary_adapter, prompt, TextModel.GPT_4_5)
+            return await self._complete_json(self.tertiary_adapter, prompt, TextModel.GEMINI_3_1_PRO)
         except Exception as tertiary_error:
             raise ModelAdapterError(
                 f"All three writers failed. "
-                f"Gemini: {settings.MODEL_PRIMARY}, "
-                f"Claude: {settings.MODEL_SECONDARY}, "
-                f"GPT: {settings.MODEL_TERTIARY}. "
+                f"Claude: {settings.MODEL_PRIMARY}, "
+                f"GPT: {settings.MODEL_SECONDARY}, "
+                f"Gemini: {settings.MODEL_TERTIARY}. "
                 f"Last error: {tertiary_error}"
             ) from tertiary_error
 
@@ -270,7 +270,7 @@ EDIT INSTRUCTION:
 CURRENT DRAFT:
 {json.dumps(current_draft, ensure_ascii=False)}
 """.strip()
-        draft = await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)
+        draft = await self._complete_json(self.editor_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
         # ── Voice-check pass ─────────────────────────────────────────
         # After every revision, run a lightweight second pass that silently
         # corrects forbidden words and crushed breathing rhythm without
@@ -339,4 +339,4 @@ Do not include markdown fences.
 APPROVED POST:
 {approved_text}
 """
-        return await self._complete_json(self.editor_adapter, prompt, TextModel.GEMINI_3_FLASH)
+        return await self._complete_json(self.editor_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
