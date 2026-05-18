@@ -86,10 +86,22 @@ class ClaudeMessagesAdapter:
 
 
 class TextModelRouter:
+    """Routes generation requests through a 3-tier fallback chain:
+
+    GENERATION (full drafts):
+      1. Gemini 3.1 Pro  — primary writer
+      2. Claude Sonnet 4.6 — secondary writer (fallback if Gemini fails)
+      3. GPT-4.5          — tertiary writer (last resort)
+
+    EDITING (small jobs — voice-check, revise, platform adapt):
+      Gemini Flash — fast, cheap, good enough for structural fixes
+    """
+
     def __init__(
         self,
         primary_adapter: Optional[GeminiChatAdapter] = None,
         secondary_adapter: Optional[ClaudeMessagesAdapter] = None,
+        tertiary_adapter: Optional[GeminiChatAdapter] = None,
         editor_adapter: Optional[GeminiChatAdapter] = None,
     ) -> None:
         api_key = settings.KIE_API_KEY
@@ -98,16 +110,25 @@ class TextModelRouter:
                 "KIE_API_KEY is not set. All AI calls will fail with 401. "
                 "Set the KIE_API_KEY environment variable in Cloud Run and redeploy."
             )
+        # ── Writer tier 1: Gemini 3.1 Pro ────────────────────────────────────
         self.primary_adapter = primary_adapter or GeminiChatAdapter(
             api_key=api_key,
             base_url=settings.KIE_GEMINI_PRO_BASE_URL,
             model_name=settings.MODEL_PRIMARY,
         )
+        # ── Writer tier 2: Claude Sonnet 4.6 ─────────────────────────────────
         self.secondary_adapter = secondary_adapter or ClaudeMessagesAdapter(
             api_key=api_key,
             endpoint=settings.KIE_CLAUDE_MESSAGES_URL,
             model_name=settings.MODEL_SECONDARY,
         )
+        # ── Writer tier 3: GPT-4.5 (last resort) ─────────────────────────────
+        self.tertiary_adapter = tertiary_adapter or GeminiChatAdapter(
+            api_key=api_key,
+            base_url=settings.KIE_GPT_BASE_URL,
+            model_name=settings.MODEL_TERTIARY,
+        )
+        # ── Editor: Flash — ONLY for voice-check, revise, platform adapt ─────
         self.editor_adapter = editor_adapter or GeminiChatAdapter(
             api_key=api_key,
             base_url=settings.KIE_GEMINI_FLASH_BASE_URL,
@@ -184,6 +205,8 @@ DRAFT TO CHECK:
         return DraftGenerationResult(model_used=model_used, **payload)
 
     async def generate_primary_draft(self, prompt: str) -> DraftGenerationResult:
+        """3-tier fallback: Gemini 3.1 → Claude Sonnet 4.6 → GPT-4.5."""
+        # ── Tier 1: Gemini 3.1 Pro ────────────────────────────────────────────
         try:
             return await self._complete_json(self.primary_adapter, prompt, TextModel.GEMINI_3_1_PRO)
         except Exception as primary_error:
@@ -192,12 +215,28 @@ DRAFT TO CHECK:
                 fallback_model=settings.MODEL_SECONDARY,
                 reason=str(primary_error),
             )
-            try:
-                return await self._complete_json(self.secondary_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
-            except Exception as secondary_error:
-                raise ModelAdapterError(
-                    f"Primary writer failed: {primary_error}. Secondary writer failed: {secondary_error}."
-                ) from secondary_error
+
+        # ── Tier 2: Claude Sonnet 4.6 ─────────────────────────────────────────
+        try:
+            return await self._complete_json(self.secondary_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
+        except Exception as secondary_error:
+            collector.llm_fallback(
+                failed_model=settings.MODEL_SECONDARY,
+                fallback_model=settings.MODEL_TERTIARY,
+                reason=str(secondary_error),
+            )
+
+        # ── Tier 3: GPT-4.5 (last resort) ────────────────────────────────────
+        try:
+            return await self._complete_json(self.tertiary_adapter, prompt, TextModel.GPT_4_5)
+        except Exception as tertiary_error:
+            raise ModelAdapterError(
+                f"All three writers failed. "
+                f"Gemini: {settings.MODEL_PRIMARY}, "
+                f"Claude: {settings.MODEL_SECONDARY}, "
+                f"GPT: {settings.MODEL_TERTIARY}. "
+                f"Last error: {tertiary_error}"
+            ) from tertiary_error
 
     async def revise_draft(
         self,

@@ -26,8 +26,11 @@ class Settings(BaseSettings):
     KIE_TASK_STATUS_URL: str = "https://api.kie.ai/api/v1/jobs/recordInfo"
 
     # PRD-aligned text model roles
+    # Primary → Secondary → Tertiary: full generation fallback chain
+    # Editor: Flash only — reserved for voice-check, revise, platform adapt
     MODEL_PRIMARY: str = "gemini-3.1-pro"
     MODEL_SECONDARY: str = "claude-sonnet-4-6"
+    MODEL_TERTIARY: str = "gpt-4.5"
     MODEL_EDITOR: str = "gemini-3-flash"
 
     # Persistence
@@ -91,6 +94,11 @@ class Settings(BaseSettings):
     @property
     def KIE_GEMINI_FLASH_BASE_URL(self) -> str:
         return f"{self.KIE_BASE_URL}/gemini-3-flash/v1"
+
+    @property
+    def KIE_GPT_BASE_URL(self) -> str:
+        """OpenAI-compatible endpoint for GPT-4.5 via kie.ai."""
+        return f"{self.KIE_BASE_URL}/openai/v1"
 
     @property
     def KIE_CLAUDE_MESSAGES_URL(self) -> str:

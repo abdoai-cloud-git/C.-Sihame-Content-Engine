@@ -14,7 +14,8 @@ class PostStatus(str, Enum):
 class TextModel(str, Enum):
     GEMINI_3_1_PRO = "gemini-3.1-pro"
     CLAUDE_SONNET_4_6 = "claude-sonnet-4-6"
-    GEMINI_3_FLASH = "gemini-3-flash"
+    GPT_4_5 = "gpt-4.5"
+    GEMINI_3_FLASH = "gemini-3-flash"  # editor / rephrasing / small jobs only
 
 
 class VoiceRoute(str, Enum):
