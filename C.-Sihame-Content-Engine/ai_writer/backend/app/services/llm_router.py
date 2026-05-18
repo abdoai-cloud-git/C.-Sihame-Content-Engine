@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any, Dict, Optional
 
 import httpx
 from openai import AsyncOpenAI
 
 from app.core.config import settings
+from app.core.log_collector import collector
 from app.models.schemas import DraftGenerationResult, TextModel
 
 
@@ -19,19 +21,25 @@ class GeminiChatAdapter:
         self.model_name = model_name
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
-    async def complete_text(self, prompt: str) -> str:
-        response = await self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        if not getattr(response, "choices", None):
-            print(f"[DEBUG] Raw response: {response}")
-            raise ModelAdapterError(f"{self.model_name} returned unexpected format: {response}")
-            
-        content = response.choices[0].message.content
-        if not content:
-            raise ModelAdapterError(f"{self.model_name} returned empty content.")
-        return content
+    async def complete_text(self, prompt: str, role: str = "primary") -> str:
+        collector.llm_call_start(self.model_name, role, len(prompt))
+        t0 = time.monotonic()
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            if not getattr(response, "choices", None):
+                raise ModelAdapterError(f"{self.model_name} returned unexpected format: {response}")
+            content = response.choices[0].message.content
+            if not content:
+                raise ModelAdapterError(f"{self.model_name} returned empty content.")
+            elapsed = int((time.monotonic() - t0) * 1000)
+            collector.llm_call_done(self.model_name, role, elapsed, len(content))
+            return content
+        except Exception as exc:
+            collector.llm_call_failed(self.model_name, role, str(exc))
+            raise
 
 
 class ClaudeMessagesAdapter:
@@ -49,7 +57,9 @@ class ClaudeMessagesAdapter:
                 parts.append(text)
         return "\n".join(parts).strip()
 
-    async def complete_text(self, prompt: str) -> str:
+    async def complete_text(self, prompt: str, role: str = "secondary") -> str:
+        collector.llm_call_start(self.model_name, role, len(prompt))
+        t0 = time.monotonic()
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -59,14 +69,20 @@ class ClaudeMessagesAdapter:
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
         }
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(self.endpoint, headers=headers, json=body)
-            response.raise_for_status()
-            payload = response.json()
-        text = self.extract_text_from_response(payload)
-        if not text:
-            raise ModelAdapterError(f"{self.model_name} returned no text blocks.")
-        return text
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(self.endpoint, headers=headers, json=body)
+                response.raise_for_status()
+                payload = response.json()
+            text = self.extract_text_from_response(payload)
+            if not text:
+                raise ModelAdapterError(f"{self.model_name} returned no text blocks.")
+            elapsed = int((time.monotonic() - t0) * 1000)
+            collector.llm_call_done(self.model_name, role, elapsed, len(text))
+            return text
+        except Exception as exc:
+            collector.llm_call_failed(self.model_name, role, str(exc))
+            raise
 
 
 class TextModelRouter:
@@ -171,6 +187,11 @@ DRAFT TO CHECK:
         try:
             return await self._complete_json(self.primary_adapter, prompt, TextModel.GEMINI_3_1_PRO)
         except Exception as primary_error:
+            collector.llm_fallback(
+                failed_model=settings.MODEL_PRIMARY,
+                fallback_model=settings.MODEL_SECONDARY,
+                reason=str(primary_error),
+            )
             try:
                 return await self._complete_json(self.secondary_adapter, prompt, TextModel.CLAUDE_SONNET_4_6)
             except Exception as secondary_error:

@@ -44,6 +44,44 @@ def healthcheck_db():
         return {"db": "paused_or_unreachable", "error": str(exc)}
 
 
+@app.get("/admin/logs")
+def admin_logs(
+    token: str = "",
+    limit: int = 100,
+    level: str = "",
+    clear: bool = False,
+):
+    """
+    Developer-only structured log viewer.
+    Protected by ADMIN_LOG_TOKEN — never share this URL with end users.
+
+    Query params:
+      token  — required, must match ADMIN_LOG_TOKEN env var
+      limit  — number of recent events to return (default 100, max 500)
+      level  — filter by level: INFO | WARN | ERROR | DEBUG (optional)
+      clear  — if true, clears the log buffer after reading
+    """
+    from app.core.config import settings as s
+    from app.core.log_collector import collector
+
+    admin_token = s.ADMIN_LOG_TOKEN
+    if not admin_token or token != admin_token:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    events = collector.recent(limit=min(limit, 500), level=level or None)
+
+    if clear:
+        collector.clear()
+
+    return {
+        "count": len(events),
+        "buffer_cleared": clear,
+        "events": events,
+    }
+
+
+
 from app.api.routes import generate
 app.include_router(generate.router, prefix=f"{settings.API_V1_STR}/content", tags=["Content Generation"])
 

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import asyncio
 from uuid import uuid4
 
+from app.core.log_collector import collector
 from app.models.schemas import (
     AdaptPlatformRequest,
     AdaptPlatformResponse,
@@ -51,6 +52,7 @@ class ContentWorkflowService:
         return voice_route, route_note
 
     async def generate_draft(self, request: GenerateDraftRequest) -> PostDraftResponse:
+        collector.draft_requested(request.raw_input, request.post_type, request.platform)
         assembled = self.context_builder.build_payload(
             user_raw_input=request.raw_input,
             post_type=request.post_type,
@@ -58,6 +60,12 @@ class ContentWorkflowService:
             rejection_feedback=request.rejection_feedback,
             mood_context=request.mood_context,
         )
+        collector.debug("draft.context_built",
+                        f"Context assembled — route={assembled.routing_metadata.voice_route.value} "
+                        f"files={len(assembled.routing_metadata.injected_files)}",
+                        voice_route=assembled.routing_metadata.voice_route.value,
+                        injected_files=assembled.routing_metadata.injected_files,
+                        prompt_chars=len(assembled.prompt))
         result = await self.text_router.generate_primary_draft(assembled.prompt)
         now = datetime.now(timezone.utc)
         draft = StoredDraft(
@@ -77,6 +85,7 @@ class ContentWorkflowService:
             updated_at=now,
         )
         await self.draft_repository.create(draft)
+        collector.draft_saved(draft.draft_id, result.model_used.value, assembled.routing_metadata.voice_route.value)
         return PostDraftResponse(**draft.model_dump())
 
     async def revise_draft(self, request: ReviseDraftRequest) -> ReviseDraftResponse:
@@ -115,6 +124,7 @@ class ContentWorkflowService:
         draft.updated_at = datetime.now(timezone.utc)
         draft.revision_history.append(revision)
         await self.draft_repository.update(draft)
+        collector.draft_revised(draft.draft_id, request.edit_instruction)
         return ReviseDraftResponse(
             draft_id=draft.draft_id,
             status=draft.status,
@@ -140,6 +150,7 @@ class ContentWorkflowService:
         draft.status = PostStatus.APPROVED_TEXT
         draft.updated_at = datetime.now(timezone.utc)
         await self.draft_repository.update(draft)
+        collector.draft_approved(draft.draft_id)
         return ApproveTextResponse(
             draft_id=draft.draft_id,
             status=draft.status,
@@ -179,6 +190,7 @@ class ContentWorkflowService:
         draft.rejection_reason = request.reason
         draft.updated_at = datetime.now(timezone.utc)
         await self.draft_repository.update(draft)
+        collector.draft_rejected(draft.draft_id, request.reason or "")
         return RejectDraftResponse(
             draft_id=draft.draft_id,
             status=draft.status,
