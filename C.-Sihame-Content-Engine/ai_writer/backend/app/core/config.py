@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "")
     SUPABASE_DRAFTS_TABLE: str = os.getenv("SUPABASE_DRAFTS_TABLE", "content_drafts")
 
+    # Admin / Developer access
+    # Set ADMIN_LOG_TOKEN in .env to a random secret string.
+    # Used to protect GET /api/v1/admin/logs — never expose to end users.
+    ADMIN_LOG_TOKEN: str = os.getenv("ADMIN_LOG_TOKEN", "")
+
     # Runtime content paths
     PROJECT_ROOT: str = str(Path(__file__).resolve().parents[3])
     KNOWLEDGE_PACK_DIR: str = str(

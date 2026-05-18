@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 import uuid
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -7,6 +8,7 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.core.log_collector import collector
 from app.models.schemas import (
     AdaptPlatformRequest,
     AdaptPlatformResponse,
@@ -59,6 +61,7 @@ async def _run_image_generation_job(
     concept_ar: str,
 ) -> None:
     """Background coroutine: runs Kie.ai polling and writes the result to _image_jobs."""
+    t0 = time.monotonic()
     try:
         # Expand Arabic concept → English symbol if coach provided one
         symbol = (
@@ -72,6 +75,9 @@ async def _run_image_generation_job(
             support=design_support,
             symbol=symbol,
         )
+        collector.debug("image.job.prompt_built",
+                        f"Image prompt built for job {job_id}",
+                        job_id=job_id, prompt_chars=len(prompt))
 
         image_url = await designer.generate_image(prompt)
 
@@ -85,11 +91,14 @@ async def _run_image_generation_job(
         draft.updated_at = datetime.now(timezone.utc)
         await draft_repo.update(draft)
 
+        elapsed = int((time.monotonic() - t0) * 1000)
         _image_jobs[job_id] = {"status": "done", "image_url": image_url, "error": None, "draft_id": draft_id}
+        collector.image_job_done(job_id, image_url, elapsed)
         logger.info("Image job %s done — url=%s", job_id, image_url)
 
     except Exception as exc:  # noqa: BLE001
         _image_jobs[job_id] = {"status": "failed", "image_url": None, "error": str(exc), "draft_id": draft_id}
+        collector.image_job_failed(job_id, str(exc))
         logger.error("Image job %s failed: %s", job_id, exc)
 
 
@@ -349,6 +358,7 @@ async def generate_design_image(
 
     job_id = str(uuid.uuid4())
     _image_jobs[job_id] = {"status": "pending", "image_url": None, "error": None, "draft_id": request.draft_id}
+    collector.image_job_queued(job_id, request.draft_id)
 
     asyncio.create_task(
         _run_image_generation_job(
