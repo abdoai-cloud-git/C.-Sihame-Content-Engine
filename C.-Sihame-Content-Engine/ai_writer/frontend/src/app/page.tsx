@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/api";
 import HistoryDrawer from "@/components/HistoryDrawer";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAsyncJob } from "@/lib/useAsyncJob";
 
 /* ─── Platform config with icons & brand colors ─── */
 const PLATFORMS = [
@@ -38,28 +39,24 @@ function MainWorkspace() {
   const [rawInput, setRawInput] = useState("");
   const [moodContext, setMoodContext] = useState("");
   const [postType, setPostType] = useState("reflection");
-  
+
   // Draft State
   const [draftId, setDraftId] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [draft, setDraft] = useState<any>(null);
 
-  // Status flags
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Load-draft error (separate from job errors — covers URL-param restore flow)
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   // Review State
   const [editInstruction, setEditInstruction] = useState("");
-  const [isRevising, setIsRevising] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false); // covers only the quick reject API call
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
   // Adapt State
   const [adaptPlatforms, setAdaptPlatforms] = useState<string[]>([]);
-  const [isAdapting, setIsAdapting] = useState(false);
   const [adaptResults, setAdaptResults] = useState<Record<string, string>>({});
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
   const [mainCopySuccess, setMainCopySuccess] = useState(false);
@@ -70,9 +67,33 @@ function MainWorkspace() {
   const [designSymbol, setDesignSymbol] = useState('');
   const [designConceptAr, setDesignConceptAr] = useState('');
   const [designImageUrl, setDesignImageUrl] = useState('');
-  const [designLoading, setDesignLoading] = useState(false);
-  const [extractLoading, setExtractLoading] = useState(false);
-  const [conceptRegenerateLoading, setConceptRegenerateLoading] = useState(false);
+
+  // ── Per-action async jobs ──────────────────────────────────────────────
+  const generateJob = useAsyncJob();
+  const reviseJob   = useAsyncJob();
+  const approveJob  = useAsyncJob();
+  const adaptJob    = useAsyncJob();
+  const extractJob  = useAsyncJob();
+  const imageJob    = useAsyncJob();
+  const conceptJob  = useAsyncJob();
+
+  // ── Backward-compat booleans (preserve existing JSX without mass-rewrite) ──
+  const isGenerating            = generateJob.isPending;
+  const isRevising              = reviseJob.isPending;
+  const isApproving             = approveJob.isPending;
+  const isAdapting              = adaptJob.isPending;
+  const extractLoading          = extractJob.isPending;
+  const designLoading           = imageJob.isPending;
+  const conceptRegenerateLoading = conceptJob.isPending;
+
+  // ── Global status banner: first active job wins ────────────────────────
+  const allJobs = [generateJob, reviseJob, approveJob, adaptJob, extractJob, imageJob, conceptJob];
+  const activeJob = allJobs.find((j) => j.isPending || j.isError) ?? null;
+
+  // ── Scroll refs for auto-focus on completion ───────────────────────────
+  const draftCardRef      = useRef<HTMLDivElement>(null);
+  const adaptResultsRef   = useRef<HTMLDivElement>(null);
+  const imagePreviewRef   = useRef<HTMLDivElement>(null);
 
   // Load draft from URL if any
   useEffect(() => {
@@ -88,6 +109,14 @@ function MainWorkspace() {
   useEffect(() => {
     if (isDrawerOpen) setIsComposerExpanded(false);
   }, [isDrawerOpen]);
+
+  // ── beforeunload guard: warn when image generation is in-flight ──
+  useEffect(() => {
+    if (!imageJob.isPending) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [imageJob.isPending]);
 
   const invalidateHistory = () => {
     queryClient.invalidateQueries({ queryKey: ["history"] });
@@ -119,13 +148,13 @@ function MainWorkspace() {
 
   const loadDraft = async (id: string) => {
     setIsLoadingDraft(true);
-    setError("");
+    setLoadError('');
     setAdaptResults({});
     
     try {
       const apiUrl = getApiBaseUrl();
       if (!apiUrl) {
-        setError("API URL is not configured. Please check environment variables.");
+        setLoadError('API URL is not configured. Please check environment variables.');
         return;
       }
       const res = await fetch(`${apiUrl}/api/v1/content/${id}`);
@@ -157,212 +186,157 @@ function MainWorkspace() {
       }
       setIsComposerExpanded(false);
     } catch (err) {
-      setError((err as Error).message);
-      setAppState("compose");
+      setLoadError((err as Error).message);
+      setAppState('compose');
     } finally {
       setIsLoadingDraft(false);
     }
   };
 
-  const generateDraft = async (options?: {
-    rawInput?: string;
-    moodContext?: string;
-    postType?: string;
-    platform?: string;
-    rejectionFeedback?: string;
-  }) => {
-    const nextRawInput = options?.rawInput ?? rawInput;
-    const nextMoodContext = options?.moodContext ?? moodContext;
-    const nextPostType = options?.postType ?? postType;
-    const nextPlatform = options?.platform ?? draft?.platform ?? "general";
-    const nextRejectionFeedback = options?.rejectionFeedback?.trim() || undefined;
+  // ── Core generation logic: pure async, no internal job state ──
+  const _doGenerate = async (
+    setPhase: (p: string) => void,
+    signal: AbortSignal,
+    opts?: { rawInput?: string; moodContext?: string; postType?: string; platform?: string; rejectionFeedback?: string; }
+  ) => {
+    const nextRawInput     = opts?.rawInput     ?? rawInput;
+    const nextMoodContext  = opts?.moodContext   ?? moodContext;
+    const nextPostType     = opts?.postType      ?? postType;
+    const nextPlatform     = opts?.platform      ?? draft?.platform ?? 'general';
+    const nextFeedback     = opts?.rejectionFeedback?.trim() || undefined;
 
-    if (!nextRawInput.trim()) {
-      throw new Error("الرجاء كتابة الفكرة أولاً");
-    }
+    if (!nextRawInput.trim()) throw new Error('الرجاء كتابة الفكرة أولاً');
+    const apiUrl = getApiBaseUrl();
+    if (!apiUrl) throw new Error('API URL is not configured.');
 
-    setIsGenerating(true);
-    setError("");
+    setPhase('جاري صياغة المنشور...');
+    const response = await fetch(`${apiUrl}/api/v1/content/draft`, {
+      method: 'POST',
+      signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        raw_input: nextRawInput,
+        mood_context: nextMoodContext.trim() || undefined,
+        post_type: nextPostType,
+        platform: nextPlatform,
+        rejection_feedback: nextFeedback,
+      }),
+    });
+    if (!response.ok) throw new Error(await parseApiError(response, 'حدث خطأ أثناء التوليد'));
 
-    try {
-      const apiUrl = getApiBaseUrl();
-      if (!apiUrl) {
-        throw new Error("API URL is not configured. Please check environment variables.");
-      }
-      const response = await fetch(`${apiUrl}/api/v1/content/draft`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          raw_input: nextRawInput,
-          mood_context: nextMoodContext.trim() || undefined,
-          post_type: nextPostType,
-          platform: nextPlatform,
-          rejection_feedback: nextRejectionFeedback,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(await parseApiError(response, "حدث خطأ أثناء التوليد"));
-      }
-
-      const data = await response.json();
-      setRawInput(nextRawInput);
-      setPostType(nextPostType);
-      setDraft(data);
-      setDraftId(data.draft_id);
-      setAppState("review");
-      setIsComposerExpanded(false);
-      invalidateHistory();
-      return data;
-    } catch (err) {
-      console.error(err);
-      setError((err as Error).message || "حدث خطأ غير متوقع.");
-      throw err;
-    } finally {
-      setIsGenerating(false);
-    }
+    const data = await response.json();
+    setRawInput(nextRawInput);
+    setPostType(nextPostType);
+    setDraft(data);
+    setDraftId(data.draft_id);
+    setAppState('review');
+    setIsComposerExpanded(false);
+    invalidateHistory();
+    // Auto-scroll to the new draft card
+    setTimeout(() => draftCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
   };
 
   // 1. Generate new draft
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await generateDraft();
-    } catch {
-      // generateDraft already set UI error state
-    }
+    await generateJob.run(({ setPhase, signal }) => _doGenerate(setPhase, signal), 'جاري صياغة المنشور...');
   };
 
   // 2. Revise existing draft
   const handleRevise = async () => {
     if (!editInstruction.trim() || !draftId) return;
-    setIsRevising(true);
-    try {
+    await reviseJob.run(async ({ setPhase, signal }) => {
+      setPhase('جاري التعديل...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/revise`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft_id: draftId,
-          edit_instruction: editInstruction,
-        }),
+        method: 'POST',
+        signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId, edit_instruction: editInstruction }),
       });
-      if (!res.ok) throw new Error(await parseApiError(res, "فشل التعديل"));
+      if (!res.ok) throw new Error(await parseApiError(res, 'فشل التعديل'));
       const data = await res.json();
-      setDraft({ ...draft, ...data });
-      setEditInstruction("");
+      setDraft((prev: Record<string, unknown>) => ({ ...prev, ...data }));
+      setEditInstruction('');
       invalidateHistory();
-    } catch (err) {
-      alert((err as Error).message);
-    } finally {
-      setIsRevising(false);
-    }
+      setTimeout(() => draftCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    }, 'جاري التعديل...');
   };
 
-  /**
-   * 3. Approve draft
-   * Transitions the app to the 'approved' state and updates the backend record.
-   */
+  /** 3. Approve draft */
   const handleApprove = async () => {
     if (!draftId || !draft) return;
-    setIsApproving(true);
-    try {
+    await approveJob.run(async ({ setPhase, signal }) => {
+      setPhase('جاري الاعتماد...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/approve-text`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft_id: draftId,
-          approved_text: buildPostText(draft),
-        }),
+        method: 'POST',
+        signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId, approved_text: buildPostText(draft) }),
       });
-      if (!res.ok) throw new Error(await parseApiError(res, "فشل اعتماد النص"));
-      
+      if (!res.ok) throw new Error(await parseApiError(res, 'فشل اعتماد النص'));
       const data = await res.json();
-      setDraft({ ...draft, status: data.status || "approved_text", approved_text: data.approved_text });
-      setAppState("approved");
+      setDraft((prev: Record<string, unknown>) => ({ ...prev, status: data.status || 'approved_text', approved_text: data.approved_text }));
+      setAppState('approved');
       invalidateHistory();
-    } catch (err) {
-      alert((err as Error).message);
-    } finally {
-      setIsApproving(false);
-    }
+    }, 'جاري الاعتماد...');
   };
 
   /**
    * 3b. Reject and Regenerate
-   * The core of the feedback loop.
-   * 1. Calls the /reject endpoint to mark the current draft as REJECTED and store the reason.
-   * 2. Immediately triggers a fresh generation attempt using the stored draft context.
-   * 3. Passes the rejection reason back into generation as an active correction constraint.
+   * 1. Quick reject API call (sets isRejecting local state).
+   * 2. Drives regeneration through generateJob for proper global banner feedback.
    */
   const handleRejectAndRegenerate = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!draftId || !draft) return;
-    setIsRejecting(true);
-    try {
+    // Phase 1: reject call — runs inside generateJob so error surfaces in banner
+    const capturedReason = rejectReason;
+    const capturedDraft  = draft;
+    await generateJob.run(async ({ setPhase, signal }) => {
+      setIsRejecting(true);
+      setPhase('جاري رفض المسودة...');
       const apiUrl = getApiBaseUrl();
-      // First hit the reject endpoint
-      const res = await fetch(`${apiUrl}/api/v1/content/reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft_id: draftId,
-          reason: rejectReason.trim() || undefined,
-        }),
+      const rejectRes = await fetch(`${apiUrl}/api/v1/content/reject`, {
+        method: 'POST',
+        signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId, reason: capturedReason.trim() || undefined }),
       });
-      if (!res.ok) throw new Error(await parseApiError(res, "فشل رفض النص"));
-
-      const feedback = rejectReason.trim();
-
-      // Reset UI reject state before regeneration starts
-      setRejectReason("");
+      if (!rejectRes.ok) throw new Error(await parseApiError(rejectRes, 'فشل رفض النص'));
+      setRejectReason('');
       setShowRejectInput(false);
-
-      // Regenerate from the stored draft context, not from whatever local composer state happens to be left.
-      try {
-        await generateDraft({
-          rawInput: draft.raw_input,
-          postType: draft.post_type,
-          platform: draft.platform,
-          rejectionFeedback: feedback,
-        });
-      } catch (regenerationError) {
-        setDraft({ ...draft, status: "rejected" });
-        setAppState("review");
-        setError(`تم رفض المسودة لكن إعادة التوليد فشلت: ${(regenerationError as Error).message}`);
-      }
-    } catch (err) {
-      alert((err as Error).message);
-    } finally {
       setIsRejecting(false);
-    }
+      // Phase 2: regenerate
+      await _doGenerate(setPhase, signal, {
+        rawInput: capturedDraft.raw_input,
+        postType: capturedDraft.post_type,
+        platform: capturedDraft.platform,
+        rejectionFeedback: capturedReason,
+      });
+    }, 'جاري رفض المسودة...');
   };
 
   // 4. Adapt for platform
   const handleAdapt = async () => {
     if (!draftId || adaptPlatforms.length === 0) return;
-    setIsAdapting(true);
-    try {
+    await adaptJob.run(async ({ setPhase, signal }) => {
+      setPhase('جاري تكييف المنشور...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/adapt`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft_id: draftId,
-          target_platforms: adaptPlatforms,
-        }),
+        method: 'POST',
+        signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draft_id: draftId, target_platforms: adaptPlatforms }),
       });
-      if (!res.ok) throw new Error(await parseApiError(res, "فشل التكيف مع المنصة"));
+      if (!res.ok) throw new Error(await parseApiError(res, 'فشل التكيف مع المنصة'));
       const data = await res.json();
       setAdaptResults(data.results);
       setCopiedPlatform(null);
       invalidateHistory();
-    } catch (err) {
-      alert((err as Error).message);
-    } finally {
-      setIsAdapting(false);
-    }
+      setTimeout(() => adaptResultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    }, 'جاري تكييف المنشور...');
   };
 
   const handleCopyMainPost = () => {
@@ -383,22 +357,24 @@ function MainWorkspace() {
   const handleNewDraft = () => {
     setDraft(null);
     setDraftId(null);
-    setAppState("compose");
-    setRawInput("");
+    setAppState('compose');
+    setRawInput('');
     setAdaptResults({});
     setAdaptPlatforms([]);
     setCopiedPlatform(null);
     setMainCopySuccess(false);
-    setEditInstruction("");
-    setRejectReason("");
+    setEditInstruction('');
+    setRejectReason('');
     setShowRejectInput(false);
-    setError("");
+    setLoadError('');
     setIsComposerExpanded(false);
     setDesignTitle('');
     setDesignSupport('');
     setDesignSymbol('');
     setDesignConceptAr('');
     setDesignImageUrl('');
+    // Reset any lingering job errors
+    allJobs.forEach((j) => j.reset());
   };
 
   const handleQuickStart = (type: string) => {
@@ -418,81 +394,65 @@ function MainWorkspace() {
     ? "bg-amber-100 text-amber-800" 
     : "bg-green-100 text-green-800";
 
-  // ─── Design Handlers ───
+  // ── Design Handlers ──────────────────────────────────────────────
   const handleExtractDesignText = async () => {
     if (!draftId) return;
-    setExtractLoading(true);
-    try {
+    await extractJob.run(async ({ setPhase, signal }) => {
+      setPhase('جاري استخراج عناصر التصميم...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/design/extract`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draft_id: draftId }),
       });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || 'فشل استخراج النص');
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'فشل استخراج النص'); }
       const data = await res.json();
       setDesignTitle(data.design_title);
       setDesignSupport(data.design_support);
       setDesignSymbol(data.design_symbol || '');
       setDesignConceptAr(data.design_concept_ar || '');
-    } catch (err) {
-      alert((err as Error).message);
-    } finally {
-      setExtractLoading(false);
-    }
+    }, 'جاري استخراج عناصر التصميم...');
   };
 
-  /** Re-generate only the visual concept (symbol + Arabic description).
-   *  Uses the NEW dedicated endpoint that reads ONLY the short title + support --
-   *  The coach's edited title and support text are intentionally preserved. */
+  /** Re-generate only the visual concept (symbol + Arabic description). */
   const handleRegenerateVisualConcept = async () => {
     if (!draftId || !designTitle.trim() || !designSupport.trim()) return;
-    setConceptRegenerateLoading(true);
-    try {
+    await conceptJob.run(async ({ setPhase, signal }) => {
+      setPhase('جاري استكشاف مفهوم بصري جديد...');
       const apiUrl = getApiBaseUrl();
       const res = await fetch(`${apiUrl}/api/v1/content/design/regenerate-concept`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           draft_id: draftId,
           design_title: designTitle,
           design_support: designSupport,
-          previous_symbol: designSymbol,       // tell LLM what to avoid
-          previous_concept_ar: designConceptAr, // tell LLM what to avoid
+          previous_symbol: designSymbol,
+          previous_concept_ar: designConceptAr,
         }),
       });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || 'فشل استكشاف المفهوم البصري');
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'فشل استكشاف المفهوم البصري'); }
       const data = await res.json();
-      // Only update the visual concept fields — leave title & support untouched
       setDesignSymbol(data.design_symbol || '');
       setDesignConceptAr(data.design_concept_ar || '');
-    } catch (err) {
-      alert((err as Error).message);
-    } finally {
-      setConceptRegenerateLoading(false);
-    }
+    }, 'جاري استكشاف مفهوم بصري جديد...');
   };
 
   const handleGenerateDesignImage = async () => {
     if (!draftId || !designTitle.trim() || !designSupport.trim()) return;
-    setDesignLoading(true);
     setDesignImageUrl('');
-
-    // Helper: wait ms milliseconds
     const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
-    try {
+    await imageJob.run(async ({ setPhase, signal }) => {
       const apiUrl = getApiBaseUrl();
 
-      // ── Step 1: Submit the job — returns immediately with a job_id ──
+      // Step 1: submit job
+      setPhase('جاري تجهيز الفكرة البصرية...');
       const res = await fetch(`${apiUrl}/api/v1/content/design/generate`, {
         method: 'POST',
+        signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           draft_id: draftId,
@@ -502,43 +462,32 @@ function MainWorkspace() {
           design_concept_ar: designConceptAr,
         }),
       });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || 'فشل بدء توليد الصورة');
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'فشل بدء توليد الصورة'); }
       const { job_id, draft_id: jobDraftId } = await res.json();
 
-      // ── Step 2: Poll every 15 seconds (max 60 × 15s = 15 minutes) ──
+      // Step 2: poll with honest stage labels
+      setPhase('جاري إرسال الطلب إلى المولّد...');
       for (let i = 0; i < 60; i++) {
         await delay(15_000);
+        if (i === 1) setPhase('جاري توليد الصورة...');
+        if (i >= 4) setPhase('يستغرق التوليد وقتاً أطول من المعتاد...');
 
-        // Pass draft_id so the backend can recover from a container restart
-        // by falling back to the Supabase-persisted design_image_url.
         const statusUrl = jobDraftId
           ? `${apiUrl}/api/v1/content/design/status/${job_id}?draft_id=${jobDraftId}`
           : `${apiUrl}/api/v1/content/design/status/${job_id}`;
-
-        const statusRes = await fetch(statusUrl);
+        const statusRes = await fetch(statusUrl, { signal });
         if (!statusRes.ok) throw new Error('فشل التحقق من حالة توليد الصورة');
-
         const statusData = await statusRes.json();
 
         if (statusData.status === 'done') {
           setDesignImageUrl(statusData.image_url);
+          setTimeout(() => imagePreviewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
           return;
         }
-        if (statusData.status === 'failed') {
-          throw new Error(statusData.error || 'فشل توليد الصورة');
-        }
-        // status === 'pending' → keep waiting
+        if (statusData.status === 'failed') throw new Error(statusData.error || 'فشل توليد الصورة');
       }
-
       throw new Error('انتهى وقت الانتظار — يرجى المحاولة مجدداً');
-    } catch (err) {
-      alert((err as Error).message);
-    } finally {
-      setDesignLoading(false);
-    }
+    }, 'جاري تجهيز الفكرة البصرية...');
   };
 
 
@@ -575,10 +524,39 @@ function MainWorkspace() {
           </span>
         </div>
 
-        {/* ─── GLOBAL ERROR ─── */}
-        {error && (
+        {/* ─── GLOBAL STATUS BANNER ─── */}
+        {activeJob && (
+          <div
+            className={`mx-4 mb-4 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 animate-fade-in-down ${
+              activeJob.isError
+                ? 'bg-red-50 text-red-700 border border-red-200'
+                : 'bg-[#0D4F5C]/10 text-[#0D4F5C] border border-[#0D4F5C]/20'
+            }`}
+          >
+            {activeJob.isPending && (
+              <span className="inline-block w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spinner flex-shrink-0" />
+            )}
+            {activeJob.isError && <span className="flex-shrink-0">❌</span>}
+            <span className="flex-1">
+              {activeJob.isPending
+                ? activeJob.phase || 'جاري المعالجة...'
+                : activeJob.errorMessage}
+            </span>
+            {activeJob.isError && (
+              <button
+                onClick={() => activeJob.reset()}
+                className="text-xs underline opacity-70 hover:opacity-100 flex-shrink-0"
+              >
+                إغلاق
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Load-draft error (separate from job errors) */}
+        {loadError && (
           <div className="p-3 mb-4 mx-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm animate-slide-up">
-            ❌ {error}
+            ❌ {loadError}
           </div>
         )}
 
@@ -623,11 +601,11 @@ function MainWorkspace() {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════ */}
+        {/* ─────────────────────────────────────────────────────────── */}
         {/* ─── REVIEW & APPROVED — CLEAN LAYOUT ─── */}
-        {/* ═══════════════════════════════════════════════════ */}
-        {!isLoadingDraft && draft && (appState === "review" || appState === "approved") && (
-          <div className="px-4 space-y-4 animate-slide-up">
+        {/* ─────────────────────────────────────────────────────────── */}
+        {!isLoadingDraft && draft && (appState === 'review' || appState === 'approved') && (
+          <div ref={draftCardRef} className="px-4 space-y-4 animate-slide-up">
 
             {/* ─── Sticky Copy + New Draft Bar ─── */}
             <div className="sticky top-0 z-30 bg-[#FAF7F2]/90 backdrop-blur-md py-3 flex justify-between items-center border-b border-[#0D4F5C]/5">
@@ -853,7 +831,7 @@ function MainWorkspace() {
 
                 {/* Adapted Results */}
                 {Object.keys(adaptResults).length > 0 && (
-                  <div className="space-y-4 pt-2">
+                  <div ref={adaptResultsRef} className="space-y-4 pt-2">
                     {Object.entries(adaptResults).map(([platform, text]) => {
                       const platformInfo = PLATFORMS.find(p => p.id === platform);
                       return (
@@ -972,7 +950,7 @@ function MainWorkspace() {
 
                 {/* Image Preview */}
                 {designImageUrl && (
-                  <div className="space-y-3 animate-slide-up">
+                  <div ref={imagePreviewRef} className="space-y-3 animate-slide-up">
                     <div className="bg-white rounded-xl border border-[#D4AF37]/30 overflow-hidden shadow-sm">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -1013,11 +991,17 @@ function MainWorkspace() {
         {/* FAB Button (when composer is minimized) */}
         {!isComposerExpanded && (
           <button
-            onClick={() => setIsComposerExpanded(true)}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gradient-to-l from-[#C4933F] to-[#D4A34F] text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all animate-pulse-glow flex items-center gap-2"
+            onClick={() => { if (!imageJob.isPending) setIsComposerExpanded(true); }}
+            disabled={imageJob.isPending}
+            title={imageJob.isPending ? 'يرجى انتظار اكتمال توليد الصورة أولاً' : undefined}
+            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-6 py-3 rounded-full font-bold shadow-lg transition-all flex items-center gap-2 ${
+              imageJob.isPending
+                ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-none'
+                : 'bg-gradient-to-l from-[#C4933F] to-[#D4A34F] text-white hover:shadow-xl animate-pulse-glow'
+            }`}
           >
-            <span className="text-lg">✨</span>
-            فكرة جديدة
+            <span className="text-lg">{imageJob.isPending ? '⏳' : '✨'}</span>
+            {imageJob.isPending ? 'جاري التوليد...' : 'فكرة جديدة'}
           </button>
         )}
 

@@ -1,0 +1,39 @@
+name: Supabase Keep-Alive
+
+# Runs every 3 days to prevent Supabase free-tier project from pausing due to inactivity.
+# Supabase pauses free projects after 7 days of no database activity.
+# This workflow performs a lightweight SELECT query to reset the inactivity timer.
+
+on:
+  schedule:
+    # Every 3 days at 08:00 UTC (well within the 7-day window)
+    - cron: "0 8 */3 * *"
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase DB
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          echo "Pinging Supabase to prevent inactivity pause..."
+          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/drafts?limit=1&select=draft_id" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          
+          echo "HTTP Status: $HTTP_STATUS"
+          cat /tmp/response.txt
+          
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Supabase is alive and responding."
+          elif [ "$HTTP_STATUS" -eq 404 ]; then
+            echo "⚠️  Table not found (404) — project is live but table may be missing."
+            exit 0
+          else
+            echo "❌ Supabase returned unexpected status: $HTTP_STATUS"
+            exit 1
+          fi

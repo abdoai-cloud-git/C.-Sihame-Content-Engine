@@ -27,6 +27,23 @@ def healthcheck():
     return {"status": "ok"}
 
 
+@app.get("/healthz/db")
+def healthcheck_db():
+    """
+    Lightweight Supabase connectivity check.
+    Returns {"db": "ok"} if reachable, or {"db": "paused_or_unreachable", "error": "..."} if not.
+    Can also be used as a keep-alive ping target (e.g., from Cloud Scheduler or GitHub Actions).
+    """
+    from app.core.config import settings as s
+    try:
+        from supabase import create_client
+        client = create_client(s.SUPABASE_URL, s.SUPABASE_ANON_KEY)
+        client.table(s.SUPABASE_DRAFTS_TABLE).select("draft_id").limit(1).execute()
+        return {"db": "ok"}
+    except Exception as exc:
+        return {"db": "paused_or_unreachable", "error": str(exc)}
+
+
 from app.api.routes import generate
 app.include_router(generate.router, prefix=f"{settings.API_V1_STR}/content", tags=["Content Generation"])
 

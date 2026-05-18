@@ -76,4 +76,28 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* Status banner entrance */
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-down {
+    animation: fadeInDown 0.25s ease-out forwards;
+  }
+
+  /* Section overlay for in-progress operations */
+  .section-overlay {
+    position: relative;
+    pointer-events: none;
+  }
+  .section-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(1px);
+    border-radius: inherit;
+    z-index: 10;
+  }
 }
