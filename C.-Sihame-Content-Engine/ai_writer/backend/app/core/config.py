@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     # Primary → Secondary → Tertiary: full generation fallback chain
     # Editor: Claude — used for voice-check, revise, platform adapt
     MODEL_PRIMARY: str = "claude-sonnet-4-6"
-    MODEL_SECONDARY: str = "gpt-5.2"
+    MODEL_SECONDARY: str = "gpt-5-5"          # via /codex/v1/responses
     MODEL_TERTIARY: str = "gemini-3.1-pro"
     MODEL_EDITOR: str = "claude-sonnet-4-6"
 
