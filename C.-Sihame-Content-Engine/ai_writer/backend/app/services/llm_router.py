@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import time
@@ -162,8 +162,18 @@ DRAFT TO CHECK:
             if start == -1 or end == -1 or end <= start:
                 raise ModelAdapterError("Model response did not contain a valid JSON object.")
             data = json.loads(cleaned[start : end + 1])
+        # Normalise safety_flags: some models return a list instead of str
         if isinstance(data.get("safety_flags"), list):
             data["safety_flags"] = " | ".join(str(s) for s in data["safety_flags"])
+        # Validate required keys exist — catches cases where model asks
+        # questions or returns unrelated JSON instead of generating content
+        required = {"angle", "hook", "body", "cta"}
+        missing = required - set(data.keys())
+        if missing:
+            raise ModelAdapterError(
+                f"Model response JSON missing required keys: {missing}. "
+                f"Got keys: {list(data.keys())}. Raw text starts with: {raw_text[:200]}"
+            )
         return data
 
     async def _voice_check_draft(self, draft: DraftGenerationResult) -> DraftGenerationResult:
